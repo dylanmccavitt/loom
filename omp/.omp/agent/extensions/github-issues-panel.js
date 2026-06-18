@@ -28,10 +28,15 @@ async function runGh(args, cwd) {
   return stdout.trim();
 }
 
+const repoCache = new Map();
+
 async function currentRepo(cwd) {
+  const cached = repoCache.get(cwd);
+  if (cached) return cached;
   const raw = await runGh(["repo", "view", "--json", "nameWithOwner,url"], cwd);
   const repo = JSON.parse(raw);
   if (!repo?.nameWithOwner || !repo?.url) throw new Error("No GitHub repository found for cwd");
+  repoCache.set(cwd, repo);
   return repo;
 }
 
@@ -52,7 +57,9 @@ async function listIssues(cwd, limit) {
     "number,title,url,state,updatedAt",
   ], cwd);
   const issues = JSON.parse(raw);
-  return { repo: repoFromIssueUrl(issues[0]?.url) || await currentRepo(cwd), issues };
+  const repo = repoFromIssueUrl(issues[0]?.url) || await currentRepo(cwd);
+  repoCache.set(cwd, repo);
+  return { repo, issues };
 }
 
 async function issueUrl(cwd, ref) {
