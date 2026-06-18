@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { readFile } from "node:fs/promises";
 import workflowCockpit, {
-  WorkflowCockpitPanel,
-  cockpitOverlayOptions,
   gatherCockpitData,
   inferIssueNumber,
   isVerificationCommand,
   parseRepoSlug,
 } from "../omp/.omp/agent/extensions/workflow-cockpit.js";
+import * as cockpitModule from "../omp/.omp/agent/extensions/workflow-cockpit.js";
 
 const GO_PROMPT = "Proceed with the current plan. Do not ask unless blocked by missing external information. Preserve unrelated changes. Use subagents for parallelizable work. Verify before yielding.";
 const SHIP_PROMPT = "Finish the active issue end-to-end. Check acceptance criteria, implement missing work, verify behavior, and prepare closeout evidence. Ask only if the active issue or target repository is unknown.";
@@ -73,43 +73,25 @@ function context(overrides = {}) {
   const widgets = [];
   const notifications = [];
   const customCalls = [];
-  const renderRequests = [];
-  const theme = {
-    fg(_token, text) {
-      return text;
-    },
-  };
   const ui = {
-    async setWidget(key, lines, options) {
-      widgets.push({ key, lines, options });
+    // OMP keyed form: setWidget(key) | setWidget(key, lines, options). The shell's
+    // presentPanel fallback uses the keyless form: setWidget(lines, options).
+    async setWidget(arg0, arg1, arg2) {
+      if (Array.isArray(arg0)) {
+        widgets.push({ key: undefined, lines: arg0, options: arg1 });
+      } else {
+        widgets.push({ key: arg0, lines: arg1, options: arg2 });
+      }
     },
     notify(message, level) {
       notifications.push({ message, level });
     },
+    // Under `node --test` the native panel primitives never resolve, so
+    // presentPanel skips this path for the setWidget fallback. We record calls so
+    // a regression that mounts a live overlay here stays visible.
     custom(factory, options) {
-      const tui = {
-        requestRender() {
-          renderRequests.push("render");
-        },
-      };
-      const call = { options, component: undefined, result: undefined, handle: undefined };
-      customCalls.push(call);
-      const promise = new Promise((resolve) => {
-        const done = (result) => {
-          call.result = result;
-          resolve(result);
-        };
-        call.component = factory(tui, theme, undefined, done);
-        options?.onHandle?.({
-          focus() {
-            call.focused = true;
-          },
-          hide() {
-            call.hidden = true;
-          },
-        });
-      });
-      return promise;
+      customCalls.push({ factory, options });
+      return Promise.resolve("noop");
     },
   };
 
@@ -125,23 +107,6 @@ function context(overrides = {}) {
     widgets,
     notifications,
     customCalls,
-    renderRequests,
-  };
-}
-
-function panelSections(extraRows = []) {
-  return [
-    { title: "Repository", rows: ["repo: owner/repo", "branch: issue-22", "worktree: /repo"] },
-    { title: "Issue state", rows: ["active issue: 22", "open issues: #22 Rebuild cockpit"] },
-    { title: "Working context", rows: ["touched-file count: 2", "last verification: node --test", ...extraRows] },
-  ];
-}
-
-function plainTheme() {
-  return {
-    fg(_token, text) {
-      return text;
-    },
   };
 }
 
@@ -164,36 +129,36 @@ test("provider helpers parse repo slugs, issue numbers, and verification command
   assert.ok(!isVerificationCommand("git status"));
 });
 
-test("/ctx derives cockpit data from documented command-context providers", async () => {
+test("/ctx presents seeded provider rows through the shared panel shell", async () => {
   const { commands } = install({ exec: repoExec(POPULATED) });
   const state = context({ getContextUsage: () => ({ tokens: 102400, contextWindow: 128000, percent: 80 }) });
 
   const lines = await commands.get("ctx").handler("", state.ctx);
-  assert.equal(state.widgets[0].key, "workflow-cockpit");
-  assert.equal(state.widgets[0].lines, undefined);
-  assert.equal(state.customCalls.length, 1);
-  assert.equal(state.customCalls[0].options.overlay, true);
-  assert.equal(typeof state.customCalls[0].options.overlayOptions, "function");
-  assert.equal(state.customCalls[0].focused, true);
 
-  const rendered = state.customCalls[0].component.render(58).join("\n");
+  // Under `node --test` the native primitives are unavailable, so the shell never
+  // mounts a live ctx.ui.custom overlay; it presents via the setWidget fallback.
+  assert.equal(state.customCalls.length, 0);
+  const fallback = state.widgets.find((widget) => Array.isArray(widget.lines));
+  assert.ok(fallback, "panel presented through the shell's setWidget fallback");
+  assert.deepEqual(fallback.options, { placement: "belowEditor" });
+
+  const rendered = fallback.lines.join("\n");
   assert.match(rendered, /Workflow Cockpit/u);
   assert.match(rendered, /repo: DylanMcCavitt\/oh-my-pi-config/u);
   assert.match(rendered, /branch: issue-22-native-cockpit/u);
   assert.match(rendered, /worktree: \/Users\/dylan\/oh-my-pi-config/u);
   assert.match(rendered, /active issue: #22 Rebuild workflow cockpit · open/u);
+  assert.match(rendered, /Open issues/u);
   assert.match(rendered, /#22 Rebuild workflow cockpit · open/u);
   assert.match(rendered, /touched-file count: 2/u);
   assert.match(rendered, /context usage 80%/u);
   assert.match(rendered, /active agents: not exposed by OMP API/u);
-  assert.match(rendered, /Esc close/u);
+  assert.doesNotMatch(rendered, /unknown/u);
+  assert.doesNotMatch(rendered, /[╭─│╰╮╯]/u);
 
-  // Returned fallback lines mirror the same provider-backed data.
+  // The returned text lines mirror the same provider-backed data.
   assert.match(lines.join("\n"), /repo: DylanMcCavitt\/oh-my-pi-config/u);
   assert.match(lines.join("\n"), /active issue: #22 Rebuild workflow cockpit/u);
-
-  state.customCalls[0].component.handleInput("\u001b");
-  await Promise.resolve();
 });
 
 test("/ctx renders every issue-22 row without unknown when providers return data", async () => {
@@ -272,13 +237,14 @@ test("/ctx command returns immediately after opening overlay", async () => {
   const state = context();
 
   const lines = await commands.get("ctx").handler("", state.ctx);
-  assert.equal(state.customCalls.length, 1);
-  assert.match(lines.join("\n"), /repo: DylanMcCavitt\/oh-my-pi-config/u);
-  assert.equal(state.customCalls[0].result, undefined);
 
-  state.customCalls[0].component.handleInput("\u001b[27u");
-  await Promise.resolve();
-  assert.equal(state.customCalls[0].result, "closed");
+  // The handler resolves as soon as the panel is presented; it never blocks on an
+  // interactive close. Native overlay is unavailable under node, so the shell uses
+  // the setWidget fallback rather than a live ctx.ui.custom mount.
+  assert.equal(state.customCalls.length, 0);
+  const fallback = state.widgets.find((widget) => Array.isArray(widget.lines));
+  assert.ok(fallback, "panel presented through the shell fallback");
+  assert.match(lines.join("\n"), /repo: DylanMcCavitt\/oh-my-pi-config/u);
 });
 
 test("/ctx renders fallback context without throwing outside TUI", async () => {
@@ -293,57 +259,65 @@ test("/ctx renders fallback context without throwing outside TUI", async () => {
   assert.equal(state.notifications.at(-1).message, "Workflow context shown");
 });
 
-test("workflow cockpit panel renders narrow terminal fallback", () => {
-  const panel = new WorkflowCockpitPanel(panelSections(), plainTheme(), () => {});
-  const lines = panel.render(24);
-  assert.match(lines.join("\n"), /Terminal too narrow/u);
-  assert.match(lines.join("\n"), /Esc close/u);
-  for (const line of lines) assert.ok(line.length <= 24, line);
-});
+test("/ctx degrades safely for narrow terminals and unavailable data", async () => {
+  const { commands } = install({ exec: repoExec([]) });
 
-test("workflow cockpit panel scrolls and closes from keyboard input", () => {
-  const extraRows = Array.from({ length: 20 }, (_value, index) => `extra row ${index}`);
-  let closedWith;
-  let renders = 0;
-  const panel = new WorkflowCockpitPanel(panelSections(extraRows), plainTheme(), (result) => {
-    closedWith = result;
-  }, () => {
-    renders += 1;
-  });
+  // Native primitives are unavailable under node, so a tiny terminal must still
+  // present the shell fallback without throwing; the shell owns live framing/scroll.
+  const descriptor = Object.getOwnPropertyDescriptor(process.stdout, "columns");
+  Object.defineProperty(process.stdout, "columns", { value: 18, configurable: true });
+  try {
+    const overlay = context();
+    const overlayLines = await commands.get("ctx").handler("", overlay.ctx);
+    assert.equal(overlay.customCalls.length, 0);
+    const fallback = overlay.widgets.find((widget) => Array.isArray(widget.lines));
+    assert.ok(fallback, "fallback panel presented without throwing");
+    const rendered = fallback.lines.join("\n");
+    assert.match(rendered, /branch: unavailable \(not a git repo\)/u);
+    assert.match(rendered, /touched-file count: unavailable \(not a git repo\)/u);
+    assert.match(rendered, /active issue: none detected from branch\/worktree/u);
+    assert.doesNotMatch(rendered, /unknown/u);
+    assert.doesNotMatch(rendered, /[╭─│╰╮╯]/u);
+    assert.match(overlayLines.join("\n"), /branch: unavailable \(not a git repo\)/u);
+  } finally {
+    if (descriptor) Object.defineProperty(process.stdout, "columns", descriptor);
+  }
 
-  assert.doesNotMatch(panel.render(60).join("\n"), /extra row 19/u);
-  panel.handleInput("end");
-  assert.equal(renders, 1);
-  assert.match(panel.render(60).join("\n"), /extra row 19/u);
-  panel.handleInput("up");
-  assert.equal(renders, 2);
-  panel.handleInput("\u001b");
-  assert.equal(closedWith, "closed");
+  // No TUI at all degrades to the plain-text widget path, also without throwing.
+  const headless = context({ hasUI: false });
+  const headlessLines = await commands.get("ctx").handler("", headless.ctx);
+  assert.match(headlessLines.join("\n"), /branch: unavailable \(not a git repo\)/u);
 });
 
 test("/ctx replaces an active cockpit instead of stacking overlays", async () => {
   const { commands } = install({ exec: repoExec(POPULATED) });
   const state = context();
-  const first = commands.get("ctx").handler("", state.ctx);
-  await first;
-  assert.equal(state.customCalls.length, 1);
-  const firstCall = state.customCalls[0];
 
-  const second = commands.get("ctx").handler("", state.ctx);
-  await second;
-  assert.equal(firstCall.result, "replaced");
-  assert.equal(firstCall.hidden, true);
-  assert.equal(state.customCalls.length, 2);
+  await commands.get("ctx").handler("", state.ctx);
+  await commands.get("ctx").handler("", state.ctx);
 
-  state.customCalls[1].component.handleInput("escape");
-  await Promise.resolve();
+  // No live overlays mount under node; each invocation clears the prior keyed
+  // widget and re-presents through the shell fallback — a replace flow, never a
+  // growing stack of overlays.
+  assert.equal(state.customCalls.length, 0);
+  const clears = state.widgets.filter((widget) => widget.key === "workflow-cockpit" && widget.lines === undefined);
+  const presents = state.widgets.filter((widget) => Array.isArray(widget.lines));
+  assert.equal(clears.length, 2, "each /ctx clears the prior panel surface");
+  assert.equal(presents.length, 2, "each /ctx re-presents exactly one panel");
+  assert.match(presents.at(-1).lines.join("\n"), /repo: DylanMcCavitt\/oh-my-pi-config/u);
 });
 
-test("cockpit overlay options use a responsive native overlay surface", () => {
-  const options = cockpitOverlayOptions();
-  assert.match(["center", "right-center"].join(" "), new RegExp(options.anchor, "u"));
-  assert.ok(options.width);
-  assert.ok(options.maxHeight);
+test("the cockpit no longer exports the hand-drawn panel internals", () => {
+  assert.equal(cockpitModule.WorkflowCockpitPanel, undefined);
+  assert.equal(cockpitModule.cockpitOverlayOptions, undefined);
+  // The provider-backed data wiring stays exported and intact.
+  assert.equal(typeof cockpitModule.gatherCockpitData, "function");
+  assert.equal(typeof cockpitModule.cockpitSections, "function");
+});
+
+test("workflow-cockpit.js contains no box-art literals (the shell owns framing)", async () => {
+  const source = await readFile(new URL("../omp/.omp/agent/extensions/workflow-cockpit.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /[╭─│╰╮╯]/u, "box-drawing characters must not appear in the cockpit module");
 });
 
 test("/route prefers existing specialized skills", async () => {

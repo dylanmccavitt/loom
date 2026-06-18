@@ -1,9 +1,9 @@
 import { formatRouteResult, routeIntent } from "./workflow-routing.js";
 import { formatRecipe } from "./workflow-recipes.js";
 import { renderDiffCommand } from "./split-diff.js";
+import { closeActivePanel, presentPanel } from "./panel-shell.js";
 
-const MAX_PANEL_BODY_LINES = 14;
-const MIN_PANEL_WIDTH = 28;
+const COCKPIT_KEY_HINTS = "↑↓/jk scroll · PgUp/PgDn page · g/G top/end · Esc close";
 const EXEC_TIMEOUT_MS = 5000;
 const MAX_OPEN_ISSUES = 5;
 const CONTEXT_RISK_PERCENT = 70;
@@ -14,8 +14,6 @@ const VERIFICATION_PATTERN =
 
 const GO_PROMPT = "Proceed with the current plan. Do not ask unless blocked by missing external information. Preserve unrelated changes. Use subagents for parallelizable work. Verify before yielding.";
 const SHIP_PROMPT = "Finish the active issue end-to-end. Check acceptance criteria, implement missing work, verify behavior, and prepare closeout evidence. Ask only if the active issue or target repository is unknown.";
-
-let activeCockpitSession;
 
 function basename(path) {
   if (typeof path !== "string" || !path) return "";
@@ -223,11 +221,11 @@ function cockpitSections(data) {
     },
     {
       title: "Issue state",
-      rows: [
-        `active issue: ${data.activeIssue}`,
-        `open issues: ${data.openIssues[0]}`,
-        ...data.openIssues.slice(1).map((line) => `             ${line}`),
-      ],
+      rows: [`active issue: ${data.activeIssue}`],
+    },
+    {
+      title: "Open issues",
+      rows: data.openIssues,
     },
     {
       title: "Working context",
@@ -241,164 +239,10 @@ function cockpitSections(data) {
   ];
 }
 
-function style(theme, token, text) {
-  return typeof theme?.fg === "function" ? theme.fg(token, text) : text;
-}
-
-function truncateText(text, width) {
-  if (width <= 0) return "";
-  const value = String(text);
-  if (value.length <= width) return value;
-  if (width === 1) return "…";
-  return `${value.slice(0, width - 1)}…`;
-}
-
-function padded(text, width) {
-  const line = truncateText(text, width);
-  return `${line}${" ".repeat(Math.max(0, width - line.length))}`;
-}
-
-function isKey(data, key) {
-  if (data === key) return true;
-  if (key === "escape") return data === "\u001b" || data === "esc" || data === "\u001b[27u";
-  if (key === "ctrl+c") return data === "\u0003";
-  if (key === "up") return data === "\u001b[A" || data === "\u001bOA" || data === "k";
-  if (key === "down") return data === "\u001b[B" || data === "\u001bOB" || data === "j";
-  if (key === "pageup") return data === "\u001b[5~" || data === "\u001b[[5~";
-  if (key === "pagedown") return data === "\u001b[6~" || data === "\u001b[[6~" || data === " ";
-  if (key === "home") return data === "\u001b[H" || data === "\u001bOH" || data === "\u001b[1~" || data === "g";
-  if (key === "end") return data === "\u001b[F" || data === "\u001bOF" || data === "\u001b[4~" || data === "G";
-  return false;
-}
-
-function cockpitOverlayOptions() {
-  const columns = process.stdout?.columns ?? 120;
-  if (columns < 100) {
-    return {
-      anchor: "center",
-      width: "90%",
-      minWidth: 24,
-      maxHeight: "80%",
-      margin: 1,
-    };
-  }
-
-  return {
-    anchor: "right-center",
-    width: "38%",
-    minWidth: 42,
-    maxHeight: "85%",
-    margin: { right: 1 },
-  };
-}
-
-class WorkflowCockpitPanel {
-  constructor(sections, theme, done, requestRender = () => {}) {
-    this.sections = sections;
-    this.theme = theme;
-    this.done = done;
-    this.requestRender = requestRender;
-    this.scrollOffset = 0;
-  }
-
-  bodyLines() {
-    const lines = [];
-    for (const section of this.sections) {
-      if (lines.length) lines.push("");
-      lines.push(`▸ ${section.title}`);
-      for (const row of section.rows) lines.push(`  ${row}`);
-    }
-    return lines;
-  }
-
-  maxScroll() {
-    return Math.max(0, this.bodyLines().length - MAX_PANEL_BODY_LINES);
-  }
-
-  scrollBy(delta) {
-    const next = Math.min(this.maxScroll(), Math.max(0, this.scrollOffset + delta));
-    if (next !== this.scrollOffset) {
-      this.scrollOffset = next;
-      this.requestRender();
-    }
-  }
-
-  handleInput(data) {
-    if (isKey(data, "escape") || isKey(data, "ctrl+c")) {
-      this.done("closed");
-    } else if (isKey(data, "up")) {
-      this.scrollBy(-1);
-    } else if (isKey(data, "down")) {
-      this.scrollBy(1);
-    } else if (isKey(data, "pageup")) {
-      this.scrollBy(-MAX_PANEL_BODY_LINES);
-    } else if (isKey(data, "pagedown")) {
-      this.scrollBy(MAX_PANEL_BODY_LINES);
-    } else if (isKey(data, "home")) {
-      this.scrollBy(-this.scrollOffset);
-    } else if (isKey(data, "end")) {
-      this.scrollBy(this.maxScroll());
-    }
-  }
-
-  render(width) {
-    const panelWidth = Math.max(1, width);
-    const innerWidth = Math.max(1, panelWidth - 2);
-    const border = (text) => style(this.theme, "border", text);
-
-    if (panelWidth < MIN_PANEL_WIDTH) {
-      return [
-        border(`╭${"─".repeat(innerWidth)}╮`),
-        `${border("│")}${padded("Workflow cockpit", innerWidth)}${border("│")}`,
-        `${border("│")}${padded("Terminal too narrow", innerWidth)}${border("│")}`,
-        `${border("│")}${padded("Esc close", innerWidth)}${border("│")}`,
-        border(`╰${"─".repeat(innerWidth)}╯`),
-      ];
-    }
-
-    const title = " Workflow Cockpit ";
-    const titleLine = truncateText(title, innerWidth);
-    const left = "─".repeat(Math.floor((innerWidth - titleLine.length) / 2));
-    const right = "─".repeat(Math.max(0, innerWidth - titleLine.length - left.length));
-    const body = this.bodyLines();
-    const maxScroll = this.maxScroll();
-    const visible = body.slice(this.scrollOffset, this.scrollOffset + MAX_PANEL_BODY_LINES);
-    const scroll = maxScroll ? `↑ ${this.scrollOffset} / ↓ ${maxScroll - this.scrollOffset}` : "all content visible";
-    const lines = [
-      `${border(`╭${left}`)}${style(this.theme, "accent", titleLine)}${border(`${right}╮`)}`,
-      `${border("│")}${style(this.theme, "dim", padded(scroll, innerWidth))}${border("│")}`,
-    ];
-
-    for (const line of visible) {
-      const rendered = line.startsWith("▸ ") ? style(this.theme, "accent", padded(line, innerWidth)) : padded(line, innerWidth);
-      lines.push(`${border("│")}${rendered}${border("│")}`);
-    }
-
-    for (let i = visible.length; i < MAX_PANEL_BODY_LINES; i += 1) {
-      lines.push(`${border("│")}${padded("", innerWidth)}${border("│")}`);
-    }
-
-    lines.push(`${border("│")}${style(this.theme, "dim", padded("↑↓/jk scroll · PgUp/PgDn jump · Esc close", innerWidth))}${border("│")}`);
-    lines.push(border(`╰${"─".repeat(innerWidth)}╯`));
-    return lines;
-  }
-
-  invalidate() {}
-
-  dispose() {}
-}
-
 async function render(ctx, lines, message, level = "info") {
   await ctx?.ui?.setWidget?.("workflow-cockpit", lines, { placement: "belowEditor" });
   ctx?.ui?.notify?.(message, level);
   return lines;
-}
-
-function closeActiveCockpit(result = "replaced") {
-  const session = activeCockpitSession;
-  activeCockpitSession = undefined;
-  session?.handle?.hide?.();
-  session?.done?.(result);
 }
 
 async function renderCockpit(ctx, providers) {
@@ -407,30 +251,9 @@ async function renderCockpit(ctx, providers) {
   await ctx?.ui?.setWidget?.("workflow-cockpit");
 
   if (ctx?.hasUI !== false && typeof ctx?.ui?.custom === "function") {
-    closeActiveCockpit("replaced");
-    const session = { done: undefined, handle: undefined };
-    const promise = ctx.ui.custom(
-      (tui, theme, _keybindings, done) => {
-        session.done = done;
-        activeCockpitSession = session;
-        return new WorkflowCockpitPanel(cockpitSections(data), theme, done, () => tui?.requestRender?.());
-      },
-      {
-        overlay: true,
-        overlayOptions: cockpitOverlayOptions,
-        onHandle: (handle) => {
-          session.handle = handle;
-          if (activeCockpitSession === session) handle?.focus?.();
-        },
-      },
-    );
-    Promise.resolve(promise).then((result) => {
-      if (activeCockpitSession === session) activeCockpitSession = undefined;
-      if (result !== "replaced") ctx?.ui?.notify?.("Workflow cockpit closed", "info");
-    }).catch((error) => {
-      if (activeCockpitSession === session) activeCockpitSession = undefined;
-      ctx?.ui?.notify?.(`Workflow cockpit failed: ${error.message}`, "error");
-    });
+    closeActivePanel(ctx);
+    const sections = cockpitSections(data).map((section) => ({ label: section.title, lines: section.rows }));
+    await presentPanel(ctx, { title: "Workflow Cockpit", sections, keyHints: COCKPIT_KEY_HINTS });
     return lines;
   }
 
@@ -555,8 +378,6 @@ export default function workflowCockpit(pi) {
 }
 
 export {
-  WorkflowCockpitPanel,
-  cockpitOverlayOptions,
   contextLines,
   cockpitSections,
   createCockpitProviders,
