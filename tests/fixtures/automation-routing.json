@@ -1,0 +1,37 @@
+[
+  {
+    "input": "tests are failing, debug it",
+    "expectedRoutes": ["diagnose"],
+    "forbiddenRoutes": ["thread-control", "handoff", "tdd", "to-issues", "to-prd"]
+  },
+  {
+    "input": "start a fresh chat with this context",
+    "expectedRoutes": ["thread-control", "handoff"],
+    "forbiddenRoutes": ["diagnose", "tdd", "to-issues", "to-prd"]
+  },
+  {
+    "input": "split this PRD into implementation tickets",
+    "expectedRoutes": ["to-issues"],
+    "forbiddenRoutes": ["handoff", "diagnose", "tdd", "to-prd"]
+  },
+  {
+    "input": "inspect browser bug",
+    "expectedRoutes": ["chrome-devtools", "diagnose"],
+    "forbiddenRoutes": ["computer-use", "handoff", "tdd", "to-issues", "to-prd"]
+  },
+  {
+    "input": "inspect the desktop app window bug",
+    "expectedRoutes": ["computer-use", "diagnose"],
+    "forbiddenRoutes": ["chrome-devtools", "handoff", "tdd", "to-issues", "to-prd"]
+  },
+  {
+    "input": "write a PRD from this conversation",
+    "expectedRoutes": ["to-prd"],
+    "forbiddenRoutes": ["handoff", "diagnose", "tdd", "to-issues"]
+  },
+  {
+    "input": "use TDD for this feature",
+    "expectedRoutes": ["tdd"],
+    "forbiddenRoutes": ["handoff", "diagnose", "to-issues", "to-prd"]
+  }
+]
