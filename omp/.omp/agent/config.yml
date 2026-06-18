@@ -59,9 +59,6 @@ display:
   showTokenUsage: true
 task: 
   eager: preferred
-commands: 
-  enableOpencodeUser: true
-  enableOpencodeProject: true
 mcp: 
   discoveryMode: true
 advisor: 
