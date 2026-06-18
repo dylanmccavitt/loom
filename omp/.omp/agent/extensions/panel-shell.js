@@ -70,8 +70,15 @@ function safeNumber(fn, fallback = 0) {
 // (real ones at runtime, stubs in tests); `options` describes the content.
 //
 //   deps    = { framedBlock, renderOutputBlock, ScrollView, getSelectListTheme? }
-//   options = { title, sections: [{ label?, lines: string[] }], keyHints?,
-//               theme, tui, done, height? }
+//   options = { title, keyHints?, theme, tui, done, height?,
+//               sections: Array<{ label?, lines: string[] }> | (innerWidth) => Array,
+//               onInput?(data, controller): boolean }
+//
+// `sections` may be a static array or a width-aware builder rebuilt per render
+// (and on `controller.refresh()`). `onInput` runs before the default scroll/close
+// handling; a truthy return suppresses the default for that key, letting a
+// consumer (e.g. /diff) own keys like [ ] { } n p. `controller` exposes
+// { refresh, scrollTo, setSections, requestRender, close, scrollView, width }.
 class PanelShell {
   constructor(deps, options = {}) {
     this.deps = deps || {};
@@ -79,21 +86,24 @@ class PanelShell {
     this.tui = options.tui;
     this.done = options.done;
     this.title = options.title ?? "";
-    this.sections = Array.isArray(options.sections) ? options.sections : [];
-    this.keyHints = toLines(options.keyHints ?? DEFAULT_KEY_HINTS);
+    // Static array or width-aware `(innerWidth) => sections` builder.
+    this.sectionsSource = options.sections;
+    this.onInput = typeof options.onInput === "function" ? options.onInput : undefined;
     this.closed = false;
 
     this.selectList = this.#resolveSelectListTheme();
+    this.hintLines = toLines(options.keyHints ?? DEFAULT_KEY_HINTS).map((line) => styleWith(this.theme, "dim", line));
 
-    this.body = this.#buildBody();
-    this.hintLines = this.keyHints.map((line) => styleWith(this.theme, "dim", line));
-
-    const availableRows = Number.isFinite(options.height)
-      ? Math.trunc(options.height)
-      : process.stdout?.rows ?? FALLBACK_ROWS;
+    // Height budget is width-independent: ScrollView owns the windowing.
+    const availableRows = Number.isFinite(options.height) ? Math.trunc(options.height) : process.stdout?.rows ?? FALLBACK_ROWS;
     const chrome = 1 /* top bar */ + (this.hintLines.length ? 1 /* divider */ + this.hintLines.length : 0) + 1 /* bottom bar */;
-    const maxBody = Math.max(1, availableRows - chrome);
-    this.bodyHeight = Math.min(this.body.length, maxBody);
+    this.maxBody = Math.max(1, availableRows - chrome);
+
+    // Provisional inner width for the initial body; corrected on first render.
+    this.lastInnerWidth = Math.max(1, (process.stdout?.columns ?? 80) - 2);
+    this.sections = this.#resolveSections(this.lastInnerWidth);
+    this.body = this.#buildBodyFrom(this.sections);
+    this.bodyHeight = Math.min(this.body.length, this.maxBody);
 
     this.scrollView = new this.deps.ScrollView(this.body, {
       height: this.bodyHeight,
@@ -103,6 +113,8 @@ class PanelShell {
         thumb: (text) => styleWith(this.theme, "accent", text),
       },
     });
+
+    this.controller = this.#createController();
 
     this.frame =
       typeof this.deps.framedBlock === "function"
@@ -133,12 +145,19 @@ class PanelShell {
     return styleWith(this.theme, "accent", text);
   }
 
+  // Resolve the section source (static array or width-aware builder) to an array.
+  #resolveSections(innerWidth) {
+    const source = this.sectionsSource;
+    const sections = typeof source === "function" ? source(innerWidth) : source;
+    return Array.isArray(sections) ? sections : [];
+  }
+
   // Flatten the logical sections into a single body buffer fed to ScrollView.
   // Section labels become themed accent rows; a blank row separates sections so
   // the windowed body stays readable without box-art dividers.
-  #buildBody() {
+  #buildBodyFrom(sections) {
     const body = [];
-    for (const section of this.sections) {
+    for (const section of sections) {
       if (!section) continue;
       const lines = toLines(section.lines);
       if (!section.label && !lines.length) continue;
@@ -149,8 +168,65 @@ class PanelShell {
     return body;
   }
 
+  // Re-resolve the section source at `innerWidth` and sync the ScrollView. Used
+  // for width changes (render) and consumer-driven content changes (refresh).
+  #rebuild(innerWidth) {
+    this.lastInnerWidth = innerWidth;
+    this.sections = this.#resolveSections(innerWidth);
+    this.body = this.#buildBodyFrom(this.sections);
+    this.bodyHeight = Math.min(this.body.length, this.maxBody);
+    this.scrollView.setLines?.(this.body);
+    this.scrollView.setHeight?.(this.bodyHeight);
+  }
+
+  // Rebuild only when a width-aware builder sees a new width; otherwise just
+  // track the latest width. Static arrays never change with width.
+  #syncBody(innerWidth) {
+    if (typeof this.sectionsSource === "function" && innerWidth !== this.lastInnerWidth) {
+      this.#rebuild(innerWidth);
+      return;
+    }
+    this.lastInnerWidth = innerWidth;
+  }
+
+  // Controller handed to `onInput` so consumers can drive the shell.
+  #createController() {
+    const shell = this;
+    return {
+      refresh() {
+        shell.#rebuild(shell.lastInnerWidth);
+        shell.frame?.invalidate?.();
+        shell.#requestRender();
+      },
+      scrollTo(line) {
+        shell.scrollView.setScrollOffset?.(line);
+        shell.frame?.invalidate?.();
+        shell.#requestRender();
+      },
+      setSections(sectionsOrFn) {
+        shell.sectionsSource = sectionsOrFn;
+        shell.#rebuild(shell.lastInnerWidth);
+        shell.frame?.invalidate?.();
+        shell.#requestRender();
+      },
+      requestRender() {
+        shell.#requestRender();
+      },
+      close(result = "closed") {
+        shell.close(result);
+      },
+      get scrollView() {
+        return shell.scrollView;
+      },
+      get width() {
+        return shell.lastInnerWidth;
+      },
+    };
+  }
+
   #buildBlock(width) {
     const inner = Math.max(1, Math.trunc(width) - 2);
+    this.#syncBody(inner);
     const bodyLines = this.scrollView.render(inner);
     const offset = safeNumber(() => this.scrollView.getScrollOffset?.() ?? 0);
     const maxScroll = safeNumber(() => this.scrollView.getMaxScrollOffset?.() ?? 0);
@@ -179,6 +255,15 @@ class PanelShell {
 
   handleInput(data) {
     if (this.closed) return;
+    if (typeof this.onInput === "function") {
+      let suppressed = false;
+      try {
+        suppressed = Boolean(this.onInput(data, this.controller));
+      } catch {
+        suppressed = false;
+      }
+      if (suppressed) return;
+    }
     if (isCloseKey(data)) {
       this.close("closed");
       return;
@@ -217,10 +302,12 @@ function createPanelShell(deps, options = {}) {
 
 // Pure plain-text projection of a panel, used for the non-TUI fallback widget.
 function panelFallbackLines({ title, sections = [] } = {}) {
+  const resolved = typeof sections === "function" ? sections(Math.max(1, (process.stdout?.columns ?? 80) - 2)) : sections;
+  const list = Array.isArray(resolved) ? resolved : [];
   const lines = [];
   if (title) lines.push(String(title));
   let renderedSections = 0;
-  for (const section of sections) {
+  for (const section of list) {
     if (!section) continue;
     const sectionLines = toLines(section.lines);
     if (!section.label && !sectionLines.length) continue;
@@ -249,7 +336,7 @@ let cachedPrimitives;
 // Lazily resolve native primitives. The dynamic imports live here — never at
 // module top — so plain-node tests can import this file cleanly. Returns null
 // when the primitives cannot be resolved (e.g. outside the jiti runtime).
-async function loadPanelPrimitives() {
+async function resolvePanelPrimitives() {
   if (cachedPrimitives) return cachedPrimitives;
   try {
     const [tuiModule, piTuiModule] = await Promise.all([
@@ -284,18 +371,18 @@ function closeActivePanel(ctx, result = "replaced") {
 // panel via `ctx.ui.custom(..., { overlay: true })` when a TUI is available, and
 // otherwise degrades to a `belowEditor` widget. Never throws when UI or
 // primitives are unavailable.
-async function presentPanel(ctx, { title, sections = [], keyHints } = {}) {
+async function presentPanel(ctx, { title, sections = [], keyHints, onInput } = {}) {
   closeActivePanel(ctx);
   const ui = ctx?.ui;
   if (!ui) return "none";
 
-  const primitives = await loadPanelPrimitives();
+  const primitives = await resolvePanelPrimitives();
   if (ctx?.hasUI !== false && typeof ui.custom === "function" && primitives) {
     let component = null;
     try {
       const promise = ui.custom(
         (tui, theme, _keybindings, done) => {
-          component = createPanelShell(primitives, { title, sections, keyHints, theme, tui, done });
+          component = createPanelShell(primitives, { title, sections, keyHints, onInput, theme, tui, done });
           ACTIVE_PANELS.set(ui, component);
           return component;
         },
@@ -322,4 +409,4 @@ async function presentPanel(ctx, { title, sections = [], keyHints } = {}) {
   return "none";
 }
 
-export { closeActivePanel, createPanelShell, panelFallbackLines, presentPanel };
+export { closeActivePanel, createPanelShell, panelFallbackLines, presentPanel, resolvePanelPrimitives };

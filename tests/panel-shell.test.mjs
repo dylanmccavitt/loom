@@ -5,6 +5,7 @@ import {
   createPanelShell,
   panelFallbackLines,
   presentPanel,
+  resolvePanelPrimitives,
 } from "../omp/.omp/agent/extensions/panel-shell.js";
 
 // Identity theme so accent()/dim styling is a no-op and assertions can match the
@@ -73,6 +74,21 @@ class StubScrollView {
     const out = [];
     for (let row = 0; row < this.height; row += 1) out.push(this.lines[this.offset + row] ?? "");
     return out;
+  }
+
+  setLines(lines) {
+    this.lines = [...lines];
+    this.clamp();
+  }
+
+  setHeight(height) {
+    this.height = Math.max(0, Math.trunc(height));
+    this.clamp();
+  }
+
+  setScrollOffset(offset) {
+    this.offset = Number.isFinite(offset) ? Math.trunc(offset) : 0;
+    this.clamp();
   }
 }
 
@@ -305,4 +321,131 @@ test("closeActivePanel is a safe no-op when nothing is mounted", () => {
   assert.doesNotThrow(() => closeActivePanel({ ui: {} }));
   assert.doesNotThrow(() => closeActivePanel({}));
   assert.doesNotThrow(() => closeActivePanel(undefined));
+});
+
+test("createPanelShell lets onInput intercept a key and suppress the default scroll", () => {
+  const seen = [];
+  const shell = createPanelShell(deps(), {
+    title: "Hook",
+    theme,
+    sections: [{ label: "Body", lines: manyLines(12) }],
+    height: 8,
+    onInput(data, controller) {
+      seen.push(data);
+      assert.ok(controller && typeof controller.refresh === "function", "controller passed to onInput");
+      return data === "n"; // own the "n" key
+    },
+  });
+  const view = shell.scrollView;
+
+  // Intercepted key: onInput sees it and the default scroll is suppressed.
+  shell.handleInput("n");
+  assert.equal(view.getScrollOffset(), 0);
+  assert.deepEqual(seen, ["n"]);
+
+  // Non-intercepted scroll key: onInput returns false, default scroll runs.
+  shell.handleInput("\u001b[B");
+  assert.equal(view.getScrollOffset(), 1);
+  assert.deepEqual(seen, ["n", "\u001b[B"]);
+});
+
+test("createPanelShell onInput can intercept close keys before the default handler", () => {
+  let closed = 0;
+  const shell = createPanelShell(deps(), {
+    title: "Hook",
+    theme,
+    sections: [{ lines: ["a"] }],
+    done: () => {
+      closed += 1;
+    },
+    onInput: (data) => data === "\u001b", // swallow Esc, let everything else fall through
+  });
+
+  shell.handleInput("\u001b");
+  assert.equal(closed, 0, "Esc suppressed by onInput");
+
+  shell.handleInput("\u0003");
+  assert.equal(closed, 1, "Ctrl-C not intercepted -> default close");
+});
+
+test("createPanelShell rebuilds a width-aware body on controller.refresh()", () => {
+  const files = [
+    { label: "fileA", lines: ["a1", "a2"] },
+    { label: "fileB", lines: ["b1", "b2", "b3"] },
+  ];
+  let current = 0;
+  const shell = createPanelShell(deps(), {
+    title: "Diff",
+    theme,
+    height: 20,
+    sections: (innerWidth) => {
+      assert.ok(innerWidth > 0, "section builder receives a positive inner width");
+      return [files[current]];
+    },
+  });
+
+  let text = shell.render(40).join("\n");
+  assert.ok(text.includes("fileA") && text.includes("a1") && text.includes("a2"));
+  assert.ok(!text.includes("fileB"));
+
+  // Consumer advances state then refreshes -> body recomposes from the builder.
+  current = 1;
+  shell.controller.refresh();
+  text = shell.render(40).join("\n");
+  assert.ok(text.includes("fileB") && text.includes("b3"));
+  assert.ok(!text.includes("fileA"));
+});
+
+test("createPanelShell rebuilds a width-aware body when the render width changes", () => {
+  const shell = createPanelShell(deps(), {
+    title: "Responsive",
+    theme,
+    height: 20,
+    sections: (innerWidth) => [{ label: "W", lines: [`width=${innerWidth}`] }],
+  });
+
+  assert.ok(shell.render(40).join("\n").includes("width=38"), "inner width = outer - 2 borders");
+  assert.ok(shell.render(60).join("\n").includes("width=58"), "rebuilds for the new width");
+});
+
+test("controller.setSections swaps the section source and rebuilds", () => {
+  const shell = createPanelShell(deps(), {
+    title: "Swap",
+    theme,
+    height: 20,
+    sections: [{ label: "Old", lines: ["old"] }],
+  });
+  assert.ok(shell.render(40).join("\n").includes("Old"));
+
+  shell.controller.setSections([{ label: "New", lines: ["new"] }]);
+  const text = shell.render(40).join("\n");
+  assert.ok(text.includes("New") && text.includes("new"));
+  assert.ok(!text.includes("Old"));
+});
+
+test("resolvePanelPrimitives resolves to null under plain node (never throws)", async () => {
+  const result = await resolvePanelPrimitives();
+  assert.equal(result, null);
+});
+
+test("presentPanel forwards a width-aware sections function to the fallback widget", async () => {
+  const widgets = [];
+  const ctx = {
+    hasUI: false,
+    ui: {
+      async setWidget(lines, options) {
+        widgets.push({ lines, options });
+      },
+    },
+  };
+
+  const result = await presentPanel(ctx, {
+    title: "Fn",
+    sections: () => [{ label: "Repo", lines: ["main"] }],
+  });
+
+  assert.equal(result, "setWidget");
+  assert.equal(widgets.length, 1);
+  assert.ok(widgets[0].lines.includes("Repo"));
+  assert.ok(widgets[0].lines.includes("main"));
 });
