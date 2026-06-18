@@ -43,5 +43,10 @@
     "input": "go ahead and do the current plan",
     "expectedRoutes": ["execute-plan"],
     "forbiddenRoutes": ["handoff", "diagnose", "tdd", "to-issues", "to-prd", "issue-autopilot", "agent-recipes"]
+  },
+  {
+    "input": "split the current plan into implementation tickets",
+    "expectedRoutes": ["to-issues"],
+    "forbiddenRoutes": ["execute-plan", "issue-autopilot", "agent-recipes"]
   }
 ]
