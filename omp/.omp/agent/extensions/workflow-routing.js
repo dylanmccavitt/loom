@@ -46,9 +46,9 @@ const ROUTE_RULES = [
     any: ["openai docs", "responses api", "agents sdk", "apps sdk", "realtime api"],
   },
   {
-    route: "issue-autopilot",
-    reason: "Issue-autopilot owns one tracked issue through PR-ready closeout.",
-    any: ["start issue", "continue issue", "ship issue", "ship one tracked issue", "active issue", "work it to pr", "tracked issue"],
+    route: "triage",
+    reason: "Triage's closeout/ship mode owns one tracked issue through PR-ready closeout.",
+    any: ["start issue", "continue issue", "ship issue", "ship one tracked issue", "active issue", "work it to pr", "tracked issue", "finish the active issue", "finish issue"],
   },
   {
     route: "execute-plan",

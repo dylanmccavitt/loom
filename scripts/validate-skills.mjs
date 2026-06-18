@@ -5,6 +5,12 @@ import path from "node:path";
 
 const USAGE = `Usage: node scripts/validate-skills.mjs [--skills-dir <dir>] [--global-skills-dir <dir>] [--reserved-name <name>]`;
 
+// Skills intentionally vendored into this repo even though a global skill of the
+// same name exists (this repo is the source of truth for them). Only the
+// "collides with an existing global skill" check is skipped for these names;
+// every other check still applies.
+const VENDORED_GLOBAL_SKILLS = new Set(["triage"]);
+
 function readArgs(argv) {
   const options = {
     skillsDir: ".agents/skills",
@@ -192,7 +198,7 @@ function validateSkills(options) {
       } else {
         seenNames.set(name, relSkillPath);
       }
-      if (globalNames.has(name)) {
+      if (globalNames.has(name) && !VENDORED_GLOBAL_SKILLS.has(name)) {
         errors.push(`${relSkillPath}: skill name '${name}' collides with an existing global skill`);
       }
     }

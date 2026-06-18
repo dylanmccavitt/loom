@@ -537,7 +537,7 @@ export default function workflowCockpit(pi) {
   });
 
   pi.registerCommand("ship", {
-    description: "Display the exact issue-autopilot prompt for finishing the active issue",
+    description: "Display the exact triage closeout-mode prompt for finishing the active issue",
     handler: async (_args, ctx) => {
       try {
         const number = await inferActiveIssueNumber(ctx, providers);

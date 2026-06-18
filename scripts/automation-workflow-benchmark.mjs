@@ -13,7 +13,6 @@ const PROTECTED_EXISTING_SKILLS = new Set([
   "tdd",
   "to-issues",
   "to-prd",
-  "triage",
   "prototype",
   "workflow-kit",
   "computer-use",

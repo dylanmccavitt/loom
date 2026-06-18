@@ -226,13 +226,13 @@ main
 - Add automation skill validation for version-controlled skills
 - Add automation routing fixtures that preserve existing skills
 
-## 6. Add issue-autopilot skill for one issue to one PR workflow
+## 6. Add the one issue to one PR closeout flow (consolidated into triage)
 
 **Type:** AFK
 
 ### What to build
 
-Add a version-controlled `issue-autopilot` skill that starts or finishes one issue using project conventions, active issue docs, branch/worktree rules, acceptance criteria, and verification.
+Add a version-controlled issue-lifecycle skill that starts or finishes one issue using project conventions, active issue docs, branch/worktree rules, acceptance criteria, and verification. This was later consolidated into the `triage` skill's closeout/ship mode.
 
 ### Acceptance criteria
 
@@ -255,7 +255,7 @@ Add a version-controlled `issue-autopilot` skill that starts or finishes one iss
 ### Test / check expectations
 
 - Static validation passes.
-- Routing fixture for `start issue 42 and work it to PR` selects `issue-autopilot`.
+- Routing fixture for `start issue 42 and work it to PR` selects `triage`.
 
 ### Risks / migration notes
 
@@ -348,7 +348,7 @@ Extend the workflow cockpit extension with `/go` and `/ship` commands that make 
 
 - Workflow cockpit extension from issue 7.
 - `execute-plan` skill from issue 5.
-- `issue-autopilot` skill from issue 6.
+- `triage` closeout/ship mode from issue 6 (consolidated).
 
 ### Test / check expectations
 
@@ -367,7 +367,7 @@ main
 ### Blocked by
 
 - Add execute-plan skill for explicit go-ahead automation
-- Add issue-autopilot skill for one issue to one PR workflow
+- Add the one issue to one PR closeout flow (consolidated into triage)
 - Add workflow cockpit Pi extension with visible context and routing commands
 
 ## 9. Add automation workflow benchmark suite

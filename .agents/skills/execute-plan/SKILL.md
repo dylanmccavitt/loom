@@ -17,4 +17,4 @@ Use this skill when the user has already approved the current plan and wants imp
 
 ## Boundaries
 
-Do not close issues, create PR closeout summaries, or claim issue acceptance criteria are complete unless the active tracked issue workflow separately requires that. If the user asks to ship one tracked issue end-to-end, route to `issue-autopilot` instead.
+Do not close issues, create PR closeout summaries, or claim issue acceptance criteria are complete unless the active tracked issue workflow separately requires that. If the user asks to ship one tracked issue end-to-end, route to `triage` instead.

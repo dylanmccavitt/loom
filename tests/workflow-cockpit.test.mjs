@@ -408,14 +408,16 @@ test("/ship requires an active issue inferred from the branch", async () => {
   assert.equal(state.notifications.at(-1).message, "Active issue is unknown; set or provide one before /ship.");
 });
 
-test("/ship displays the exact issue-autopilot prompt with an active issue", async () => {
+test("/ship displays the exact triage closeout prompt with an active issue", async () => {
   const exec = repoExec([
     ["git branch --show-current", { stdout: "issue-8-payments" }],
     ["git rev-parse --show-toplevel", { stdout: "/repo" }],
   ]);
   const { commands } = install({ exec });
   const state = context();
-  const lines = await commands.get("ship").handler("", state.ctx);
+  const ship = commands.get("ship");
+  assert.equal(ship.description, "Display the exact triage closeout-mode prompt for finishing the active issue");
+  const lines = await ship.handler("", state.ctx);
   assert.deepEqual(lines, [SHIP_PROMPT]);
   assert.equal(state.widgets.at(-1).lines[0], SHIP_PROMPT);
 });
