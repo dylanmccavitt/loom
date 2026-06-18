@@ -49,9 +49,6 @@ statusLine:
   preset: full
   separator: pipe
   sessionAccent: true
-tui: 
-  textSizing: false
-  tight: false
 display: 
   showTokenUsage: true
 task: 
