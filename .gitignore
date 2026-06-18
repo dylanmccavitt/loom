@@ -1,0 +1,24 @@
+# Keep this repo declarative. Runtime state stays in ~/.omp.
+
+# macOS
+.DS_Store
+
+# OMP runtime state
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*-shm
+*-wal
+sessions/
+terminal-sessions/
+cache/
+logs/
+*.log
+blobs/
+
+# Secret/local overrides
+*.local.yml
+*.local.yaml
+*.secret.yml
+*.secret.yaml
