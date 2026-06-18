@@ -11,82 +11,40 @@ modelRoles:
 disabledProviders: 
   - claude-plugins
   - opencode
-skills: 
-  ignoredSkills: 
+skills:
+  ignoredSkills:
     - using-superpowers
     - orca-pi-harness
-disabledExtensions: 
-  - skill:caveman
-  - skill:codex-deliverable-report
-  - skill:codex-issue-implementation
-  - skill:codex-pr-review
-  - skill:codex-project-sanity-check
-  - skill:codex-proof-pass
-  - skill:codex-repo-triage
-  - skill:codex-resume-thread
-  - skill:codex-skill-maintenance
-  - skill:codex-thread-closeout
-  - skill:codex-workflow-sharpener
-  - skill:devenv
-  - skill:doc
-  - skill:excalidraw-diagrams
-  - skill:find-skills
-  - skill:fleet-status
-  - skill:gh-issue-thread-chain
-  - skill:graduate
-  - skill:html-annotated-pr-review
-  - skill:html-code-approaches
-  - skill:html-implementation-plan
-  - skill:html-module-map
-  - skill:html-ticket-triage-board
-  - skill:inspo
-  - skill:jupyter-notebook
-  - skill:learn
-  - skill:loading
-  - skill:mocking
-  - skill:orca-cli
-  - skill:pdf
-  - skill:quick
-  - skill:repo-workflow-bootstrap
-  - skill:security-best-practices
-  - skill:security-ownership-map
-  - skill:security-threat-model
-  - skill:summarize-youtube-videos
-  - skill:swiftui-pro
-  - skill:theme-factory
-  - skill:vault-note
-  - skill:write-a-skill
-  - skill:writing-hookify-rules
-  - skill:skill-creator
-  - skill:sentry-android-sdk
-  - skill:sentry-browser-sdk
-  - skill:sentry-cloudflare-sdk
-  - skill:sentry-cocoa-sdk
-  - skill:sentry-code-review
-  - skill:sentry-create-alert
-  - skill:sentry-dotnet-sdk
-  - skill:sentry-elixir-sdk
-  - skill:sentry-feature-setup
-  - skill:sentry-fix-issues
-  - skill:sentry-flutter-sdk
-  - skill:sentry-go-sdk
-  - skill:sentry-nestjs-sdk
-  - skill:sentry-nextjs-sdk
-  - skill:sentry-node-sdk
-  - skill:sentry-otel-exporter-setup
-  - skill:sentry-php-sdk
-  - skill:sentry-pr-code-review
-  - skill:sentry-python-sdk
-  - skill:sentry-react-native-sdk
-  - skill:sentry-react-sdk
-  - skill:sentry-ruby-sdk
-  - skill:sentry-sdk-setup
-  - skill:sentry-sdk-skill-creator
-  - skill:sentry-sdk-upgrade
-  - skill:sentry-setup-ai-monitoring
-  - skill:sentry-svelte-sdk
-  - skill:sentry-workflow
-  - skill:ai-gateway
+    - caveman
+    - codex-*
+    - devenv
+    - doc
+    - excalidraw-diagrams
+    - find-skills
+    - fleet-status
+    - gh-issue-thread-chain
+    - graduate
+    - html-*
+    - inspo
+    - jupyter-notebook
+    - learn
+    - loading
+    - mocking
+    - orca-cli
+    - pdf
+    - quick
+    - repo-workflow-bootstrap
+    - security-*
+    - summarize-youtube-videos
+    - swiftui-pro
+    - theme-factory
+    - vault-note
+    - write-a-skill
+    - writing-hookify-rules
+    - skill-creator
+    - sentry-*
+    - ai-gateway
+disabledExtensions:
   - context-file:user:CLAUDE.md
 statusLine: 
   preset: full

@@ -25,24 +25,29 @@ function lineCount(text) {
   return text.endsWith('\n') ? text.split('\n').length - 1 : text.split('\n').length;
 }
 
-function countListUnder(source, key) {
+function listValuesUnder(source, key) {
   const lines = source.split(/\r?\n/);
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const match = line.match(new RegExp(`^(\\s*)${key}:\\s*$`));
     if (!match) continue;
     const baseIndent = match[1].length;
-    let count = 0;
+    const values = [];
     for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
       const current = lines[cursor];
       if (!current.trim()) continue;
       const indent = current.match(/^\s*/)[0].length;
       if (indent <= baseIndent) break;
-      if (/^\s*-\s+/.test(current)) count += 1;
+      const item = current.match(/^\s*-\s+(.+?)\s*$/);
+      if (item) values.push(item[1].replace(/^['"]|['"]$/g, ''));
     }
-    return count;
+    return values;
   }
-  return 0;
+  return [];
+}
+
+function countListUnder(source, key) {
+  return listValuesUnder(source, key).length;
 }
 
 function countMapUnder(source, key) {
@@ -75,9 +80,11 @@ function scalarValue(source, key) {
   return match ? match[1].trim() : '';
 }
 
-const disabledExtensions = countListUnder(config, 'disabledExtensions');
-const ignoredSkills = countListUnder(config, 'ignoredSkills');
+const disabledExtensionValues = listValuesUnder(config, 'disabledExtensions');
+const ignoredSkillPatterns = listValuesUnder(config, 'ignoredSkills');
 const disabledProviders = countListUnder(config, 'disabledProviders');
+const disabledExtensions = disabledExtensionValues.length;
+const ignoredSkills = ignoredSkillPatterns.length;
 const modelRoles = countMapUnder(config, 'modelRoles');
 const customExtensions = readdirSync(`${root}/omp/.omp/agent/extensions`).filter((name) => name.endsWith('.js')).length;
 const configLines = lineCount(config);
@@ -86,6 +93,90 @@ const extensionLines = lineCount(extension);
 const mcpDiscoveryEnabled = boolValue(config, 'discoveryMode');
 const advisorSubagentsEnabled = boolValue(config, 'subagents');
 const taskEagerPreferred = scalarValue(config, 'eager') === 'preferred' ? 1 : 0;
+
+function globMatches(pattern, value) {
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+  return new RegExp(`^${escaped}$`).test(value);
+}
+
+const expectedBlockedSkills = [
+  'caveman',
+  'codex-deliverable-report',
+  'codex-issue-implementation',
+  'codex-pr-review',
+  'codex-project-sanity-check',
+  'codex-proof-pass',
+  'codex-repo-triage',
+  'codex-resume-thread',
+  'codex-skill-maintenance',
+  'codex-thread-closeout',
+  'codex-workflow-sharpener',
+  'devenv',
+  'doc',
+  'excalidraw-diagrams',
+  'find-skills',
+  'fleet-status',
+  'gh-issue-thread-chain',
+  'graduate',
+  'html-annotated-pr-review',
+  'html-code-approaches',
+  'html-implementation-plan',
+  'html-module-map',
+  'html-ticket-triage-board',
+  'inspo',
+  'jupyter-notebook',
+  'learn',
+  'loading',
+  'mocking',
+  'orca-cli',
+  'pdf',
+  'quick',
+  'repo-workflow-bootstrap',
+  'security-best-practices',
+  'security-ownership-map',
+  'security-threat-model',
+  'summarize-youtube-videos',
+  'swiftui-pro',
+  'theme-factory',
+  'vault-note',
+  'write-a-skill',
+  'writing-hookify-rules',
+  'skill-creator',
+  'sentry-android-sdk',
+  'sentry-browser-sdk',
+  'sentry-cloudflare-sdk',
+  'sentry-cocoa-sdk',
+  'sentry-code-review',
+  'sentry-create-alert',
+  'sentry-dotnet-sdk',
+  'sentry-elixir-sdk',
+  'sentry-feature-setup',
+  'sentry-fix-issues',
+  'sentry-flutter-sdk',
+  'sentry-go-sdk',
+  'sentry-nestjs-sdk',
+  'sentry-nextjs-sdk',
+  'sentry-node-sdk',
+  'sentry-otel-exporter-setup',
+  'sentry-php-sdk',
+  'sentry-pr-code-review',
+  'sentry-python-sdk',
+  'sentry-react-native-sdk',
+  'sentry-react-sdk',
+  'sentry-ruby-sdk',
+  'sentry-sdk-setup',
+  'sentry-sdk-skill-creator',
+  'sentry-sdk-upgrade',
+  'sentry-setup-ai-monitoring',
+  'sentry-svelte-sdk',
+  'sentry-workflow',
+  'ai-gateway',
+];
+const unblockedSkills = expectedBlockedSkills.filter((name) => {
+  return !disabledExtensionValues.includes(`skill:${name}`) && !ignoredSkillPatterns.some((pattern) => globMatches(pattern, name));
+});
+assert(unblockedSkills.length === 0, `skill filters no longer block: ${unblockedSkills.join(', ')}`);
+assert(disabledExtensionValues.includes('context-file:user:CLAUDE.md'), 'user CLAUDE.md context suppression was removed');
 
 const spawnCalls = [];
 const encoder = new TextEncoder();
