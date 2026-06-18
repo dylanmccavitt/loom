@@ -108,6 +108,7 @@ test("/ctx renders fallback context without throwing outside TUI", async () => {
     issue: { number: 7 },
     git: { branch: () => "not displayable", currentBranch: "issue-7-workflow-cockpit", touchedFiles: ["a", "b"] },
     contextRiskFlags: ["stale verification"],
+    hasUI: false,
   });
   const lines = await commands.get("ctx").handler("", state.ctx);
   assert.equal(state.widgets.at(-1).key, "workflow-cockpit");
@@ -121,10 +122,9 @@ test("/ctx renders fallback context without throwing outside TUI", async () => {
   assert.equal(state.notifications.at(-1).message, "Workflow context shown");
 });
 
-test("/ctx opens a focused overlay in TUI mode", async () => {
+test("/ctx opens a focused overlay when custom UI is available", async () => {
   const { commands } = install();
   const state = context({
-    mode: "tui",
     repo: { nameWithOwner: "DylanMcCavitt/oh-my-pi-config" },
     activeIssue: 22,
     git: { currentBranch: "issue-22-native-cockpit", worktree: "/repo", touchedFiles: ["a", "b", "c"] },

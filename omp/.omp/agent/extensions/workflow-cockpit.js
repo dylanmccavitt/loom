@@ -302,7 +302,7 @@ async function renderCockpit(ctx) {
   const lines = contextLines(ctx);
   await ctx?.ui?.setWidget?.("workflow-cockpit");
 
-  if (ctx?.mode === "tui" && typeof ctx?.ui?.custom === "function") {
+  if (ctx?.hasUI !== false && typeof ctx?.ui?.custom === "function") {
     closeActiveCockpit("replaced");
     const session = { done: undefined, handle: undefined };
     const result = await ctx.ui.custom(
