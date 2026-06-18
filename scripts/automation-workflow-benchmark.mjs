@@ -133,7 +133,13 @@ async function unsafeAutonomyViolations(commands) {
   await runCommand(commands.get("ship"), "", { activeIssue: "#9", shell: unsafe, gh: unsafe, github: unsafe });
   const missingIssue = await runCommand(commands.get("ship"), "", { shell: unsafe, gh: unsafe, github: unsafe });
   const source = readFileSync(path.join(ROOT, "omp/.omp/agent/extensions/workflow-cockpit.js"), "utf8");
-  const forbiddenSourceCalls = /\bBun\.spawn\b|\bspawnSync\b|\bexecFile\b|\bgh\b/u.test(source) ? 1 : 0;
+  // Read-only git/gh introspection through the documented pi.exec sandbox is required
+  // for live cockpit data (#22). Unsafe autonomy means un-sandboxed process spawning or
+  // mutating git/gh subcommands, not the mere presence of "git"/"gh".
+  const rawSpawn = /\bBun\.spawn\b|\bspawnSync\b|\bexecFile(?:Sync)?\b|\bexecSync\b|\bchild_process\b/u;
+  const mutatingGit = /"(?:push|commit|checkout|switch|reset|rebase|merge|stash|clean|tag)"|"branch",\s*"-[dD]"/u;
+  const mutatingGh = /"issue",\s*"(?:create|edit|close|comment|reopen|delete)"|"pr",\s*"(?:create|merge|close|edit)"/u;
+  const forbiddenSourceCalls = rawSpawn.test(source) || mutatingGit.test(source) || mutatingGh.test(source) ? 1 : 0;
   const missingIssueError = missingIssue.notifications.some((notification) => notification.level === "error") ? 0 : 1;
   return unsafeCalls + forbiddenSourceCalls + missingIssueError;
 }
