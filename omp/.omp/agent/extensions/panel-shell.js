@@ -1,0 +1,325 @@
+// Shared native panel shell for OMP extension overlays.
+//
+// Wraps OMP 16.0.5's documented panel primitives — `framedBlock` /
+// `renderOutputBlock` (themed bordered block) plus `ScrollView` (bounded
+// scrollable body with its own offset/scrollbar/handleScrollKey) — into one
+// small module so `/ctx`, `/diff`, and future panels stop hand-drawing borders
+// with string concatenation. The frame looks like Pi's own tool-output blocks.
+//
+// Runtime constraint: the native primitives resolve only inside OMP's jiti
+// runtime (their package `exports` map to `.ts` sources). Plain `node --test`
+// cannot import them. Therefore this module NEVER statically imports
+// `@oh-my-pi/*`. Primitives are either injected (`createPanelShell(deps, ...)`)
+// for tests/consumers, or resolved lazily at runtime inside `presentPanel`.
+
+const ACTIVE_PANELS = new WeakMap();
+
+// Default footer hint shown when a consumer does not supply its own.
+const DEFAULT_KEY_HINTS = "↑↓/jk scroll · PgUp/PgDn page · g/G top/end · Esc close";
+// Fallback panel height used only when neither an explicit height nor a TTY row
+// count is available (e.g. piped output, tests). Not a body-slicing constant:
+// ScrollView owns the windowing; this only bounds the height budget.
+const FALLBACK_ROWS = 24;
+
+// Vim-style and byte aliases mapped onto the canonical CSI sequences that
+// ScrollView.handleScrollKey understands. Mirrors the `isKey` byte sequences
+// used by the existing extensions so every panel shares scroll semantics.
+const SCROLL_ALIASES = {
+  k: "\u001b[A", // up
+  j: "\u001b[B", // down
+  b: "\u001b[5~", // pageup
+  " ": "\u001b[6~", // pagedown (space)
+  g: "\u001b[H", // home
+  G: "\u001b[F", // end
+};
+
+function toLines(value) {
+  if (value == null) return [];
+  return Array.isArray(value) ? value.map((line) => String(line)) : [String(value)];
+}
+
+function isCloseKey(data) {
+  return data === "\u001b" || data === "esc" || data === "\u001b[27u" || data === "\u0003";
+}
+
+function normalizeScrollKey(data) {
+  return Object.prototype.hasOwnProperty.call(SCROLL_ALIASES, data) ? SCROLL_ALIASES[data] : data;
+}
+
+function styleWith(theme, token, text) {
+  if (typeof theme?.fg === "function") {
+    try {
+      return theme.fg(token, text);
+    } catch {
+      return text;
+    }
+  }
+  return text;
+}
+
+function safeNumber(fn, fallback = 0) {
+  try {
+    const value = fn();
+    return Number.isFinite(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+// Pure, dependency-injected OMP Component. `deps` carries the native primitives
+// (real ones at runtime, stubs in tests); `options` describes the content.
+//
+//   deps    = { framedBlock, renderOutputBlock, ScrollView, getSelectListTheme? }
+//   options = { title, sections: [{ label?, lines: string[] }], keyHints?,
+//               theme, tui, done, height? }
+class PanelShell {
+  constructor(deps, options = {}) {
+    this.deps = deps || {};
+    this.theme = options.theme;
+    this.tui = options.tui;
+    this.done = options.done;
+    this.title = options.title ?? "";
+    this.sections = Array.isArray(options.sections) ? options.sections : [];
+    this.keyHints = toLines(options.keyHints ?? DEFAULT_KEY_HINTS);
+    this.closed = false;
+
+    this.selectList = this.#resolveSelectListTheme();
+
+    this.body = this.#buildBody();
+    this.hintLines = this.keyHints.map((line) => styleWith(this.theme, "dim", line));
+
+    const availableRows = Number.isFinite(options.height)
+      ? Math.trunc(options.height)
+      : process.stdout?.rows ?? FALLBACK_ROWS;
+    const chrome = 1 /* top bar */ + (this.hintLines.length ? 1 /* divider */ + this.hintLines.length : 0) + 1 /* bottom bar */;
+    const maxBody = Math.max(1, availableRows - chrome);
+    this.bodyHeight = Math.min(this.body.length, maxBody);
+
+    this.scrollView = new this.deps.ScrollView(this.body, {
+      height: this.bodyHeight,
+      scrollbar: "auto",
+      theme: {
+        track: (text) => styleWith(this.theme, "borderMuted", text),
+        thumb: (text) => styleWith(this.theme, "accent", text),
+      },
+    });
+
+    this.frame =
+      typeof this.deps.framedBlock === "function"
+        ? this.deps.framedBlock(this.theme, (width) => this.#buildBlock(width))
+        : {
+            render: (width) => this.deps.renderOutputBlock(this.#buildBlock(width), this.theme),
+            invalidate: () => {},
+          };
+  }
+
+  #resolveSelectListTheme() {
+    if (typeof this.deps.getSelectListTheme !== "function") return undefined;
+    try {
+      return this.deps.getSelectListTheme();
+    } catch {
+      return undefined;
+    }
+  }
+
+  #accent(text) {
+    if (typeof this.selectList?.selectedText === "function") {
+      try {
+        return this.selectList.selectedText(text);
+      } catch {
+        // fall through to theme token
+      }
+    }
+    return styleWith(this.theme, "accent", text);
+  }
+
+  // Flatten the logical sections into a single body buffer fed to ScrollView.
+  // Section labels become themed accent rows; a blank row separates sections so
+  // the windowed body stays readable without box-art dividers.
+  #buildBody() {
+    const body = [];
+    for (const section of this.sections) {
+      if (!section) continue;
+      const lines = toLines(section.lines);
+      if (!section.label && !lines.length) continue;
+      if (body.length) body.push("");
+      if (section.label) body.push(this.#accent(String(section.label)));
+      for (const line of lines) body.push(String(line));
+    }
+    return body;
+  }
+
+  #buildBlock(width) {
+    const inner = Math.max(1, Math.trunc(width) - 2);
+    const bodyLines = this.scrollView.render(inner);
+    const offset = safeNumber(() => this.scrollView.getScrollOffset?.() ?? 0);
+    const maxScroll = safeNumber(() => this.scrollView.getMaxScrollOffset?.() ?? 0);
+    const total = this.body.length;
+    const headerMeta =
+      maxScroll > 0 ? `${Math.min(total, offset + 1)}-${Math.min(total, offset + this.bodyHeight)}/${total}` : undefined;
+    const sections = [{ lines: bodyLines }];
+    if (this.hintLines.length) sections.push({ separator: true, lines: this.hintLines });
+    return { header: this.title, headerMeta, width, sections };
+  }
+
+  #requestRender() {
+    try {
+      this.tui?.requestRender?.();
+    } catch {
+      // best-effort; rendering will catch up on the next frame
+    }
+  }
+
+  close(result = "closed") {
+    if (this.closed) return;
+    this.closed = true;
+    this.invalidate();
+    this.done?.(result);
+  }
+
+  handleInput(data) {
+    if (this.closed) return;
+    if (isCloseKey(data)) {
+      this.close("closed");
+      return;
+    }
+    let handled = false;
+    try {
+      handled = Boolean(this.scrollView.handleScrollKey?.(normalizeScrollKey(data)));
+    } catch {
+      handled = false;
+    }
+    if (handled) {
+      this.frame?.invalidate?.();
+      this.#requestRender();
+    }
+  }
+
+  render(width) {
+    const safeWidth = Math.max(1, Math.floor(Number(width) || 80));
+    return this.frame?.render?.(safeWidth) ?? [];
+  }
+
+  invalidate() {
+    this.frame?.invalidate?.();
+  }
+
+  dispose() {
+    this.closed = true;
+    this.invalidate();
+  }
+}
+
+// Factory: build a panel-shell Component from injected native primitives.
+function createPanelShell(deps, options = {}) {
+  return new PanelShell(deps, options);
+}
+
+// Pure plain-text projection of a panel, used for the non-TUI fallback widget.
+function panelFallbackLines({ title, sections = [] } = {}) {
+  const lines = [];
+  if (title) lines.push(String(title));
+  let renderedSections = 0;
+  for (const section of sections) {
+    if (!section) continue;
+    const sectionLines = toLines(section.lines);
+    if (!section.label && !sectionLines.length) continue;
+    if (renderedSections > 0) lines.push("");
+    if (section.label) lines.push(String(section.label));
+    for (const line of sectionLines) lines.push(String(line));
+    renderedSections += 1;
+  }
+  return lines;
+}
+
+async function importFirst(...specifiers) {
+  for (const specifier of specifiers) {
+    try {
+      return await import(specifier);
+    } catch {
+      // try the next candidate specifier
+    }
+  }
+  return null;
+}
+
+// Module-level cache so the dynamic imports run at most once per process.
+let cachedPrimitives;
+
+// Lazily resolve native primitives. The dynamic imports live here — never at
+// module top — so plain-node tests can import this file cleanly. Returns null
+// when the primitives cannot be resolved (e.g. outside the jiti runtime).
+async function loadPanelPrimitives() {
+  if (cachedPrimitives) return cachedPrimitives;
+  try {
+    const [tuiModule, piTuiModule] = await Promise.all([
+      importFirst("@oh-my-pi/pi-coding-agent/tui", "@oh-my-pi/pi-coding-agent"),
+      importFirst("@oh-my-pi/pi-tui", "@oh-my-pi/pi-tui/components/scroll-view"),
+    ]);
+    const framedBlock = tuiModule?.framedBlock;
+    const renderOutputBlock = tuiModule?.renderOutputBlock;
+    const ScrollView = piTuiModule?.ScrollView;
+    if (typeof framedBlock !== "function" || typeof ScrollView !== "function") return null;
+    let getSelectListTheme;
+    const agentModule = await importFirst("@oh-my-pi/pi-coding-agent");
+    if (typeof agentModule?.getSelectListTheme === "function") getSelectListTheme = agentModule.getSelectListTheme;
+    cachedPrimitives = { framedBlock, renderOutputBlock, ScrollView, getSelectListTheme };
+    return cachedPrimitives;
+  } catch {
+    return null;
+  }
+}
+
+// Hide/replace the panel currently mounted on this ctx.ui (no stacking).
+function closeActivePanel(ctx, result = "replaced") {
+  const ui = ctx?.ui;
+  if (!ui) return;
+  const active = ACTIVE_PANELS.get(ui);
+  if (!active) return;
+  ACTIVE_PANELS.delete(ui);
+  active.close?.(result);
+}
+
+// Single-call overlay presenter. Resolves native primitives lazily, mounts the
+// panel via `ctx.ui.custom(..., { overlay: true })` when a TUI is available, and
+// otherwise degrades to a `belowEditor` widget. Never throws when UI or
+// primitives are unavailable.
+async function presentPanel(ctx, { title, sections = [], keyHints } = {}) {
+  closeActivePanel(ctx);
+  const ui = ctx?.ui;
+  if (!ui) return "none";
+
+  const primitives = await loadPanelPrimitives();
+  if (ctx?.hasUI !== false && typeof ui.custom === "function" && primitives) {
+    let component = null;
+    try {
+      const promise = ui.custom(
+        (tui, theme, _keybindings, done) => {
+          component = createPanelShell(primitives, { title, sections, keyHints, theme, tui, done });
+          ACTIVE_PANELS.set(ui, component);
+          return component;
+        },
+        { overlay: true },
+      );
+      Promise.resolve(promise)
+        .then(() => {
+          if (component && ACTIVE_PANELS.get(ui) === component) ACTIVE_PANELS.delete(ui);
+        })
+        .catch((error) => {
+          if (component && ACTIVE_PANELS.get(ui) === component) ACTIVE_PANELS.delete(ui);
+          ui.notify?.(`Panel failed: ${error.message}`, "error");
+        });
+      return "custom";
+    } catch (error) {
+      ui.notify?.(`Panel unavailable: ${error.message}`, "error");
+    }
+  }
+
+  if (typeof ui.setWidget === "function") {
+    await ui.setWidget(panelFallbackLines({ title, sections }), { placement: "belowEditor" });
+    return "setWidget";
+  }
+  return "none";
+}
+
+export { closeActivePanel, createPanelShell, panelFallbackLines, presentPanel };
