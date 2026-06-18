@@ -46,6 +46,11 @@ const ROUTE_RULES = [
     any: ["openai docs", "responses api", "agents sdk", "apps sdk", "realtime api"],
   },
   {
+    route: "agent-recipes",
+    reason: "Agent-recipes owns turning short spawn intents into complete task assignments.",
+    any: ["spawn review", "spawn agents", "/spawn", "subagent recipe", "agent recipe", "parallel implementation"],
+  },
+  {
     route: "computer-use",
     reason: "Desktop or app wording means inspect the visible local UI, not DevTools.",
     any: ["desktop app", "local app", "app window", "read slack", "control spotify", "computer use"],

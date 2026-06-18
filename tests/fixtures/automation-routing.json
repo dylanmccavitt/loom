@@ -33,5 +33,10 @@
     "input": "use TDD for this feature",
     "expectedRoutes": ["tdd"],
     "forbiddenRoutes": ["handoff", "diagnose", "to-issues", "to-prd", "execute-plan", "issue-autopilot", "agent-recipes"]
+  },
+  {
+    "input": "/spawn review agents",
+    "expectedRoutes": ["agent-recipes"],
+    "forbiddenRoutes": ["handoff", "diagnose", "tdd", "to-issues", "to-prd", "execute-plan", "issue-autopilot"]
   }
 ]
