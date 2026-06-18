@@ -35,13 +35,15 @@ async function currentRepo(cwd) {
   return repo;
 }
 
+function repoFromIssueUrl(url) {
+  const match = url?.match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/\d+$/);
+  return match ? { nameWithOwner: match[1], url: `https://github.com/${match[1]}` } : null;
+}
+
 async function listIssues(cwd, limit) {
-  const repo = await currentRepo(cwd);
   const raw = await runGh([
     "issue",
     "list",
-    "--repo",
-    repo.nameWithOwner,
     "--state",
     "open",
     "--limit",
@@ -49,7 +51,8 @@ async function listIssues(cwd, limit) {
     "--json",
     "number,title,url,state,updatedAt",
   ], cwd);
-  return { repo, issues: JSON.parse(raw) };
+  const issues = JSON.parse(raw);
+  return { repo: repoFromIssueUrl(issues[0]?.url) || await currentRepo(cwd), issues };
 }
 
 async function issueUrl(cwd, ref) {

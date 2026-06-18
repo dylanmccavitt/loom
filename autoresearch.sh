@@ -115,7 +115,7 @@ globalThis.Bun = {
     const joined = argv.join(' ');
     if (joined === 'gh repo view --json nameWithOwner,url') {
       stdout = JSON.stringify({ nameWithOwner: 'example/project', url: 'https://github.com/example/project' });
-    } else if (joined === 'gh issue list --repo example/project --state open --limit 7 --json number,title,url,state,updatedAt') {
+    } else if (joined === 'gh issue list --state open --limit 7 --json number,title,url,state,updatedAt') {
       stdout = JSON.stringify(fakeIssues);
     } else {
       stderr = `unexpected gh invocation: ${joined}`;
