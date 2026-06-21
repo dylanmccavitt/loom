@@ -172,9 +172,6 @@ function validateManifest(manifest) {
         errors.push(`${label}: runtime-only paths must be local-only`);
       }
     }
-    if (/panel|side-panel|prototype/u.test(textOf(resource).toLowerCase())) {
-      errors.push(`${label}: panel/prototype surfaces belong in excludedSurfaces, not resources`);
-    }
   }
 
   for (const coverage of REQUIRED_COVERAGE) {
@@ -187,12 +184,6 @@ function validateManifest(manifest) {
     .join("\n");
   for (const term of REQUIRED_LOCAL_ONLY_TERMS) {
     if (!localOnlyText.includes(term)) errors.push(`missing local-only runtime coverage for ${term}`);
-  }
-
-  const exclusions = Array.isArray(manifest.excludedSurfaces) ? manifest.excludedSurfaces : [];
-  const panelExclusion = exclusions.find((surface) => /panel|side-panel|prototype/u.test(textOf(surface).toLowerCase()));
-  if (!panelExclusion) {
-    errors.push("missing explicit panel/prototype exclusion");
   }
 
   return errors;

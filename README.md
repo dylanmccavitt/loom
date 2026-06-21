@@ -25,7 +25,7 @@ At category level, OMP user/project resources and workflow-kit categories are `t
 
 Every harness change is planned and validated as a dry run before any future live write. The read-only pre-write gate is [`scripts/dry-run-harness-safety-gate.mjs`](scripts/dry-run-harness-safety-gate.mjs), driven by [`docs/harness/dry-run-link-plan.json`](docs/harness/dry-run-link-plan.json) from issue #45.
 
-The gate reports planned OMP, Codex, and Claude candidate paths, generated config destinations, local-only skips, panel/prototype exclusions, duplicate paths, and overwrite risk. It rejects dangerous destinations, local-only write targets, secret-looking values, private home paths in plan data, auth/cache files, runtime databases, sessions, logs, histories, and whole-root Claude skill symlinks.
+The gate reports planned OMP, Codex, and Claude candidate paths, generated config destinations, local-only skips, duplicate paths, overwrite risk, and tracked-source hygiene. It rejects dangerous destinations, local-only write targets, secret-looking values, private home paths in plan data or tracked source, auth/cache files, runtime databases, sessions, logs, histories, and whole-root Claude skill symlinks.
 
 The apply/render executor is intentionally not implemented yet. This README documents the model and the current dry-run safety boundary; it does not claim a working installer for `~/.omp`, `~/.codex`, `~/.claude`, or repo config.
 
@@ -37,12 +37,16 @@ The apply/render executor is intentionally not implemented yet. This README docu
 - [`scripts/`](scripts/) - validators, refreshers, safety gate, inventory, and benchmark commands; `track`.
 - [`tests/`](tests/) - Node `node:test` suites and fixtures covering validators, plans, skills, and gates; `track`.
 - [`docs/issues/`](docs/issues/) - issue-shaping and workflow research notes; `reference-only`.
-- [`autoresearch.sh`](autoresearch.sh) - full-flow traceability benchmark script; `reference-only`.
+- [`scripts/autoresearch.sh`](scripts/autoresearch.sh) - full-flow traceability benchmark script; `reference-only`.
 - [`.gitignore`](.gitignore) - excludes runtime state, local overlays, common credential files, logs, databases, sessions, blobs, and caches; `track`.
 
 ## Validators And Tests
 
-There is no package runner yet; run commands directly from the repo root.
+Use the package runner from the repo root for the normal offline validation path:
+
+```sh
+npm run check
+```
 
 ### Scripts
 
@@ -77,9 +81,7 @@ There is no package runner yet; run commands directly from the repo root.
 | Issue autopilot skill | `node --test tests/issue-autopilot-skill.test.mjs` |
 | OMP built-ins snapshot | `node --test tests/omp-builtins-snapshot.test.mjs` |
 | Skill validation | `node --test tests/skill-validation.test.mjs` |
-| Split diff overlay | `node --test tests/split-diff.test.mjs` |
 | Thread-control skill | `node --test tests/thread-control-skill.test.mjs` |
-| Workflow cockpit panel (excluded/non-nucleus coverage) | `node --test tests/workflow-cockpit.test.mjs` |
 
 ## Canonical References
 

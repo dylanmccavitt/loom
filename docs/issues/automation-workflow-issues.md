@@ -70,7 +70,7 @@ Add fixture-driven tests that prove new automation routing points to existing sp
 
 ### Relevant files / areas
 
-- Existing global skills: `handoff`, `diagnose`, `tdd`, `to-issues`, `to-prd`, `prototype`, `workflow-kit`, `computer-use`, `chrome-devtools`, and `openai-docs`.
+- Existing global skills: `handoff`, `diagnose`, `tdd`, `to-issues`, `to-prd`, `workflow-kit`, `computer-use`, `chrome-devtools`, and `openai-docs`.
 - New automation skills introduced by later issues.
 - Any route-selection fixtures or tests added by issue 1.
 
@@ -271,105 +271,6 @@ main
 - Add automation skill validation for version-controlled skills
 - Add automation routing fixtures that preserve existing skills
 
-## 7. Add workflow cockpit Pi extension with visible context and routing commands
-
-**Type:** AFK
-
-### What to build
-
-Add a custom Pi extension beside `github-issues-panel.js` that exposes visible commands for context health and routing without implementing the skills itself.
-
-### Acceptance criteria
-
-- [ ] Extension registers `/ctx` to show repo, active issue if known, branch/worktree if available, touched-file count if available, last verification if recorded, active agents if available, and context-risk flags.
-- [ ] Extension registers `/route <intent>` to display the recommended existing skill/tool route for the intent.
-- [ ] Extension registers `/new-thread` to display a next-thread starter that tells the user to invoke/use the existing `handoff` skill with the current focus.
-- [ ] Extension registers `/spawn-recipe <intent>` to paste or display a task-subagent assignment recipe generated from the `agent-recipes` patterns.
-- [ ] Missing optional state renders as `unknown`, not as an exception.
-- [ ] `/new-thread` references existing handoff behavior and does not write handoffs itself.
-- [ ] `/route` prefers existing specialized skills over new automation skills when applicable.
-
-### Non-goals
-
-- Do not implement skill behavior inside the extension.
-- Do not silently execute shell, GitHub, or destructive commands from these routes.
-- Do not add `/go` or `/ship` in this slice.
-
-### Relevant files / areas
-
-- `omp/.omp/agent/extensions/github-issues-panel.js` for Pi extension registration style, especially `pi.setLabel?.(...)`, `pi.registerCommand(...)`, `ctx.ui?.notify?.(...)`, and `ctx.ui?.setWidget?.(...)`.
-- `thread-control` skill from issue 3.
-- `agent-recipes` skill from issue 4.
-- Routing fixtures from issue 2.
-
-### Test / check expectations
-
-- Mock the Pi API and assert every command registers.
-- Assert command handlers notify or render visible output.
-- Assert invalid or missing args produce visible errors without throwing.
-
-### Risks / migration notes
-
-- Missing context should degrade to `unknown`, not block the cockpit.
-- The extension should stay a visible router; skill ownership remains with the skill files.
-
-### Desired base branch
-
-main
-
-### Blocked by
-
-- Add automation routing fixtures that preserve existing skills
-- Add thread-control skill as a router to handoff, not a replacement
-- Add agent-recipes skill for high-quality subagent prompts
-
-## 8. Add go and ship commands to the workflow cockpit
-
-**Type:** AFK
-
-### What to build
-
-Extend the workflow cockpit extension with `/go` and `/ship` commands that make automation visible and route to the correct skill intent.
-
-### Acceptance criteria
-
-- [ ] Extension registers `/go` and outputs exactly: `Proceed with the current plan. Do not ask unless blocked by missing external information. Preserve unrelated changes. Use subagents for parallelizable work. Verify before yielding.`
-- [ ] Extension registers `/ship` and outputs exactly: `Finish the active issue end-to-end. Check acceptance criteria, implement missing work, verify behavior, and prepare closeout evidence. Ask only if the active issue or target repository is unknown.`
-- [ ] `/go` does not imply issue closeout.
-- [ ] `/ship` requires active issue context or emits a visible error telling the user to set or provide one.
-- [ ] Both commands are visible and reversible: they paste or display prompts, not silently execute destructive commands.
-
-### Non-goals
-
-- Do not call shell, GitHub, branch, worktree, or PR APIs from `/go` or `/ship`.
-- Do not change the prompts from the exact strings above without updating the tests.
-
-### Relevant files / areas
-
-- Workflow cockpit extension from issue 7.
-- `execute-plan` skill from issue 5.
-- `issue-autopilot` skill from issue 6.
-
-### Test / check expectations
-
-- Mock extension test asserts `/go` and `/ship` output exactly the prompts above.
-- Mock extension test asserts neither command calls shell or GitHub APIs.
-
-### Risks / migration notes
-
-- `/ship` must not become a generic execute button; it is issue closeout and needs active issue context.
-- Exact-prompt tests are intentional here because the command contract is user-visible.
-
-### Desired base branch
-
-main
-
-### Blocked by
-
-- Add execute-plan skill for explicit go-ahead automation
-- Add issue-autopilot skill for one issue to one PR workflow
-- Add workflow cockpit Pi extension with visible context and routing commands
-
 ## 9. Add automation workflow benchmark suite
 
 **Type:** AFK
@@ -381,8 +282,8 @@ Add a separate benchmark suite for automation workflow friction so it does not g
 ### Acceptance criteria
 
 - [ ] Primary metric is `automation_workflow_friction`.
-- [ ] Metrics include `automation_command_count`, `route_accuracy_score`, `duplicate_skill_overlap_count`, `context_visibility_score`, `new_thread_reuses_handoff_skill`, `unsafe_autonomy_violations`, `spawn_recipe_count`, `commands_to_start_issue`, and `commands_to_safe_handoff`.
-- [ ] Hard checks require `duplicate_skill_overlap_count=0`, `unsafe_autonomy_violations=0`, and `new_thread_reuses_handoff_skill=1`.
+- [ ] Metrics include `route_accuracy_score`, `duplicate_skill_overlap_count`, `unsafe_autonomy_violations`, and `spawn_recipe_count`.
+- [ ] Hard checks require `duplicate_skill_overlap_count=0` and `unsafe_autonomy_violations=0`.
 - [ ] The suite is separate from the current `scripts/autoresearch.sh` unless execution explicitly chooses to replace that script.
 - [ ] The current `scripts/autoresearch.sh` remains treated as a full-flow traceability benchmark, not the harness-friction benchmark described in `/tmp/oh-my-pi-harness-benchmark-handoff.md`.
 
@@ -395,7 +296,6 @@ Add a separate benchmark suite for automation workflow friction so it does not g
 
 - `scripts/autoresearch.sh` for the current full-flow traceability benchmark boundary.
 - `/tmp/oh-my-pi-harness-benchmark-handoff.md` for prior harness benchmark context.
-- Workflow cockpit extension from issues 7 and 8.
 - Skill validation and routing fixtures from issues 1 and 2.
 
 ### Test / check expectations
@@ -416,5 +316,3 @@ main
 
 - Add automation skill validation for version-controlled skills
 - Add automation routing fixtures that preserve existing skills
-- Add workflow cockpit Pi extension with visible context and routing commands
-- Add go and ship commands to the workflow cockpit

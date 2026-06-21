@@ -53,7 +53,6 @@ test("dry-run safety gate reports checked-in plan without mutation", () => {
   assert.match(result.stdout, /\[generated config destinations\]/u);
   assert.match(result.stdout, /codex-runtime-state/u);
   assert.match(result.stdout, /claude-runtime-state/u);
-  assert.match(result.stdout, /panel-prototype-work: skipped/u);
   assert.match(result.stdout, /Result: passed/u);
 });
 
@@ -270,32 +269,6 @@ test("safety gate rejects bulk Claude skill-root symlink plans", () => {
     const result = runGate(["--plan", temp.path, "--skip-git-tracked-check"]);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /bulk Claude skill-root symlinks are forbidden/u);
-  } finally {
-    temp.cleanup();
-  }
-});
-
-test("panel prototype candidates are skipped unless explicitly opted in", () => {
-  const temp = withTempPlan((plan) => {
-    plan.candidateLinks.push({
-      id: "panel-prototype-candidate",
-      sourceHarness: "omp",
-      sourceResource: "omp-user-project-resources",
-      mode: "candidate-symlink",
-      livePath: "omp/.omp/agent/extensions/github-issues-panel.js",
-      proposedTarget: "repo:omp/.omp/agent/extensions/github-issues-panel.js",
-      disposition: "track",
-      notes: "Excluded unless panel prototype work is explicitly opted in.",
-    });
-  });
-  try {
-    const result = runGate(["--plan", temp.path, "--skip-git-tracked-check"]);
-    assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /skipped candidate link: panel-prototype-candidate/u);
-
-    const optedIn = runGate(["--plan", temp.path, "--include-panel-prototypes", "--skip-git-tracked-check"]);
-    assert.equal(optedIn.status, 0, optedIn.stderr);
-    assert.match(optedIn.stdout, /panel-prototype-candidate/u);
   } finally {
     temp.cleanup();
   }

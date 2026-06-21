@@ -6,7 +6,6 @@
   "manifestPath": "docs/harness/resource-manifest.json",
   "codexAdapterPlanPath": "docs/harness/codex-adapter-plan/adapter-plan.json",
   "claudeAdapterPlanPath": "docs/harness/claude-adapter-plan/adapter-plan.json",
-  "panelPrototypeOptIn": false,
   "candidateLinks": [
     {
       "id": "omp-global-agents-md",

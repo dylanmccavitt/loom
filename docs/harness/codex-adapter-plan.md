@@ -1,6 +1,6 @@
 # Codex Adapter Plan
 
-Issue #41 defines the Codex-side adapter plan for the unified OMP/Codex/Claude harness nucleus. This slice is a plan and validation package only. It does not write to live `~/.codex`, does not change the Codex default model/provider, does not remove duplicate skills, and does not modify active panel or side-panel prototype work.
+Issue #41 defines the Codex-side adapter plan for the unified OMP/Codex/Claude harness nucleus. This slice is a plan and validation package only. It does not write to live `~/.codex`, does not change the Codex default model/provider, and does not remove duplicate skills.
 
 Canonical data lives in `docs/harness/codex-adapter-plan/adapter-plan.json`. Parseable dry-run templates live under `docs/harness/codex-adapter-plan/templates/`.
 

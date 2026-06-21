@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import workflowCockpit from "../omp/.omp/agent/extensions/workflow-cockpit.js";
 import { routeIntent } from "../omp/.omp/agent/extensions/workflow-routing.js";
 import { recipeCount } from "../omp/.omp/agent/extensions/workflow-recipes.js";
 
@@ -14,23 +13,11 @@ const PROTECTED_EXISTING_SKILLS = new Set([
   "to-issues",
   "to-prd",
   "triage",
-  "prototype",
   "workflow-kit",
   "computer-use",
   "chrome-devtools",
   "openai-docs",
 ]);
-
-function installCockpit() {
-  const commands = new Map();
-  workflowCockpit({
-    setLabel() {},
-    registerCommand(name, command) {
-      commands.set(name, command);
-    },
-  });
-  return commands;
-}
 
 function parseSkillName(content) {
   const match = content.match(/^---\n([\s\S]*?)\n---/u);
@@ -83,65 +70,15 @@ function routeAccuracyScore() {
   return checks ? passed / checks : 0;
 }
 
-async function runCommand(command, args, ctxOverrides = {}) {
-  const widgets = [];
-  const notifications = [];
-  const ctx = {
-    cwd: ROOT,
-    ui: {
-      async setWidget(lines) {
-        widgets.push(lines);
-      },
-      notify(message, level) {
-        notifications.push({ message, level });
-      },
-    },
-    ...ctxOverrides,
-  };
-  const lines = await command.handler(args, ctx);
-  return { lines, widgets, notifications };
-}
-
-async function contextVisibilityScore(commands) {
-  const labels = [
-    "repo:",
-    "active issue:",
-    "branch:",
-    "worktree:",
-    "touched-file count:",
-    "last verification:",
-    "active agents:",
-    "context-risk flags:",
-  ];
-  const { lines } = await runCommand(commands.get("ctx"), "", {});
-  const joined = lines.join("\n");
-  return labels.filter((label) => joined.includes(label)).length / labels.length;
-}
-
-async function newThreadReusesHandoffSkill(commands) {
-  const { lines } = await runCommand(commands.get("new-thread"), "", { activeIssue: "#9" });
-  const joined = lines.join("\n").toLowerCase();
-  return joined.includes("existing handoff skill") && joined.includes("does not write handoffs") ? 1 : 0;
-}
-
-async function unsafeAutonomyViolations(commands) {
-  let unsafeCalls = 0;
-  const unsafe = () => {
-    unsafeCalls += 1;
-  };
-  await runCommand(commands.get("go"), "", { shell: unsafe, gh: unsafe, github: unsafe });
-  await runCommand(commands.get("ship"), "", { activeIssue: "#9", shell: unsafe, gh: unsafe, github: unsafe });
-  const missingIssue = await runCommand(commands.get("ship"), "", { shell: unsafe, gh: unsafe, github: unsafe });
-  const source = readFileSync(path.join(ROOT, "omp/.omp/agent/extensions/workflow-cockpit.js"), "utf8");
-  // Read-only git/gh introspection through the documented pi.exec sandbox is required
-  // for live cockpit data (#22). Unsafe autonomy means un-sandboxed process spawning or
-  // mutating git/gh subcommands, not the mere presence of "git"/"gh".
+function unsafeAutonomyViolations() {
+  const sources = [
+    "omp/.omp/agent/extensions/workflow-routing.js",
+    "omp/.omp/agent/extensions/workflow-recipes.js",
+  ].map((relativePath) => readFileSync(path.join(ROOT, relativePath), "utf8"));
   const rawSpawn = /\bBun\.spawn\b|\bspawnSync\b|\bexecFile(?:Sync)?\b|\bexecSync\b|\bchild_process\b/u;
   const mutatingGit = /"(?:push|commit|checkout|switch|reset|rebase|merge|stash|clean|tag)"|"branch",\s*"-[dD]"/u;
   const mutatingGh = /"issue",\s*"(?:create|edit|close|comment|reopen|delete)"|"pr",\s*"(?:create|merge|close|edit)"/u;
-  const forbiddenSourceCalls = rawSpawn.test(source) || mutatingGit.test(source) || mutatingGh.test(source) ? 1 : 0;
-  const missingIssueError = missingIssue.notifications.some((notification) => notification.level === "error") ? 0 : 1;
-  return unsafeCalls + forbiddenSourceCalls + missingIssueError;
+  return sources.filter((source) => rawSpawn.test(source) || mutatingGit.test(source) || mutatingGh.test(source)).length;
 }
 
 function finite(value) {
@@ -149,40 +86,24 @@ function finite(value) {
 }
 
 async function main() {
-  const commands = installCockpit();
-  const automation_command_count = commands.size;
   const route_accuracy_score = routeAccuracyScore();
   const duplicate_skill_overlap_count = duplicateSkillOverlapCount();
-  const context_visibility_score = await contextVisibilityScore(commands);
-  const new_thread_reuses_handoff_skill = await newThreadReusesHandoffSkill(commands);
-  const unsafe_autonomy_violations = await unsafeAutonomyViolations(commands);
+  const unsafe_autonomy_violations = unsafeAutonomyViolations();
   const spawn_recipe_count = recipeCount();
-  const commands_to_start_issue = commands.has("ship") ? 1 : 0;
-  const commands_to_safe_handoff = commands.has("new-thread") ? 1 : 0;
 
   const automation_workflow_friction = Math.round(
-    automation_command_count
-      + (1 - route_accuracy_score) * 100
+    (1 - route_accuracy_score) * 100
       + duplicate_skill_overlap_count * 1000
-      + (1 - context_visibility_score) * 100
-      + (1 - new_thread_reuses_handoff_skill) * 1000
       + unsafe_autonomy_violations * 1000
-      + Math.max(0, 5 - spawn_recipe_count) * 10
-      + commands_to_start_issue
-      + commands_to_safe_handoff,
+      + Math.max(0, 5 - spawn_recipe_count) * 10,
   );
 
   const metrics = {
     automation_workflow_friction,
-    automation_command_count,
     route_accuracy_score,
     duplicate_skill_overlap_count,
-    context_visibility_score,
-    new_thread_reuses_handoff_skill,
     unsafe_autonomy_violations,
     spawn_recipe_count,
-    commands_to_start_issue,
-    commands_to_safe_handoff,
   };
 
   for (const [name, value] of Object.entries(metrics)) {
@@ -192,7 +113,6 @@ async function main() {
   const hardChecks = [
     ["duplicate_skill_overlap_count=0", metrics.duplicate_skill_overlap_count === 0],
     ["unsafe_autonomy_violations=0", metrics.unsafe_autonomy_violations === 0],
-    ["new_thread_reuses_handoff_skill=1", metrics.new_thread_reuses_handoff_skill === 1],
   ];
 
   for (const [name, ok] of hardChecks) {

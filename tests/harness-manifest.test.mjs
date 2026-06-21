@@ -56,16 +56,6 @@ test("repo-prefixed current paths exist in this checkout", () => {
   }
 });
 
-test("panel prototype work is excluded, not normalized into resources", () => {
-  assert.ok(
-    manifest.excludedSurfaces.some((surface) => /panel|side-panel|prototype/u.test(JSON.stringify(surface))),
-    "missing panel/prototype exclusion",
-  );
-  for (const resource of manifest.resources) {
-    assert.doesNotMatch(JSON.stringify(resource), /panel|side-panel|prototype/u);
-  }
-});
-
 test("manifest does not contain secret-looking values or absolute private home paths", () => {
   const text = readFileSync(manifestPath, "utf8");
   assert.doesNotMatch(text, /\bgh[pousr]_[A-Za-z0-9_]{20,}\b/u);
@@ -82,5 +72,4 @@ test("dry-run inventory prints planned classifications without mutation", () => 
   assert.match(result.stdout, /Mutation: disabled/u);
   assert.match(result.stdout, /\[local-only\]/u);
   assert.match(result.stdout, /codex-runtime-state/u);
-  assert.match(result.stdout, /panel-prototype-work/u);
 });

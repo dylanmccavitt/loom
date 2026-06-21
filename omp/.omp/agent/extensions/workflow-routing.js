@@ -31,11 +31,6 @@ const ROUTE_RULES = [
     any: ["write a prd", "create a prd", "turn this into a prd", "make a spec", "create a spec"],
   },
   {
-    route: "prototype",
-    reason: "Existing prototype skill owns throwaway UI or state-machine explorations.",
-    any: ["prototype", "mock up", "try a few designs", "let me play with"],
-  },
-  {
     route: "workflow-kit",
     reason: "Existing workflow-kit skill owns reusable Oh My Pi workflow setup.",
     any: ["workflow kit", "oh my pi globally", "project-specific skills"],

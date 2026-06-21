@@ -1,6 +1,6 @@
 # Claude Adapter Plan
 
-Issue #42 defines the Claude-side adapter plan for the unified OMP/Codex/Claude harness nucleus. This slice is a plan and validation package only. It does not write to live `~/.claude`, does not symlink or copy the entire Claude home directory, does not copy private Claude runtime/session/history/cache/daemon/auth data, does not delete duplicate skills, and does not modify active panel or side-panel prototype work.
+Issue #42 defines the Claude-side adapter plan for the unified OMP/Codex/Claude harness nucleus. This slice is a plan and validation package only. It does not write to live `~/.claude`, does not symlink or copy the entire Claude home directory, does not copy private Claude runtime/session/history/cache/daemon/auth data, and does not delete duplicate skills.
 
 Canonical data lives in `docs/harness/claude-adapter-plan/adapter-plan.json`. Parseable dry-run templates live under `docs/harness/claude-adapter-plan/templates/`.
 

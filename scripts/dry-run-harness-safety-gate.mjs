@@ -11,7 +11,6 @@ const USAGE = [
   "  [--codex-plan <path>]",
   "  [--claude-plan <path>]",
   "  [--check-live]",
-  "  [--include-panel-prototypes]",
   "  [--skip-git-tracked-check]",
   "  [--source-root <dir>]",
 ].join(" ");
@@ -114,7 +113,6 @@ function readArgs(argv) {
     codexPlan: DEFAULT_CODEX_PLAN,
     claudePlan: DEFAULT_CLAUDE_PLAN,
     checkLive: false,
-    includePanelPrototypes: false,
     skipGitTrackedCheck: false,
     sourceRoot: null,
   };
@@ -127,10 +125,6 @@ function readArgs(argv) {
     }
     if (arg === "--check-live") {
       options.checkLive = true;
-      continue;
-    }
-    if (arg === "--include-panel-prototypes") {
-      options.includePanelPrototypes = true;
       continue;
     }
     if (arg === "--skip-git-tracked-check") {
@@ -360,9 +354,6 @@ function validateManifest(manifest) {
     if (resource.disposition === "local-only" && resource.intendedRepoTarget !== "none") {
       errors.push(`${label}: local-only resources must use intendedRepoTarget \"none\"`);
     }
-    if (/panel|side-panel|prototype/u.test(textOf(resource).toLowerCase())) {
-      errors.push(`${label}: panel/prototype surfaces belong in excludedSurfaces, not resources`);
-    }
     for (const livePath of asArray(resource.currentLivePath)) {
       if (!isNonEmptyString(livePath)) {
         errors.push(`${label}: currentLivePath entries must be non-empty strings`);
@@ -381,11 +372,7 @@ function validateManifest(manifest) {
     }
   }
 
-  const excludedSurfaces = Array.isArray(manifest.excludedSurfaces) ? manifest.excludedSurfaces : [];
-  const panelExclusion = excludedSurfaces.find((surface) => /panel|side-panel|prototype/u.test(textOf(surface).toLowerCase()));
-  if (!panelExclusion) errors.push("manifest: missing explicit panel/prototype exclusion");
-
-  return { errors, warnings, resources, byId, localOnlyPatterns, excludedSurfaces };
+  return { errors, warnings, resources, byId, localOnlyPatterns };
 }
 
 function validateCodexPlan(codexPlan) {
@@ -434,15 +421,6 @@ function validateClaudePlan(claudePlan) {
   return { errors, localOnlyPatterns, generatedSurfaces };
 }
 
-function isExcludedPanelPath(value, excludedSurfaces) {
-  if (!isNonEmptyString(value)) return false;
-  const normalized = normalizePathText(value);
-  return excludedSurfaces.some((surface) => {
-    if (!/panel|side-panel|prototype/u.test(textOf(surface).toLowerCase())) return false;
-    return asArray(surface.paths).some((surfacePath) => normalized === normalizePathText(surfacePath));
-  });
-}
-
 function validateTemplatePath(templatePath, errors, label) {
   if (!isNonEmptyString(templatePath)) return;
   if (isPatternPath(templatePath)) {
@@ -471,7 +449,6 @@ function isBulkClaudeSkillRootLink(link) {
 function validatePlan(plan, manifestInfo, codexInfo, claudeInfo, options) {
   const errors = [];
   const warnings = [];
-  const skippedPanelLinks = [];
   const activeLinks = [];
   const generatedDestinations = [];
   const seenLinkIds = new Set();
@@ -518,13 +495,6 @@ function validatePlan(plan, manifestInfo, codexInfo, claudeInfo, options) {
     }
     if (isBulkClaudeSkillRootLink(link)) {
       errors.push(`${label}: bulk Claude skill-root symlinks are forbidden; use curated per-skill candidates`);
-    }
-
-    const isPanel = isExcludedPanelPath(link.livePath, manifestInfo.excludedSurfaces)
-      || isExcludedPanelPath(link.proposedTarget, manifestInfo.excludedSurfaces);
-    if (isPanel && !options.includePanelPrototypes && !plan.panelPrototypeOptIn) {
-      skippedPanelLinks.push(link);
-      continue;
     }
 
     const resource = manifestInfo.byId.get(link.sourceResource);
@@ -621,7 +591,7 @@ function validatePlan(plan, manifestInfo, codexInfo, claudeInfo, options) {
     }
   }
 
-  return { errors, warnings, activeLinks, skippedPanelLinks, generatedDestinations, localOnlyPatterns };
+  return { errors, warnings, activeLinks, generatedDestinations, localOnlyPatterns };
 }
 
 function trackedPathErrors() {
@@ -746,7 +716,6 @@ function printReport(options, manifestInfo, codexInfo, claudeInfo, planInfo, sou
   console.log(`Claude adapter plan: ${options.claudePlan}`);
   console.log("Mutation: disabled");
   console.log(`Live link check: ${options.checkLive ? "path-only" : "disabled"}`);
-  console.log(`Panel prototypes: ${options.includePanelPrototypes ? "included by explicit flag" : "skipped unless opted in"}`);
   console.log("");
   console.log(`Manifest validation: passed (${manifestInfo.resources.length} resources)`);
   console.log(`Local-only symlink target guard: passed (${planInfo.localOnlyPatterns.length} patterns blocked)`);
@@ -778,16 +747,6 @@ function printReport(options, manifestInfo, codexInfo, claudeInfo, planInfo, sou
   }
   for (const surface of claudeInfo.localOnlyPatterns) {
     console.log(`- claude adapter: ${surface}`);
-  }
-
-  console.log("");
-  console.log("[panel prototypes]");
-  for (const surface of manifestInfo.excludedSurfaces) {
-    console.log(`- ${surface.id}: ${options.includePanelPrototypes ? "opted in" : "skipped"}`);
-    console.log(`  paths: ${asArray(surface.paths).join(", ")}`);
-  }
-  for (const link of planInfo.skippedPanelLinks) {
-    console.log(`- skipped candidate link: ${link.id}`);
   }
 
   console.log("");
