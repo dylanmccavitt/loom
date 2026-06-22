@@ -100,8 +100,10 @@ npm run check
 | Execute-plan skill | `node --test tests/execute-plan-skill.test.mjs` |
 | Harness manifest | `node --test tests/harness-manifest.test.mjs` |
 | Harness safety gate | `node --test tests/harness-safety-gate.test.mjs` |
-| Issue autopilot skill | `node --test tests/issue-autopilot-skill.test.mjs` |
+| Install command | `node --test tests/install-command.test.mjs` |
+| Issue execution skill | `node --test tests/issue-execution-skill.test.mjs` |
 | OMP built-ins snapshot | `node --test tests/omp-builtins-snapshot.test.mjs` |
+| Render harness nucleus | `node --test tests/render-harness-nucleus.test.mjs` |
 | Skill validation | `node --test tests/skill-validation.test.mjs` |
 | Thread-control skill | `node --test tests/thread-control-skill.test.mjs` |
 
