@@ -228,6 +228,8 @@ main
 
 ## 6. Add issue-autopilot skill for one issue to one PR workflow
 
+> **Retired:** This packet proposed an `issue-autopilot` skill; it shipped as `issue-execution` (now the single issue-lifecycle skill) instead. Retained as a historical planning record — the `issue-autopilot` name below is superseded.
+
 **Type:** AFK
 
 ### What to build

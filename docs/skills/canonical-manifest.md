@@ -4,7 +4,7 @@ Single source of truth for the harness skill nucleus. Built by consolidating thr
 (`~/.agents/skills`, `~/.codex/skills`, `~/.claude/skills`) into the repo `.agents/skills/`, then
 symlinking all three roots back to it. One copy per skill, no harness prefixes, reusable across harnesses.
 
-- Physical dirs before: 161 (across 3 roots)  ->  canonical skills: 58
+- Physical dirs before: 161 (across 3 roots)  ->  canonical skills: 58 at build (now 60 after the issue-lane prune)
 - Pruned (10): codex-issue-implementation, codex-workflow-sharpener, devenv, graduate, inspo, learn, loading, mocking, quick, vault-note
 
 ## Build rules (per skill)
