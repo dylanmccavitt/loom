@@ -61,16 +61,32 @@ function parseFrontmatter(filePath, content, errors) {
 
   const frontmatter = content.slice(4, end).split("\n");
   const data = new Map();
-  for (const [lineIndex, line] of frontmatter.entries()) {
+  for (let i = 0; i < frontmatter.length; i += 1) {
+    const line = frontmatter[i];
     if (!line.trim() || line.trim().startsWith("#")) continue;
     const separator = line.indexOf(":");
     if (separator === -1) {
-      errors.push(`${filePath}:${lineIndex + 2}: frontmatter line must be key: value`);
+      errors.push(`${filePath}:${i + 2}: frontmatter line must be key: value`);
       continue;
     }
     const key = line.slice(0, separator).trim();
     let value = line.slice(separator + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    if (/^[|>][+-]?$/u.test(value) || value === "") {
+      // YAML block scalar (>-, >, |, |-) or empty: gather more-indented continuation lines.
+      const baseIndent = line.length - line.trimStart().length;
+      const parts = [];
+      let j = i + 1;
+      for (; j < frontmatter.length; j += 1) {
+        const cont = frontmatter[j];
+        if (!cont.trim()) { parts.push(""); continue; }
+        if (cont.length - cont.trimStart().length <= baseIndent) break;
+        parts.push(cont.trim());
+      }
+      if (parts.length) {
+        value = parts.join(" ").replace(/\s+/gu, " ").trim();
+        i = j - 1;
+      }
+    } else if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
     data.set(key, value);
