@@ -32,8 +32,8 @@ const ROUTE_RULES = [
   },
   {
     route: "assembler",
-    reason: "Assembler owns per-repo kit setup: the repo contract, harness wiring, and repo-specific skills (replaces the retired bootstrap trio).",
-    any: ["set up this repo", "set up a repo for the kit", "workflow kit", "set up the workflow kit", "workflow kit setup", "repo contract", "refresh the contract", "project-specific skills", "project-specific agents", "repo-specific skills", "repo-specific agents", "scaffold repo-specific agents"],
+    reason: "Assembler owns per-repo kit setup: the repo envelope, harness wiring, and repo-specific skills (replaces the retired bootstrap trio).",
+    any: ["set up this repo", "set up a repo for the kit", "workflow kit", "set up the workflow kit", "workflow kit setup", "repo envelope", "refresh the envelope", "project-specific skills", "project-specific agents", "repo-specific skills", "repo-specific agents", "scaffold repo-specific agents"],
   },
   {
     route: "openai-docs",
@@ -46,13 +46,13 @@ const ROUTE_RULES = [
     any: ["go ahead", "execute the plan", "proceed", "stop discussing and implement", "ship the current plan"],
   },
   {
-    route: "robots",
-    reason: "Robots owns running one tracked Linear issue end-to-end to a PR.",
+    route: "roboports",
+    reason: "Roboports owns running one tracked Linear issue end-to-end to a PR.",
     any: ["start issue", "continue issue", "ship issue", "ship one tracked issue", "work it to pr", "tracked issue end-to-end"],
   },
   {
-    route: "robots",
-    reason: "Robots owns the subagent fanout discipline when executing an issue.",
+    route: "roboports",
+    reason: "Roboports owns the subagent fanout discipline when executing an issue.",
     any: ["spawn review", "spawn agents", "/spawn", "subagent recipe", "agent recipe", "parallel implementation"],
   },
   {

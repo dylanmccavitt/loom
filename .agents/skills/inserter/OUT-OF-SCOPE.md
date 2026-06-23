@@ -5,7 +5,7 @@ enhancement requests. It serves two purposes:
 
 1. **Institutional memory** — why an enhancement was rejected, so the reasoning
    isn't lost when the issue is closed `wontfix`.
-2. **Deduplication** — when a new issue matches a prior rejection, dispatch
+2. **Deduplication** — when a new issue matches a prior rejection, inserter
    surfaces the previous decision instead of re-litigating it.
 
 ## Directory structure
@@ -52,7 +52,7 @@ strategic decision — never a temporary "we're too busy" deferral.
 
 ## When to check it
 
-During context-gathering (Triage step 1), read all `.out-of-scope/*.md`. Match by
+During context-gathering (Inserter step 1), read all `.out-of-scope/*.md`. Match by
 concept similarity, not keywords — "night theme" matches `dark-mode.md`. On a
 match, surface it to the maintainer: "This resembles `.out-of-scope/dark-mode.md`,
 rejected before because [reason]. Still the same call?" The maintainer may:
@@ -70,7 +70,7 @@ Only when an **enhancement** (never a bug) is rejected as `wontfix`:
 3. If no, create a new file with the concept name, decision, reason, and first
    prior request.
 4. Post a `save_comment` linking the file and explaining the decision.
-5. Apply the `wontfix` state (via the contract's label/state map) and close.
+5. Apply the `wontfix` state (via the envelope's label/state map) and close.
 
 If the maintainer later reverses a rejection, delete the file; historical issues
 stay closed as records, and the new triggering issue runs through normal triage.

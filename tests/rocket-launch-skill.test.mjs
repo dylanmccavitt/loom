@@ -30,7 +30,7 @@ test("rocket-launch reuses the proof and review engines", () => {
 
 test("rocket-launch never merges with a red gate", () => {
   assert.match(skill, /Never merges with a red gate\./u);
-  assert.match(skill, /If any gate is red: stop, report which gate failed and why, and route the fix back to `robots`\. Do not merge\./u);
+  assert.match(skill, /If any gate is red: stop, report which gate failed and why, and route the fix back to `roboports`\. Do not merge\./u);
 });
 
 test("rocket-launch closes the issue through the bridge", () => {
@@ -54,6 +54,6 @@ test("rocket-launch does not validate by merging or closing live", () => {
 });
 
 test("rocket-launch routes unready work and missing contracts", () => {
-  assert.match(skill, /routes back to `robots`/u);
+  assert.match(skill, /routes back to `roboports`/u);
   assert.match(skill, /route to `assembler` first/u);
 });

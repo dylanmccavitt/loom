@@ -6,7 +6,7 @@ Linear's native GitHub integration (branch name carries the Linear issue id, the
 PR auto-links and auto-closes the issue on merge). Decisions are recorded in
 [ADR 0003](../decisions/0003-factorio-workflow-kit.md).
 
-This manifest is the build contract. Each skill is authored eval-first: write its
+This manifest is the build envelope. Each skill is authored eval-first: write its
 `evals.json` and content-contract test, then iterate `SKILL.md` until both pass.
 
 ## Pipeline
@@ -17,14 +17,14 @@ prospect      land on the idea            -> Linear initiative/project + idea do
   -> blueprint   draft spec + templates    -> Linear doc (PRD) + blueprint/templates/
   -> main-bus    keep lanes open to scale  -> architecture/ADR notes
   -> ghosts      stamp planned work        -> Linear issues/sub-issues, dependency-ordered
-  -> dispatch    sort/route/prioritize     -> Linear states + labels
-  -> robots      build the ghosts          -> branch/worktree -> implement/test -> PR
-  -> modules     optimize where it pays    -> perf via diagnose, diminishing-returns aware
-  -> quality     refactor in place/salvage -> upgrade or recycle, never sprawl
+  -> inserter    sort/route/prioritize     -> Linear states + labels
+  -> roboports   build the ghosts          -> branch/worktree -> implement/test -> PR
+  -> radar       check drift               -> check-only sync evidence + next route
+  -> proof-pass  prove behavior            -> targeted proof artifacts
   -> rocket-launch  ship it                -> review gate, merge PR, close Linear issue
   -> space-age   beyond one repo           -> CI/CD + multi-repo/multi-env logistics
 
-assembler   crafts the per-repo contract + tooling that every skill above reads.
+assembler   crafts the per-repo envelope + tooling that every skill above reads.
 bus-first   the minimal-diff doctrine every code-writing skill cites.
 ```
 
@@ -37,9 +37,35 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
 - **Doctrine, not sprawl.** `bus-first` is cited, never copied, by code-writing
   skills. Reuse before write; minimum that works; never cut
   validation/security/error-handling/accessibility.
-- **Dynamic per repo.** `assembler` generates a repo contract; skills read it.
+- **Dynamic per repo.** `assembler` generates a repo envelope; skills read it.
   Skills do not hardcode trackers, teams, labels, or commands.
 - **Eval-first.** No skill is "released" until its eval layers are green.
+
+## Core vocabulary and rename plan
+
+Factory Nucleus uses one ledger vocabulary across PRDs, issues, skills, tests,
+handoff graphs, and evals:
+
+- **factory** — a repo-local workflow subsystem with a local Loom state root.
+- **ghost** — planned-but-unbuilt tracked work, usually one issue.
+- **blueprint** — the reusable spec/template stamped into ghosts.
+- **recipe** — an executable delivery plan with ordered stages and gates.
+- **envelope** — durable repo/workflow policy; this replaces `contract` as the
+  concept name. Historical repo-envelope files may remain as migration notes, but
+  new schema/runtime language says envelope.
+- **circuit** — a validation or escalation gate guarding a protected surface.
+- **inserter** — the canonical issue sorter/router; hard-renamed from the former
+  `dispatch` skill with no steady-state alias or duplicate path.
+- **roboports** — the canonical one-issue implementation network; hard-renamed
+  from the former `robots` skill with no steady-state alias or duplicate path.
+- **radar** — check-only drift detection and route suggestion.
+- **proof-pass** — proof evidence collection, usable alone or as a recipe circuit.
+- **rocket-launch** — launch gate, merge, and tracker closeout bridge.
+- **space-age** — cross-repo or cross-environment promotion logistics.
+
+Hard renames are clean cutovers. References, tests, handoff graphs, routing text,
+and evals move to the new names together; old names may appear only in explicit
+migration notes explaining the cutover.
 
 ## Skill table
 
@@ -49,12 +75,14 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
 | `prospect` | scout a new patch | start a new idea | initiative/project + doc | — | MVP | new |
 | `blueprint` | saved layout you stamp | PRD/spec + reusable templates | document; template scaffolds | PR/issue templates | MVP | replaces `to-prd` |
 | `ghosts` | ghost = planned-unbuilt entity | split plan into tracer-bullet issues, dep-ordered | issues/sub-issues, blocked-by | — | MVP | replaces `to-issues` |
-| `robots` | construction/logistic bots | execute one issue end-to-end + fanout discipline | reads issue/acceptance | branch/worktree -> PR | MVP | replaces `issue-execution`, `agent-recipes`; reuses `tdd`, `diagnose` |
+| `roboports` | construction/logistic bots | execute one issue end-to-end + fanout discipline | reads issue/acceptance | branch/worktree -> PR | MVP | replaces `issue-execution`, `agent-recipes`; reuses `tdd`, `diagnose` |
+| `radar` | radar scan | check-only drift model + next-route suggestion | reads state/labels/dependencies | reads branch/PR/proof evidence | enrich | new |
+| `proof-pass` | proof circuit | proof-only validation and evidence capture | optional read-only checks | local/browser/test artifacts | MVP | kept engine; used by `rocket-launch` |
 | `rocket-launch` | launch | ship: review gate, merge, close issue | close issue, status update | PR review/merge/CI | MVP | replaces `thread-closeout`, `gh-issue-thread-chain` closeout; reuses `pr-review`, `proof-pass` |
-| `assembler` | machine that builds machines | per-repo contract + tooling generation | team/project/label map | template files | MVP (minimal) | replaces `repo-workflow-bootstrap`, `workflow-kit`, `setup-matt-pocock-skills` |
+| `assembler` | machine that builds machines | per-repo envelope + tooling generation | team/project/label map | template files | MVP (minimal) | replaces `repo-workflow-bootstrap`, `workflow-kit`, `setup-matt-pocock-skills` |
 | `research` | science packs (tiered) | spike/investigate before building | research document | — | enrich | new |
 | `main-bus` | central bus, anti-spaghetti | scalability/architecture so you don't wall yourself in | ADR/doc | — | enrich | replaces `improve-codebase-architecture` |
-| `dispatch` | filter inserter / logistics request | triage: classify, prioritize, route to ready | states + labels | — | enrich | replaces `triage` |
+| `inserter` | filter inserter / logistics request | triage: classify, prioritize, route to ready | states + labels | — | enrich | replaces `triage` |
 | `modules` | modules + beacons (diminishing returns) | optimize where returns exist | — | — | enrich | new; reuses `diagnose` |
 | `quality` | quality tiers + recycler | refactor in place / salvage / delete | — | — | enrich | new; cites `bus-first` |
 | `space-age` | platforms/planets | CI/CD + multi-repo/multi-env logistics | cross-project | CI | enrich | new |
@@ -97,12 +125,12 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
   spec/issues exist.
 - **Does:** clarify the idea's intent and shape (briefly, no relitigating), then
   create the Linear home for it — an initiative or project (per the repo
-  contract) plus an idea/brief document attached to it. Returns the created
+  envelope) plus an idea/brief document attached to it. Returns the created
   object ids/links. Hands off to `research` (if unknowns) or `blueprint` (if
   ready to spec).
 - **Linear:** `save_project` / `save_initiative` + `save_document`.
 - **Invariants:** never starts implementation; never creates issues (that is
-  `ghosts`); reads the `assembler` contract for the target team/project.
+  `ghosts`); reads the `assembler` envelope for the target team/project.
 - **Eval cases:** positive "kick off a new idea: offline mode for the editor";
   adversarial "lets start a new thing, offline editor idk yet"; negative "split
   this plan into issues" (-> route to `ghosts`).
@@ -117,7 +145,7 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
   the canonical templates under `blueprint/templates/`.
 - **Linear/GitHub:** `save_document` for the spec; templates materialized by
   `assembler`.
-- **Invariants:** spec uses the repo domain glossary from the contract; explicit
+- **Invariants:** spec uses the repo domain glossary from the envelope; explicit
   acceptance criteria + non-goals + proof plan; no file paths/code snippets in the
   spec except decision-encoding prototype snippets.
 - **Eval cases:** positive "write the PRD for offline mode"; positive "give me a
@@ -132,31 +160,31 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
   every layer, demoable on its own), mark HITL vs AFK, set dependencies, then
   publish Linear issues/sub-issues in dependency order with blocked-by relations.
 - **Linear:** `save_issue` (parent for sub-issues, blockedBy/blocks, labels,
-  project, milestone, estimate), reads contract label/state map.
+  project, milestone, estimate), reads envelope label/state map.
 - **Invariants:** thin vertical slices over thick horizontal ones; dependency
   order so blockers are referenceable; does not implement; does not modify a
   parent idea's scope.
 - **Eval cases:** positive "turn the offline-mode PRD into issues"; positive
   "make tickets for this"; adversarial "brek this down into tickts"; negative
-  "implement issue ABC-12" (-> `robots`).
+  "implement issue ABC-12" (-> `roboports`).
 
-### `robots`
+### `roboports`
 
 - **Trigger:** `Use when` the user asks to start, continue, or ship one tracked
   Linear issue end-to-end (implement, test, open/update the PR).
 - **Does:** one issue -> one branch/worktree (named with the Linear issue id) ->
-  one PR. Main agent owns intake/integration/closeout; subagents do bounded,
-  disjoint, localized work (the localized-roboport discipline — never one mega
-  network). Cites `bus-first` for the implementation; uses `tdd` when test-first,
-  `diagnose` for bugs. Prepares a review packet; does not own closeout (that is
-  `rocket-launch`).
+  one PR. Main agent owns intake, integration, and launch handoff; subagents do
+  bounded, disjoint, localized work (the localized-roboport discipline — never one
+  mega network). Cites `bus-first` for the implementation; uses `tdd` when
+  test-first, `diagnose` for bugs. Prepares a review packet; does not own closeout
+  (that is `rocket-launch`).
 - **GitHub/Linear:** branch/worktree + PR; reads issue acceptance criteria.
 - **Invariants:** preserves one-issue-one-branch-one-PR; branch carries the issue
   id for the bridge; implements only the acceptance criteria; never silently
   closes the issue.
 - **Eval cases:** positive "implement ABC-12"; positive "continue work on the
   offline-mode sync issue"; adversarial "strat building ABC-12"; negative
-  "triage the new bugs" (-> `dispatch`).
+  "triage the new bugs" (-> `inserter`).
 
 ### `rocket-launch`
 
@@ -171,18 +199,18 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
 - **Invariants:** never merges with a red gate; never silently closes without the
   bridge/acceptance check; leaves a human-reviewable record.
 - **Eval cases:** positive "ship the offline-mode PR"; positive "this is ready,
-  launch it"; negative "open a draft PR, not ready" (-> `robots`).
+  launch it"; negative "open a draft PR, not ready" (-> `roboports`).
 
 ### `assembler` (minimal for MVP)
 
 - **Trigger:** `Use when` setting up a repo for the kit, or refreshing its
-  contract: which Linear team/project/labels map to this repo, its domain
+  envelope: which Linear team/project/labels map to this repo, its domain
   glossary, its commands, and its PR/issue/doc templates.
 - **Does (MVP):** read the repo + ask only for facts tools can't supply, then
-  generate the repo-local contract (`.agents/contract/` or repo docs) and stamp
+  generate the repo-local envelope (`.agents/envelope/` or repo docs) and stamp
   templates from `blueprint/templates/`. Reuses the retired bootstrap trio's
   machinery, re-themed. Full per-repo skill/agent generation is enrichment.
-- **Invariants:** never writes secrets; create-missing-only; the contract is the
+- **Invariants:** never writes secrets; create-missing-only; the envelope is the
   single binding point every kit skill reads.
 - **Eval cases:** positive "set up this repo for the kit"; positive "refresh the
   Linear mapping for this repo"; negative "create an issue" (-> `ghosts`).
@@ -222,14 +250,14 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
 - **Does:** runs a time-boxed investigation and writes findings as a Linear
   document on the idea's project. Tiered like science packs: start with the
   cheapest pack that answers the question (red = a quick local spike / read the
-  code; green = integration/contract checks; higher tiers = external/library/
+  code; green = integration/envelope checks; higher tiers = external/library/
   prior-art research) and stop as soon as the decision is unblocked. Reuses
   `map-seed` when the unknown is best answered by a throwaway prototype.
 - **Invariants:** time-boxed; every finding states the decision it unblocks;
-  never slides into implementation; feeds `blueprint`. Reads the repo contract.
+  never slides into implementation; feeds `blueprint`. Reads the repo envelope.
 - **Eval cases:** positive "spike whether we can do offline sync with CRDTs";
   positive "research how other editors handle conflict resolution"; negative
-  "implement the sync layer" (-> `robots`); negative "what's the capital of
+  "implement the sync layer" (-> `roboports`); negative "what's the capital of
   France" (no activation).
 
 ### `main-bus` (re-themes `improve-codebase-architecture`)
@@ -245,28 +273,28 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
   existing architecture/deepening/interface/language guidance, re-themed.
 - **Invariants:** plans/advises, does not mass-refactor in place (that is
   `quality`); proposes seams at the highest point; records decisions as an
-  ADR/doc. Reads the repo contract + domain glossary.
+  ADR/doc. Reads the repo envelope + domain glossary.
 - **Eval cases:** positive "how should we structure this so it scales";
   positive "this is turning into spaghetti, plan the bus"; negative "rename this
   variable everywhere" (-> `quality`); negative "implement the cache" (->
-  `robots`).
+  `roboports`).
 
-### `dispatch` (re-themes `triage`)
+### `inserter` (re-themes `triage`)
 
 - **Trigger:** `Use when` sorting incoming Linear issues: classify, prioritize,
   set state/labels, decide what is ready to pick up, or route bugs vs features.
 - **Does:** the filter inserter — routes each issue to the right place. Moves
-  issues through the contract's state machine (e.g. needs-triage -> needs-info ->
+  issues through the envelope's state machine (e.g. needs-triage -> needs-info ->
   ready-for-agent / ready-for-human / wontfix) and category (bug vs enhancement),
-  using the repo contract's label/state map; reproduces bugs before promoting
+  using the repo envelope's label/state map; reproduces bugs before promoting
   them; writes an agent brief when marking ready-for-agent. Re-themes the existing
   `triage` state machine to Linear via `save_issue`/labels/`save_comment`.
 - **Invariants:** exactly one category + one state per issue; never implements;
-  reads the contract label/state map and never hardcodes label strings; routes
-  fully-specified work to `robots` and decomposition to `ghosts`.
+  reads the envelope label/state map and never hardcodes label strings; routes
+  fully-specified work to `roboports` and decomposition to `ghosts`.
 - **Eval cases:** positive "triage the new bugs and tell me what's ready";
   positive "what should we pick up next"; negative "split this plan into issues"
-  (-> `ghosts`); negative "implement ABC-12" (-> `robots`).
+  (-> `ghosts`); negative "implement ABC-12" (-> `roboports`).
 
 ### `modules` (modules + beacons)
 
@@ -298,7 +326,7 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
   (perf) and `main-bus` (structure planning).
 - **Eval cases:** positive "clean up this module, it's a mess"; positive "this is
   duplicated in three places, consolidate it"; negative "make it faster" (->
-  `modules`); negative "add a new endpoint" (-> `robots`).
+  `modules`); negative "add a new endpoint" (-> `roboports`).
 
 ### `space-age` (platforms + planets)
 
@@ -315,14 +343,14 @@ bus-first   the minimal-diff doctrine every code-writing skill cites.
   `rocket-launch` per hop rather than reinventing merge/gate logic.
 - **Eval cases:** positive "set up CI to promote this from staging to prod";
   positive "roll this change across the three service repos"; negative "ship this
-  one PR" (-> `rocket-launch`); negative "implement the feature" (-> `robots`).
+  one PR" (-> `rocket-launch`); negative "implement the feature" (-> `roboports`).
 
 ## Cutover retire/keep map
 
 Cutover completed (2026-06-23): replacement skills reached parity and the
 GitHub-default planning lane was retired in favor of the Linear-first Factorio
-kit. Retirements were gated on each replacement reaching parity: `dispatch`,
-`main-bus`, `robots`, `rocket-launch`, and `assembler` now own the old lane's
+kit. Retirements were gated on each replacement reaching parity: `inserter`,
+`main-bus`, `roboports`, `rocket-launch`, and `assembler` now own the old lane's
 active responsibilities.
 
 - **Retire (replaced):** `to-prd`, `to-issues`, `triage`,
@@ -342,7 +370,7 @@ active responsibilities.
 
 1. **Lint** — `validate-skills.mjs` (frontmatter, `name`==dir, concrete
    `Use when`, no secrets, no collisions). Offline CI.
-2. **Content-contract test** — `tests/<skill>-skill.test.mjs` pins the trigger,
+2. **Content-envelope test** — `tests/<skill>-skill.test.mjs` pins the trigger,
    routing, and load-bearing invariants. Offline CI.
 3. **Trigger evals** — `<skill>/evals/evals.json` with positive + adversarial/typo
    + negative prompts, LLM-judged. On-demand.

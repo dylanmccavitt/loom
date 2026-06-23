@@ -1,10 +1,10 @@
-// In-memory model of the Factorio-kit contract: Linear as the planning system of
+// In-memory model of the Factorio-kit envelope: Linear as the planning system of
 // record, GitHub as code delivery, joined by the bridge: the branch name carries
 // the Linear issue id AND the PR body carries a closing keyword (e.g. "Closes
 // ABC-1"); merging a PR that satisfies BOTH closes the linked issue.
 //
 // This is a fixture for golden-path/behavioral evals, NOT the skills themselves.
-// It encodes the cross-skill contract so a test (or an on-demand agent eval with
+// It encodes the cross-skill envelope so a test (or an on-demand agent eval with
 // mocked MCP) can assert the pipeline wiring is coherent.
 
 // The bridge's second requirement: a GitHub/Linear closing keyword naming the
@@ -66,7 +66,7 @@ export function createWorld() {
       api.issue(key).state = state;
     },
 
-    // robots: one issue -> one branch (carries the id) -> one PR. The PR body
+    // roboports: one issue -> one branch (carries the id) -> one PR. The PR body
     // carries the closing keyword the bridge needs to auto-close on merge.
     openPr(issueKey, branch, body = "") {
       api.issue(issueKey); // must exist

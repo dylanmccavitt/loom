@@ -34,25 +34,25 @@ A Factorio-themed kit becomes loom's single planning/issue/execution lane.
    Linear's native GitHub integration: the branch name carries the Linear issue
    id; the PR auto-links and auto-closes the issue on merge.
 3. **Naming.** Skills use clean Factorio nouns with no harness/theme prefix
-   (`prospect`, `blueprint`, `ghosts`, `robots`, `rocket-launch`, `assembler`,
-   `main-bus`, `space-age`, `research`, `modules`, `quality`, `dispatch`).
+   (`prospect`, `blueprint`, `ghosts`, `roboports`, `rocket-launch`, `assembler`,
+   `main-bus`, `space-age`, `research`, `modules`, `quality`, `inserter`).
    Routing is carried entirely by each `description`'s concrete `Use when ...`
    trigger; the family is grouped by a manifest, not a prefix.
 4. **Clean-code doctrine.** A standalone doctrine skill (`bus-first`) carries an
-   original Factorio-framed minimal-diff ladder. `assembler`, `robots`,
+   original Factorio-framed minimal-diff ladder. `assembler`, `roboports`,
    `rocket-launch`, and `quality` cite it. It is a skill, not a loom-wide rule,
    so it stays curatable per flow.
 5. **Adaptation model.** `assembler` reads a repo once and generates a repo-local
-   contract (Linear team/project/label map, domain glossary, commands,
+   envelope (Linear team/project/label map, domain glossary, commands,
    PR/issue/doc templates) plus optional repo-specific skills/agents, reusing the
-   retired bootstrap trio's machinery. `robots` execute issues end-to-end against
-   that contract. Every kit skill reads the contract, so behavior is dynamic per
+   retired bootstrap trio's machinery. `roboports` execute issues end-to-end against
+   that envelope. Every kit skill reads the envelope, so behavior is dynamic per
    repo.
 6. **Blueprints.** Canonical templates live in `blueprint/templates/` (versioned
    and eval-able in loom). `assembler` stamps repo-local copies; Linear-side
    templates are applied via `save_document` / issue-description scaffolds.
 7. **Build order.** A tracer-bullet MVP ships first
-   (`prospect -> blueprint -> ghosts -> robots -> rocket-launch`, plus
+   (`prospect -> blueprint -> ghosts -> roboports -> rocket-launch`, plus
    `bus-first` and a minimal `assembler` substrate), then the rest is enrichment.
 8. **Eval.** Each skill is authored eval-first and gated by layers: structural
    lint (`validate-skills.mjs`), content-contract `node:test`, trigger
@@ -78,7 +78,7 @@ A Factorio-themed kit becomes loom's single planning/issue/execution lane.
 - New skill names must clear `validate-skills.mjs` collision checks against
   existing loom and global skills before release.
 - The kit depends on the Linear MCP for planning side effects and on Linear's
-  GitHub integration for the bridge; the contract `assembler` generates is the
+  GitHub integration for the bridge; the envelope `assembler` generates is the
   per-repo binding point.
 - If loom ever needs a tracker-agnostic planning lane again, this ADR must be
   superseded.

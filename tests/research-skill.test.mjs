@@ -21,7 +21,7 @@ test("research is time-boxed and ties findings to a decision", () => {
 test("research uses tiered science packs", () => {
   assert.match(skill, /Science packs/u);
   assert.match(skill, /Red — local spike/u);
-  assert.match(skill, /Green — integration\/contract/u);
+  assert.match(skill, /Green — integration\/envelope/u);
 });
 
 test("research records findings as a Linear document", () => {
@@ -30,7 +30,7 @@ test("research records findings as a Linear document", () => {
 });
 
 test("research never implements and routes onward", () => {
-  assert.match(skill, /that is `robots`/u);
+  assert.match(skill, /that is `roboports`/u);
   assert.match(skill, /`blueprint`/u);
   assert.match(skill, /`map-seed`/u);
 });

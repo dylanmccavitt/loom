@@ -11,7 +11,7 @@
       "ghosts",
       "blueprint",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -26,7 +26,7 @@
       "ghosts",
       "blueprint",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -40,7 +40,7 @@
       "tdd",
       "blueprint",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -56,7 +56,7 @@
       "ghosts",
       "blueprint",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -72,7 +72,7 @@
       "ghosts",
       "blueprint",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -86,7 +86,7 @@
       "tdd",
       "ghosts",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -100,13 +100,13 @@
       "ghosts",
       "blueprint",
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
     "input": "/spawn review agents",
     "expectedRoutes": [
-      "robots"
+      "roboports"
     ],
     "forbiddenRoutes": [
       "handoff",
@@ -128,7 +128,7 @@
       "tdd",
       "ghosts",
       "blueprint",
-      "robots"
+      "roboports"
     ]
   },
   {
@@ -138,13 +138,13 @@
     ],
     "forbiddenRoutes": [
       "execute-plan",
-      "robots"
+      "roboports"
     ]
   },
   {
     "input": "start issue 42 and work it to PR",
     "expectedRoutes": [
-      "robots"
+      "roboports"
     ],
     "forbiddenRoutes": [
       "handoff",

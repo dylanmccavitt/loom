@@ -20,9 +20,9 @@ calls out where today's layout will wall you in as you scale and proposes the
 It plans and advises; it does not mass-refactor in place — that is `quality`. It
 records the decision as an ADR/doc, not code.
 
-## Read first: the repo contract
+## Read first: the repo envelope
 
-Read the repo contract that `assembler` generated and the standing ADRs in the
+Read the repo envelope that `assembler` generated and the standing ADRs in the
 area before proposing anything: the **domain glossary** (so the bus's lanes are
 named in the project's own words), the ADRs (decisions you must not re-litigate),
 and where this repo records architecture decisions. Never invent a structure the
@@ -32,7 +32,7 @@ glossary already names; never re-suggest something an ADR already closed.
 
 Name the *structure* with the architecture vocabulary in
 [LANGUAGE.md](LANGUAGE.md); name the *materials* that flow on the lanes with the
-contract's domain glossary. Use both exactly — don't drift into "component",
+envelope's domain glossary. Use both exactly — don't drift into "component",
 "service", or "boundary".
 
 - **Module** — anything with an interface and an implementation.
@@ -77,13 +77,13 @@ the design-it-twice fan-out in [INTERFACE-DESIGN.md](INTERFACE-DESIGN.md).
 
 ### 5. Record the decision
 
-Record the agreed restructure where the contract puts architecture decisions (a
+Record the agreed restructure where the envelope puts architecture decisions (a
 repo ADR or a Linear architecture document): the lane, the seam, the materials it
 carries, and the consumers it serves. So `main-bus` records the decision as an
 ADR/doc — the bus map is only the presentation. If a candidate contradicts a
 standing ADR, only reopen it when the friction is real: flag it, don't silently
 overturn it. Hand the agreed restructure to `ghosts` to stamp as tracked issues;
-implementing it is `robots`.
+implementing it is `roboports`.
 
 ## Minimal restructure (cite `bus-first`)
 
@@ -97,8 +97,8 @@ seam that holds it. Capacity you won't consume just rots on the belt.
 
 - **Plans and advises; never mass-refactors in place** — an in-place refactor,
   rename, or salvage routes to `quality`; implementing a feature routes to
-  `robots`.
+  `roboports`.
 - **Proposes seams at the highest point** that holds the behaviour.
 - **Records decisions as an ADR/doc**; never re-litigates a standing ADR.
-- **Reads the repo contract + domain glossary**; never invents names the glossary
+- **Reads the repo envelope + domain glossary**; never invents names the glossary
   already provides or hardcodes a structure.

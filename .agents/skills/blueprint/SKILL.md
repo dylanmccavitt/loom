@@ -14,9 +14,9 @@ file.
 
 ## Required reading
 
-Before drafting, read the per-repo contract `assembler` generated (the repo contract):
+Before drafting, read the per-repo envelope `assembler` generated (the repo envelope):
 the Linear team/project/label map, the **domain glossary**, the commands, and the
-template set. Do not hardcode a tracker, team, labels, or commands — read the contract.
+template set. Do not hardcode a tracker, team, labels, or commands — read the envelope.
 Also read the originating `prospect` idea/brief and any `research` document.
 
 ## Synthesize, never interview
@@ -66,4 +66,4 @@ never bake in repo-specific facts or secrets.
 - Unknowns that must be resolved before specifying → `research`.
 - A design that must be felt before it is specified → `map-seed`; fold its findings back.
 - Turning the finished spec into tracked work → `ghosts`. **Blueprint never creates issues** — when asked to "create the issues now", hand off to `ghosts`.
-- Implementing a spec'd issue → `robots` (which cites `bus-first` for a minimal diff).
+- Implementing a spec'd issue → `roboports` (which cites `bus-first` for a minimal diff).

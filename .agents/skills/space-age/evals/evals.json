@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "Set up CI to promote this from staging to prod.",
-      "expected_output": "Activates space-age: reads the repo contract for the environments and pipeline, defines the staging -> prod promotion path (each environment a planet, the CI/CD pipeline the space platform carrying the artifact), and runs the rocket-launch gates per environment at each hop — never promoting past a red gate.",
+      "expected_output": "Activates space-age: reads the repo envelope for the environments and pipeline, defines the staging -> prod promotion path (each environment a planet, the CI/CD pipeline the space platform carrying the artifact), and runs the rocket-launch gates per environment at each hop — never promoting past a red gate.",
       "files": []
     },
     {
       "id": 2,
       "prompt": "Roll this change across the three service repos.",
-      "expected_output": "Activates space-age: coordinates the multi-repo change in dependency order so dependents land after the repos they depend on, walking the contract's dependency graph and shipping each repo through rocket-launch on its own one-issue-one-branch-one-PR bridge.",
+      "expected_output": "Activates space-age: coordinates the multi-repo change in dependency order so dependents land after the repos they depend on, walking the envelope's dependency graph and shipping each repo through rocket-launch on its own one-issue-one-branch-one-PR bridge.",
       "files": []
     },
     {
@@ -28,7 +28,7 @@
     {
       "id": 5,
       "prompt": "Implement the offline-mode feature.",
-      "expected_output": "Does NOT activate space-age — this is building one feature, not promoting across environments or coordinating multiple repos. Routes to robots.",
+      "expected_output": "Does NOT activate space-age — this is building one feature, not promoting across environments or coordinating multiple repos. Routes to roboports.",
       "files": []
     }
   ]

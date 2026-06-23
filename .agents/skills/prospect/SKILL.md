@@ -14,18 +14,18 @@ it opens the patch so the rest of the kit can mine it.
 This skill does not create Linear initiatives, projects, or documents while being
 validated; during real intake it opens one home for the idea and attaches a brief.
 
-## Read the contract first
+## Read the envelope first
 
 This skill drives Linear through its MCP tools and never hardcodes a tracker.
-Before creating anything, read the repo contract that `assembler` generated (the
-`.agents/contract/` map or the repo docs it points to) for:
+Before creating anything, read the repo envelope that `assembler` generated (the
+`.agents/envelope/` map or the repo docs it points to) for:
 
 - the target Linear **team**, and whether new ideas land as an **initiative** or
   a **project** in this repo;
 - the domain glossary, so the idea is named in the repo's own language;
 - any naming/label conventions for new planning objects.
 
-If no contract exists yet, route the user to `assembler` to generate one before
+If no envelope exists yet, route the user to `assembler` to generate one before
 landing the idea.
 
 ## Land the idea
@@ -34,7 +34,7 @@ landing the idea.
    its rough shape in a line or two, and capture the open unknowns. Do not
    relitigate a decided idea or run a full interview — that depth belongs to
    `blueprint`.
-2. **Create the Linear home.** Per the contract, call `save_initiative` *or*
+2. **Create the Linear home.** Per the envelope, call `save_initiative` *or*
    `save_project` on the target team for this idea. One home per idea: reuse an
    existing one instead of creating a duplicate.
 3. **Attach the brief.** Call `save_document` to publish an idea/brief doc on that
@@ -58,7 +58,7 @@ landing the idea.
   pure planning intake.
 - **Never creates issues or sub-issues.** Stamping planned work is `ghosts`' job;
   `prospect` only opens the home.
-- **Reads the `assembler` contract** for the target team and the
+- **Reads the `assembler` envelope** for the target team and the
   initiative-vs-project choice; never hardcodes a team, project, or label.
 - **One home per idea.** Reuse before create; do not duplicate an existing
   initiative or project.

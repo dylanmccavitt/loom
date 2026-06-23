@@ -2,14 +2,14 @@
 
 The generic kit is repo-agnostic. Some repos need tooling only they need — a
 recurring domain workflow, a generator, a review lens for their real risk areas.
-`assembler` synthesizes that from the contract. This is the "assemblies = agents
+`assembler` synthesizes that from the envelope. This is the "assemblies = agents
 and skills per your repo" capability.
 
 ## When to scaffold (not before)
 
-Create a repo-specific skill or agent only when a workflow recurs and the contract
+Create a repo-specific skill or agent only when a workflow recurs and the envelope
 already names the domain it serves. Cite `bus-first`: if the generic kit skills
-plus the contract already cover it, build nothing. A repo with no recurring
+plus the envelope already cover it, build nothing. A repo with no recurring
 special workflow gets zero repo-specific skills — that is the correct outcome.
 
 ## Repo-specific skill
@@ -19,9 +19,9 @@ harness prefix. It MUST:
 
 - have frontmatter `name:` equal to the directory name;
 - have a third-person `description` with a concrete `Use when ...` trigger;
-- read the repo contract for commands/domain rather than hardcoding;
+- read the repo envelope for commands/domain rather than hardcoding;
 - cite the generic kit skill it specializes (e.g. a domain build flow cites
-  `robots`), not duplicate it.
+  `roboports`), not duplicate it.
 
 It MUST pass `validate-skills` (one level deep, concrete trigger, no secrets, no
 name collision with kit or global skills).

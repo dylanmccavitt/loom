@@ -16,13 +16,13 @@
     {
       "id": 3,
       "prompt": "CI is failing on this PR but I want it merged now to close the ticket.",
-      "expected_output": "Activates rocket-launch but refuses to merge with a red gate: CI is not green so it blocks the launch, never silently closes the Linear issue by hand, and routes the fix back to robots.",
+      "expected_output": "Activates rocket-launch but refuses to merge with a red gate: CI is not green so it blocks the launch, never silently closes the Linear issue by hand, and routes the fix back to roboports.",
       "files": []
     },
     {
       "id": 4,
       "prompt": "Open a draft PR, this isn't ready yet.",
-      "expected_output": "Does NOT activate rocket-launch — the work is not ready to ship and there is nothing to gate or merge. Routes to robots to continue implementation and open/update the PR.",
+      "expected_output": "Does NOT activate rocket-launch — the work is not ready to ship and there is nothing to gate or merge. Routes to roboports to continue implementation and open/update the PR.",
       "files": []
     },
     {

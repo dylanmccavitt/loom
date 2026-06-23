@@ -137,6 +137,29 @@ function safeRealpath(target) {
   }
 }
 
+function nearestPackageName(start) {
+  let dir = path.resolve(safeRealpath(start) ?? start);
+  while (true) {
+    const packagePath = path.join(dir, "package.json");
+    if (existsSync(packagePath)) {
+      try {
+        return JSON.parse(readFileSync(packagePath, "utf8")).name ?? null;
+      } catch {
+        return null;
+      }
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
+function isSamePackageSkillsRoot(globalRoot, skillsRoot) {
+  const globalName = nearestPackageName(globalRoot);
+  const localName = nearestPackageName(skillsRoot);
+  return !!globalName && globalName === localName;
+}
+
 function collectGlobalSkillNames(globalSkillsDirs, skillsRoot) {
   const names = new Set();
   const skillsReal = safeRealpath(skillsRoot);
@@ -144,7 +167,11 @@ function collectGlobalSkillNames(globalSkillsDirs, skillsRoot) {
     const resolved = path.resolve(dir);
     if (!existsSync(resolved)) continue;
     // Skip a global root that resolves to the skills dir itself (symlinked single source of truth).
-    if (skillsReal && safeRealpath(resolved) === skillsReal) continue;
+    // The default ~/.agents/skills root may point at another worktree of this same package; that is
+    // this repo's canonical skills, not an external collision source. Explicit test/global dirs still count.
+    const defaultGlobalRoot = path.join(homedir(), ".agents", "skills");
+    const sameDefaultPackage = resolved === defaultGlobalRoot && isSamePackageSkillsRoot(resolved, skillsRoot);
+    if (skillsReal && (safeRealpath(resolved) === skillsReal || sameDefaultPackage)) continue;
     for (const entry of listEntries(resolved)) {
       if (!entry.isDirectory()) continue;
       const skillPath = path.join(resolved, entry.name, "SKILL.md");

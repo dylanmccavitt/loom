@@ -11,7 +11,7 @@ hand.
 
 ## Read first
 
-Read the repo contract `assembler` generated (domain glossary, the idea's Linear
+Read the repo envelope `assembler` generated (domain glossary, the idea's Linear
 project) so findings land in the right place and speak the repo's language.
 
 ## Science packs (cheapest pack that answers it)
@@ -20,7 +20,7 @@ Pick the lowest tier that can resolve the unknown, and stop the moment the
 decision is unblocked:
 
 1. **Red — local spike.** Read the code, run a small experiment, check the data.
-2. **Green — integration/contract.** Probe the seams: does the API, contract, or
+2. **Green — integration/envelope.** Probe the seams: does the API, envelope, or
    schema actually behave as assumed across the boundary?
 3. **Blue+ — external/prior-art.** Library docs, prior art, how comparable systems
    solve it. Reach here only when red and green can't answer it.
@@ -39,5 +39,5 @@ decision is overproduction. Hand the resolved decisions to `blueprint`.
 - Time-boxed: state the box up front; stop when the decision is unblocked or the
   box is spent (and report what's still open).
 - Every finding names the decision it unblocks.
-- Never slides into implementation — that is `robots`.
-- Records findings in Linear; reads the repo contract, hardcodes nothing.
+- Never slides into implementation — that is `roboports`.
+- Records findings in Linear; reads the repo envelope, hardcodes nothing.

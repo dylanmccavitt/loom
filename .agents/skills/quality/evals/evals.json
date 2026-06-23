@@ -28,7 +28,7 @@
     {
       "id": 5,
       "prompt": "Add a new export endpoint to the API.",
-      "expected_output": "Does NOT activate quality; routes to robots to implement the new tracked behavior end-to-end. quality only improves existing code in place without changing behavior, so adding a new endpoint is out of scope.",
+      "expected_output": "Does NOT activate quality; routes to roboports to implement the new tracked behavior end-to-end. quality only improves existing code in place without changing behavior, so adding a new endpoint is out of scope.",
       "files": []
     }
   ]

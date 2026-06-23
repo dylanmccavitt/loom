@@ -45,13 +45,13 @@ test("main-bus records the decision as an ADR/doc", () => {
   assert.ok(skill.includes("ADR/doc"), "must record decisions as an ADR/doc");
 });
 
-test("main-bus reads the repo contract and domain glossary", () => {
-  assert.match(skill, /repo contract/u);
+test("main-bus reads the repo envelope and domain glossary", () => {
+  assert.match(skill, /repo envelope/u);
   assert.match(skill, /domain glossary/u);
 });
 
-test("main-bus routes implementation to robots", () => {
-  assert.ok(skill.includes("`robots`"), "must route feature implementation to robots");
+test("main-bus routes implementation to roboports", () => {
+  assert.ok(skill.includes("`roboports`"), "must route feature implementation to roboports");
 });
 
 test("main-bus reuses the carried-over architecture guidance", () => {

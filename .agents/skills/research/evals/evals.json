@@ -19,7 +19,7 @@
     {
       "id": 4,
       "prompt": "Implement the sync layer.",
-      "expected_output": "Does NOT activate research; this is implementation work that routes to robots."
+      "expected_output": "Does NOT activate research; this is implementation work that routes to roboports."
     },
     {
       "id": 5,
