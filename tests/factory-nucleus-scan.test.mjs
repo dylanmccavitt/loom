@@ -332,6 +332,44 @@ test("factory scan ignores policy-bearing .loom.yml values", () => {
   });
 });
 
+test("factory scan treats quoted pointer policy keys as policy-bearing", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    ".loom.yml": `factory: test-factory\n"commands":\n  test: npm test\n`,
+  }, (root) => {
+    const scan = scanFactory({ root, generatedAt });
+
+    assert.deepEqual(scan.pointer, {
+      present: true,
+      status: "ignored-policy",
+      ignoredKeys: ["commands"],
+    });
+  });
+});
+
+test("factory scan does not follow symlinked .loom.yml pointers", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    ".loom.yml": "factory: inside\n",
+  }, (root) => {
+    const outside = mkdtempSync(path.join(tmpdir(), "factory-pointer-outside-"));
+    try {
+      writeFileSync(path.join(outside, ".loom.yml"), "factory: external\n");
+      rmSync(path.join(root, ".loom.yml"), { force: true });
+      symlinkSync(path.join(outside, ".loom.yml"), path.join(root, ".loom.yml"));
+
+      const result = runScan(root);
+      const scan = scanFactory({ root, generatedAt });
+
+      assert.match(result.stdout, /Pointer: unreadable/u);
+      assert.doesNotMatch(result.stdout, /external/u);
+      assert.deepEqual(scan.pointer, { present: true, status: "unreadable" });
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
+  });
+});
+
 test("factory scan skips content inspection unless explicitly requested", () => {
   const fakeToken = `ghp_${"12345678901234567890"}`;
   withTempRepo({

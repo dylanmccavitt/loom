@@ -117,29 +117,40 @@ function safeJsonFile(filePath) {
   }
 }
 
+function isInsidePath(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 function discoverPointer(root) {
   const pointerPath = path.join(root, ".loom.yml");
   if (!existsSync(pointerPath)) return { present: false };
   let text;
   try {
-    text = readFileSync(pointerPath, "utf8");
+    const stat = lstatSync(pointerPath);
+    const realRoot = realpathSync(root);
+    const realPointer = realpathSync(pointerPath);
+    if (!stat.isFile() || !isInsidePath(realRoot, realPointer)) return { present: true, status: "unreadable" };
+    text = readFileSync(realPointer, "utf8");
   } catch {
     return { present: true, status: "unreadable" };
   }
-  const entries = text
+  const topLevelLines = text
     .split(/\r?\n/u)
-    .filter((line) => line.trim() && !line.trim().startsWith("#") && line === line.trimStart())
-    .map((line) => line.trim().match(/^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$/u))
+    .filter((line) => line.trim() && !line.trim().startsWith("#") && line === line.trimStart());
+  const parsedEntries = topLevelLines.map((line) => line.trim().match(/^["']?([A-Za-z][A-Za-z0-9_-]*)["']?:(?:\s*(.*))?$/u));
+  const entries = parsedEntries
     .filter(Boolean)
     .map((match) => ({ key: match[1], value: match[2]?.replace(/^["']|["']$/gu, "") ?? "" }));
+  const malformedTopLevelCount = parsedEntries.filter((match) => !match).length;
   const policyKeys = entries
     .map((entry) => entry.key)
     .filter((key) => !POINTER_IDENTITY_KEYS.has(key));
-  if (policyKeys.length > 0) {
+  if (policyKeys.length > 0 || malformedTopLevelCount > 0) {
     return {
       present: true,
       status: "ignored-policy",
-      ignoredKeys: [...new Set(policyKeys)].map(redactSecrets),
+      ignoredKeys: [...new Set([...policyKeys, ...(malformedTopLevelCount > 0 ? ["unparsed"] : [])])].map(redactSecrets),
     };
   }
   const identity = entries.find((entry) => POINTER_IDENTITY_KEYS.has(entry.key) && entry.value.trim())?.value.trim();
@@ -297,10 +308,6 @@ function collectContentScanFiles(root) {
 }
 
 
-function isInsidePath(parent, child) {
-  const relative = path.relative(parent, child);
-  return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
-}
 
 function scanContentSignals(root) {
   const realRoot = realpathSync(root);
