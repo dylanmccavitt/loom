@@ -1,4 +1,0 @@
-interface:
-  display_name: "GH Issue Thread Chain"
-  short_description: "Run GitHub issues through agent threads"
-  default_prompt: "Use $gh-issue-thread-chain to start the next ready GitHub issue thread and carry it through PR review."

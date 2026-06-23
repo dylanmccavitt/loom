@@ -21,13 +21,13 @@ const ROUTE_RULES = [
     any: ["tdd", "test-driven", "red-green-refactor", "red green refactor"],
   },
   {
-    route: "to-issues",
-    reason: "Existing issue-slicing skill owns turning plans or PRDs into tickets.",
+    route: "ghosts",
+    reason: "Ghosts owns splitting a plan or PRD into dependency-ordered Linear issues.",
     any: ["split this prd", "implementation tickets", "break this plan into issues", "turn this into issues"],
   },
   {
-    route: "to-prd",
-    reason: "Existing PRD skill owns turning context into a PRD or spec.",
+    route: "blueprint",
+    reason: "Blueprint owns synthesizing a PRD or spec from existing context.",
     any: ["write a prd", "create a prd", "turn this into a prd", "make a spec", "create a spec"],
   },
   {
@@ -46,13 +46,13 @@ const ROUTE_RULES = [
     any: ["go ahead", "execute the plan", "proceed", "stop discussing and implement", "ship the current plan"],
   },
   {
-    route: "issue-execution",
-    reason: "Issue-execution owns running one tracked issue end-to-end through PR-ready closeout.",
+    route: "robots",
+    reason: "Robots owns running one tracked Linear issue end-to-end to a PR.",
     any: ["start issue", "continue issue", "ship issue", "ship one tracked issue", "work it to pr", "tracked issue end-to-end"],
   },
   {
-    route: "agent-recipes",
-    reason: "Agent-recipes owns turning short spawn intents into complete task assignments.",
+    route: "robots",
+    reason: "Robots owns the subagent fanout discipline when executing an issue.",
     any: ["spawn review", "spawn agents", "/spawn", "subagent recipe", "agent recipe", "parallel implementation"],
   },
   {
