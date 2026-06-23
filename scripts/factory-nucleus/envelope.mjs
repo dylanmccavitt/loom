@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -48,6 +48,12 @@ function factoryIdFromName(name) {
   const redacted = redactSecrets(name).replace(/\[REDACTED\]/gu, "redacted");
   const id = redacted.toLowerCase().replace(/[^a-z0-9-]+/gu, "-").replace(/^-+|-+$/gu, "");
   return id || "factory";
+}
+
+function explicitDefaultBranch(root) {
+  const remoteHead = gitOutput(root, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
+  if (remoteHead?.startsWith("origin/")) return remoteHead.slice("origin/".length);
+  return "main";
 }
 
 function yamlString(value) {
@@ -110,7 +116,7 @@ export function initEnvelope({ root = process.cwd(), homeDir = process.env.HOME 
       provider: "none",
     },
     delivery: {
-      defaultBranch: redactSecrets(scan.git.defaultBranch || "main"),
+      defaultBranch: redactSecrets(explicitDefaultBranch(repoRoot)),
       branchPrefix: "factory",
       autoMerge: false,
     },
@@ -142,6 +148,7 @@ export function initEnvelope({ root = process.cwd(), homeDir = process.env.HOME 
   const validation = validateEnvelopeYaml(yaml);
   if (!validation.ok) throw new Error(`invalid generated envelope: ${validation.errors.join("; ")}`);
   const state = resolveFactoryStatePaths({ homeDir, targetRepoPath: repoRoot, factoryId, generatedAt });
+  if (existsSync(state.envelope)) throw new Error("factory envelope already exists; refusing to overwrite local state");
   mkdirSync(path.dirname(state.envelope), { recursive: true });
   writeFileSync(state.envelope, yaml);
   return { envelope, path: state.envelope, repoRoot };

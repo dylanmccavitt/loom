@@ -81,6 +81,11 @@ test("factory init-envelope writes a schema-valid conservative local envelope", 
       assert.match(envelopeYaml, /- "npm test"/u);
       assert.match(envelopeYaml, /- "npm run lint"/u);
       assert.match(envelopeYaml, /name: "tracker-explicit"/u);
+      assert.throws(
+        () => initEnvelope({ root, homeDir: home, generatedAt }),
+        /already exists; refusing to overwrite/u,
+      );
+      assert.equal(readFileSync(result.path, "utf8"), envelopeYaml);
       assert.equal(existsSync(path.join(root, ".loom.yml")), false, "init must not write a target-repo pointer");
       assert.deepEqual(walkFiles(root), beforeRepo);
       assert.deepEqual([...walkFiles(home).keys()], [path.relative(home, result.path)]);
@@ -112,6 +117,25 @@ test("factory init-envelope CLI leaves tracker binding explicit and unset", () =
       assert.equal(validateEnvelopeYaml(envelopeYaml).ok, true);
       assert.match(envelopeYaml, /provider: none/u);
       assert.deepEqual(walkFiles(root), beforeRepo);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+});
+
+test("factory init-envelope does not persist current branch as default branch", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    ".github/workflows/ci.yml": "name: ci\n",
+  }, (root) => {
+    run("git", ["branch", "-m", "feature/init-envelope"], { cwd: root });
+    const home = mkdtempSync(path.join(tmpdir(), "factory-envelope-branch-home-"));
+    try {
+      const result = initEnvelope({ root, homeDir: home, generatedAt });
+      const envelopeYaml = readFileSync(result.path, "utf8");
+
+      assert.match(envelopeYaml, /defaultBranch: "main"/u);
+      assert.doesNotMatch(envelopeYaml, /feature\/init-envelope/u);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
