@@ -268,6 +268,25 @@ export function keyMatchesForbidden(key, forbidden) {
   return key === forbidden || key.startsWith(`${forbidden}.`) || key.endsWith(`.${forbidden}`);
 }
 
+// YAML frontmatter block of a Markdown document (the text between the leading `---` line and the
+// next `---`). Returns null when the document has no frontmatter, so frontmatter-less Markdown is
+// left unscanned and behaves exactly as before.
+export function markdownFrontmatter(content) {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/u.exec(content);
+  return match ? match[1] : null;
+}
+
+function forbiddenKeyFindings(label, keys, candidate) {
+  const findings = [];
+  const forbidden = new Set([...(candidate.forbiddenKeys ?? []), ...FORBIDDEN_GLOBAL_KEYS]);
+  for (const forbiddenKey of forbidden) {
+    for (const key of keys) {
+      if (keyMatchesForbidden(key, forbiddenKey)) findings.push(`${label}: forbidden key ${key}`);
+    }
+  }
+  return findings;
+}
+
 // --- candidate model -------------------------------------------------------------------------
 
 function collectFiles(root, current = root) {
@@ -300,7 +319,7 @@ function localOnlyPatterns(manifest, plan) {
 // Disposition is resolved from the resource manifest (the source of truth for ownership).
 // Precedence: local-only patterns first, then a home-anchored manifest resource for the same
 // harness, then a documented safe fallback of reference-only (reported, never auto-applied).
-function resolveDisposition(displayDestination, harness, manifest, localOnly) {
+export function resolveDisposition(displayDestination, harness, manifest, localOnly) {
   if (pathMatchesLocalOnly(displayDestination, localOnly)) return "local-only";
   const normalized = normalizePathText(displayDestination);
   for (const resource of manifest.resources ?? []) {
@@ -490,17 +509,22 @@ export function gateRenderedOutput(candidates, localOnly, tempRoot) {
         // Unparseable rendered config (e.g. malformed JSON) is a gate finding, never a throw.
         findings.push(`${label}: invalid ${kind.toUpperCase()} (${error.message})`);
       }
-      if (keys) {
-        const forbidden = new Set([...(candidate.forbiddenKeys ?? []), ...FORBIDDEN_GLOBAL_KEYS]);
-        for (const forbiddenKey of forbidden) {
-          for (const key of keys) {
-            if (keyMatchesForbidden(key, forbiddenKey)) {
-              findings.push(`${label}: forbidden key ${key}`);
-            }
-          }
-        }
-      }
+      if (keys) findings.push(...forbiddenKeyFindings(label, keys, candidate));
       if (kind === "toml") tomlFiles.push(safeJoin(tempRoot, candidate.renderedRelPath));
+    } else if (path.extname(candidate.renderedRelPath) === ".md") {
+      // Markdown components (SKILL.md, agents/*.md) can carry YAML frontmatter; forbidden-key-scan
+      // that frontmatter as YAML so model:/auth:/profile: keys never slip in. Frontmatter-less
+      // Markdown is left untouched.
+      const frontmatter = markdownFrontmatter(candidate.content);
+      if (frontmatter !== null) {
+        let keys = null;
+        try {
+          keys = configKeys(frontmatter, "yaml");
+        } catch (error) {
+          findings.push(`${label}: invalid frontmatter YAML (${error.message})`);
+        }
+        if (keys) findings.push(...forbiddenKeyFindings(label, keys, candidate));
+      }
     }
   }
   parseRenderedTomlWithPython(tomlFiles, findings);

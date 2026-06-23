@@ -2,20 +2,25 @@
 // Cross-harness plugin-bridge renderer (LOO-8 slice 2).
 //
 // Reuses the slice-1 render-to-write executor (scripts/render-harness-nucleus.mjs) verbatim for the
-// safety gate, marker manifest, and create-missing-only apply engine. This script only adds a new
-// candidate source: the tracked loom-nucleus plugin templates under docs/harness/plugin-bridge/.
+// safety gate, marker manifest, create-missing-only apply engine, and disposition resolution. This
+// script only adds a new candidate source: the tracked loom-nucleus plugin templates under
+// docs/harness/plugin-bridge/, plus three plugin-bridge-specific containment guards layered on top of
+// the engine gate before any write:
+//   - a destination allowlist: appliable writes may only ever land on the personal marketplace catalog
+//     or the co-located loom-nucleus plugin source; any other home track/adapt destination refuses.
+//   - template-path validation: template paths are checked (no absolute, no `..`, realpath under the
+//     bridge dir) BEFORE the template file is read.
+//   - symlink-escape detection: before writing, the live target's existing parent chain is realpathed
+//     and required to stay under the real allowed root (rejects a symlinked ~/.agents/plugins ancestor).
 //
 //   (default) dry-run  — render the plugin/marketplace/skill/agent/hook templates into an ephemeral
 //                        temp dir, gate the rendered bytes, and print a deterministic candidate
 //                        manifest. Zero writes to any live path.
-//   --write            — strict-manual apply. Refuses unless the dry-run render + gate pass clean,
-//                        then applies create-missing-only against the live HOME and records the
-//                        ~/.loom-harness/applied-manifest.json marker. Idempotent: a second run is a
-//                        clean no-op. Appliable writes only ever land on safe ~/ targets (the personal
-//                        marketplace ~/.agents/plugins/marketplace.json and the co-located loom-nucleus
-//                        plugin source); the gate rejects any cache/local-only/dangerous destination.
+//   --write            — strict-manual apply. Refuses unless the dry-run render + gate + containment
+//                        checks pass clean, then applies create-missing-only against the live HOME and
+//                        records the ~/.loom-harness/applied-manifest.json marker. Idempotent.
 
-import { readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -23,16 +28,11 @@ import {
   loadMarker,
   markerPath,
   renderAndGate,
+  resolveDisposition,
   resolveHomeRoot,
   saveMarkerIfChanged,
 } from "./render-harness-nucleus.mjs";
-import {
-  asArray,
-  globPatternToRegex,
-  isPatternPath,
-  normalizePathText,
-  pathMatchesLocalOnly,
-} from "./lib/harness-safety.mjs";
+import { asArray, normalizePathText } from "./lib/harness-safety.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -43,8 +43,13 @@ export const DEFAULTS = {
   bridgeDir: "docs/harness/plugin-bridge",
 };
 
+// The ONLY home destinations render-plugin-bridge may ever write: the personal marketplace catalog
+// and the co-located loom-nucleus plugin source. Everything else is reported; a track/adapt home
+// destination outside this root is a containment violation that refuses the write.
+export const PLUGIN_BRIDGE_ROOT = "~/.agents/plugins";
+
 const APPROVAL_POLICY =
-  "strict-manual (dry-run rendered diff, dangerous-key validation, live-file backup, marker-tracked create-missing-only)";
+  "strict-manual (dry-run rendered diff, dangerous-key validation, destination allowlist, symlink-escape guard, live-file backup, marker-tracked create-missing-only)";
 
 const USAGE = [
   "Usage: node scripts/render-plugin-bridge.mjs [options]",
@@ -115,28 +120,35 @@ export function localOnlyPatterns(manifest) {
   return [...patterns].sort();
 }
 
-// Faithful mirror of render-harness-nucleus.resolveDisposition (which is not exported): local-only
-// first, then the first non-local-only manifest resource for the disposition harness whose
-// home-anchored currentLivePath prefix/glob-matches the destination, then a reference-only fallback.
-export function resolveDisposition(destination, dispositionHarness, manifest, localOnly) {
-  if (pathMatchesLocalOnly(destination, localOnly)) return "local-only";
+// True only for the personal marketplace catalog or the co-located loom-nucleus plugin source.
+export function isAllowedPluginDestination(destination) {
   const normalized = normalizePathText(destination);
-  for (const resource of manifest.resources ?? []) {
-    if (dispositionHarness && resource.sourceHarness !== dispositionHarness) continue;
-    if (resource.disposition === "local-only") continue;
-    for (const livePath of asArray(resource.currentLivePath)) {
-      if (typeof livePath !== "string" || livePath.startsWith("repo:")) continue;
-      const pattern = normalizePathText(livePath);
-      if (!pattern) continue;
-      if (isPatternPath(pattern)) {
-        if (globPatternToRegex(pattern).test(normalized)) return resource.disposition;
-      } else {
-        const base = pattern.replace(/\/$/u, "");
-        if (normalized === base || normalized.startsWith(`${base}/`)) return resource.disposition;
-      }
-    }
+  if (normalized.split("/").includes("..")) return false;
+  return (
+    normalized === `${PLUGIN_BRIDGE_ROOT}/marketplace.json` ||
+    normalized.startsWith(`${PLUGIN_BRIDGE_ROOT}/loom-nucleus/`)
+  );
+}
+
+// Finding 3: validate a raw template path BEFORE reading it. Rejects absolute paths and `..`
+// segments (path.join would normalize `..` away and let a template escape the bridge dir), then
+// realpaths the result and requires it to stay under the real bridge dir (no symlink escape).
+function resolveTemplatePath(bridgeDir, templateRel) {
+  if (typeof templateRel !== "string" || templateRel.length === 0) {
+    throw new Error(`invalid template path: ${JSON.stringify(templateRel)}`);
   }
-  return "reference-only";
+  if (path.isAbsolute(templateRel)) {
+    throw new Error(`template path must be relative, not absolute: ${templateRel}`);
+  }
+  if (templateRel.split(/[\\/]+/u).includes("..")) {
+    throw new Error(`template path must not contain '..': ${templateRel}`);
+  }
+  const baseReal = realpathSync(bridgeDir);
+  const real = realpathSync(path.resolve(bridgeDir, templateRel));
+  if (real !== baseReal && !real.startsWith(baseReal + path.sep)) {
+    throw new Error(`template path escapes the bridge dir: ${templateRel}`);
+  }
+  return real;
 }
 
 export function buildPluginCandidates(plan, manifest, options) {
@@ -145,13 +157,17 @@ export function buildPluginCandidates(plan, manifest, options) {
   const candidates = [];
 
   for (const template of plan.templates ?? []) {
-    const source = path.join(bridgeDir, template.template);
-    const content = readFileSync(source, "utf8");
+    // Finding 3: validate the raw template path before the read.
+    const realSource = resolveTemplatePath(bridgeDir, template.template);
+    const content = readFileSync(realSource, "utf8");
+    const lexicalSource = path.join(bridgeDir, template.template);
     const disposition = resolveDisposition(template.destination, template.dispositionHarness, manifest, localOnly);
-    // Appliable = a tracked/adapted disposition AND a home-anchored destination. Project-scoped
-    // catalogs (the repo Claude marketplace) are rendered + gated + reported, never written to HOME.
+    // Finding 1: appliable requires a tracked/adapted disposition, a home-anchored destination, AND a
+    // destination inside the plugin-bridge write allowlist. Anything else is reported, never written.
     const appliable =
-      (disposition === "track" || disposition === "adapt") && template.destination.startsWith("~/");
+      (disposition === "track" || disposition === "adapt") &&
+      template.destination.startsWith("~/") &&
+      isAllowedPluginDestination(template.destination);
     candidates.push({
       id: `${template.dispositionHarness}:${template.id}:${template.destination}`,
       harness: template.dispositionHarness,
@@ -159,7 +175,7 @@ export function buildPluginCandidates(plan, manifest, options) {
       consumedBy: template.consumedBy,
       boundaryId: null,
       forbiddenKeys: template.forbiddenKeys ?? [],
-      source: path.relative(REPO_ROOT, source),
+      source: path.relative(REPO_ROOT, lexicalSource),
       content,
       renderedRelPath: path.join("plugin-bridge", template.template),
       destination: template.destination,
@@ -176,10 +192,95 @@ export function buildPluginCandidates(plan, manifest, options) {
   return { candidates, localOnly };
 }
 
-// Refuses unless a clean preflight + render + gate, then applies create-missing-only and records the
-// marker. Reuses the engine's renderAndGate + applyCandidates + saveMarkerIfChanged verbatim.
+// Finding 1: any home-anchored track/adapt candidate outside the write allowlist is a containment
+// violation (refuses the whole write), in addition to being marked non-appliable.
+export function containmentFindings(candidates) {
+  const findings = [];
+  for (const candidate of candidates) {
+    const writeDisposition = candidate.disposition === "track" || candidate.disposition === "adapt";
+    if (
+      candidate.destination.startsWith("~/") &&
+      writeDisposition &&
+      !isAllowedPluginDestination(candidate.destination)
+    ) {
+      findings.push(
+        `${candidate.id}: home destination ${candidate.destination} is outside the plugin-bridge write allowlist (${PLUGIN_BRIDGE_ROOT}/marketplace.json or ${PLUGIN_BRIDGE_ROOT}/loom-nucleus/**)`,
+      );
+    }
+  }
+  return [...new Set(findings)].sort();
+}
+
+// Deepest existing ancestor of `p` (p itself if it exists).
+function existingAncestor(p) {
+  let current = path.resolve(p);
+  while (!existsSync(current)) {
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return current;
+}
+
+// Finding 2: applyCandidates joins lexically, so a symlinked ~/.agents/plugins (or any ancestor up to
+// it) would redirect a create-missing write outside the boundary. Before writing, realpath every
+// existing component on the path down to the target and require each to stay within the real allowed
+// root (or be an ancestor of it, e.g. ~/.agents before ~/.agents/plugins is created).
+function symlinkEscapeReason(destination, homeRoot) {
+  if (!destination.startsWith("~/")) return null;
+  if (!existsSync(homeRoot)) return null;
+  const realHome = realpathSync(path.resolve(homeRoot));
+  const allowedRoot = path.join(realHome, ".agents", "plugins");
+  const livePath = path.join(realHome, destination.slice(2));
+  if (livePath !== allowedRoot && !livePath.startsWith(allowedRoot + path.sep)) {
+    return `${destination}: resolves outside the plugin-bridge root`;
+  }
+  let probe = livePath;
+  while (probe !== realHome) {
+    if (existsSync(probe)) {
+      const real = realpathSync(probe);
+      const underAllowed = real === allowedRoot || real.startsWith(allowedRoot + path.sep);
+      const ancestorOfAllowed = real === allowedRoot || allowedRoot.startsWith(real + path.sep);
+      if (!underAllowed && !ancestorOfAllowed) {
+        return `${destination}: a symlinked path component escapes the plugin-bridge root (${probe} -> ${real})`;
+      }
+      if (lstatSync(probe).isSymbolicLink() && !underAllowed) {
+        return `${destination}: symlinked parent ${probe} rejected`;
+      }
+    }
+    const parent = path.dirname(probe);
+    if (parent === probe) break;
+    probe = parent;
+  }
+  return null;
+}
+
+export function symlinkContainmentFindings(candidates, homeRoot) {
+  const findings = [];
+  for (const candidate of candidates) {
+    if (!candidate.appliable) continue;
+    const reason = symlinkEscapeReason(candidate.destination, homeRoot);
+    if (reason) findings.push(reason);
+  }
+  return [...new Set(findings)].sort();
+}
+
+// The full plugin-bridge gate: the engine's render + safety gate plus the plugin-bridge containment
+// checks (destination allowlist + symlink-escape). Any finding refuses the write.
+export function pluginBridgeGate(candidates, localOnly, homeRoot) {
+  return [
+    ...new Set([
+      ...containmentFindings(candidates),
+      ...symlinkContainmentFindings(candidates, homeRoot),
+      ...renderAndGate(candidates, localOnly),
+    ]),
+  ].sort();
+}
+
+// Refuses unless a clean render + gate + containment, then applies create-missing-only and records
+// the marker. Reuses the engine's applyCandidates + saveMarkerIfChanged verbatim.
 export function gateAndApply(candidates, localOnly, homeRoot, marker) {
-  const findings = renderAndGate(candidates, localOnly);
+  const findings = pluginBridgeGate(candidates, localOnly, homeRoot);
   if (findings.length > 0) {
     return { refused: true, findings, actions: [], backups: [], markerChanged: false };
   }
@@ -223,7 +324,7 @@ function printTextManifest(manifest, findings) {
   lines.push(`Approval policy: ${APPROVAL_POLICY}`);
   lines.push(`Rendered files: ${manifest.renderedFiles} (temp only; no live path written in dry-run)`);
   lines.push("");
-  lines.push("[appliable candidates] (track/adapt + home-anchored; eligible for --write create-missing-only)");
+  lines.push("[appliable candidates] (track/adapt + home-anchored + inside the write allowlist)");
   for (const entry of manifest.candidates.filter((candidate) => candidate.appliable)) {
     lines.push(`- ${entry.destination}`);
     lines.push(`  kind: ${entry.kind} (consumedBy: ${entry.consumedBy})`);
@@ -252,8 +353,8 @@ function printTextManifest(manifest, findings) {
   return lines.join("\n");
 }
 
-function runDryRun(plan, candidates, localOnly, options) {
-  const findings = renderAndGate(candidates, localOnly);
+function runDryRun(plan, candidates, localOnly, options, homeRoot) {
+  const findings = pluginBridgeGate(candidates, localOnly, homeRoot);
   const manifest = buildManifest(plan, candidates, localOnly, "dry-run");
   if (options.json) {
     console.log(JSON.stringify({ ...manifest, result: findings.length === 0 ? "pass" : "fail", findings }, null, 2));
@@ -269,7 +370,7 @@ function runWrite(plan, candidates, localOnly, options, homeRoot, marker) {
     if (options.json) {
       console.log(JSON.stringify({ mode: "write", result: "fail", refused: true, findings }, null, 2));
     } else {
-      console.error("Refusing to write: dry-run safety gate failed:");
+      console.error("Refusing to write: plugin-bridge safety gate failed:");
       for (const finding of findings) console.error(`- ${finding}`);
     }
     return 1;
@@ -305,8 +406,8 @@ function main() {
   const plan = readJson(repoPath(options.plan));
   const manifest = readJson(repoPath(options.manifest));
   const { candidates, localOnly } = buildPluginCandidates(plan, manifest, options);
-  if (!options.write) return runDryRun(plan, candidates, localOnly, options);
   const homeRoot = resolveHomeRoot(options);
+  if (!options.write) return runDryRun(plan, candidates, localOnly, options, homeRoot);
   const marker = loadMarker(homeRoot);
   return runWrite(plan, candidates, localOnly, options, homeRoot, marker);
 }

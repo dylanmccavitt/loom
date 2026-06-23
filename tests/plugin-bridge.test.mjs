@@ -1,16 +1,19 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-import { renderAndGate } from "../scripts/render-harness-nucleus.mjs";
+import { renderAndGate, resolveDisposition } from "../scripts/render-harness-nucleus.mjs";
 import {
   buildPluginCandidates,
+  containmentFindings,
   gateAndApply,
+  isAllowedPluginDestination,
   localOnlyPatterns,
-  resolveDisposition,
+  PLUGIN_BRIDGE_ROOT,
+  symlinkContainmentFindings,
 } from "../scripts/render-plugin-bridge.mjs";
 
 const repoFile = (rel) => new URL(`../${rel}`, import.meta.url).pathname;
@@ -301,4 +304,126 @@ test("verifier exits non-zero with a reason when a marker hash drifts", () => {
   const report = JSON.parse(result.stderr);
   assert.ok(report.reasons.some((reason) => reason.includes("hash drift")), result.stderr);
   rmSync(home, { recursive: true, force: true });
+});
+
+// --- security regressions (review findings) -----------------------------------------------------
+
+test("[finding 1] confines appliable writes to the plugin-bridge root and refuses outside destinations", () => {
+  assert.equal(isAllowedPluginDestination(`${PLUGIN_BRIDGE_ROOT}/marketplace.json`), true);
+  assert.equal(isAllowedPluginDestination(`${PLUGIN_BRIDGE_ROOT}/loom-nucleus/skills/x/SKILL.md`), true);
+  assert.equal(isAllowedPluginDestination("~/.codex/agents/omp-x.toml"), false);
+  assert.equal(isAllowedPluginDestination(`${PLUGIN_BRIDGE_ROOT}/loom-nucleus/../../.ssh/authorized_keys`), false);
+
+  // ~/.codex/agents resolves to `adapt` via the codex-agents-skills manifest row; without the
+  // allowlist this would be appliable. It must instead be non-appliable AND a containment finding.
+  const evilPlan = {
+    pluginName: "loom-nucleus",
+    pluginVersion: "0.0.0",
+    templates: [
+      {
+        id: "evil-codex-agent",
+        kind: "agent",
+        consumedBy: "codex",
+        template: "loom-nucleus/.codex-plugin/plugin.json",
+        destination: "~/.codex/agents/omp-evil.toml",
+        dispositionHarness: "codex",
+      },
+    ],
+  };
+  const { candidates } = buildPluginCandidates(evilPlan, manifest, {});
+  assert.equal(candidates[0].disposition, "adapt", "guard test requires a track/adapt resolution");
+  assert.equal(candidates[0].appliable, false, "a home destination outside the allowlist must not be appliable");
+  assert.ok(
+    containmentFindings(candidates).some((finding) => finding.includes("outside the plugin-bridge write allowlist")),
+    "containment finding expected",
+  );
+
+  const home = tempDir("plugin-bridge-allowlist-");
+  const result = gateAndApply(candidates, localOnlyPatterns(manifest), home, { schemaVersion: 1, generatedBy: "test", entries: {} });
+  assert.equal(result.refused, true, "the write must refuse a destination outside the allowlist");
+  assert.deepEqual(listFiles(home), [], "refused write must touch no file");
+  rmSync(home, { recursive: true, force: true });
+});
+
+test("[finding 2] refuses to write when a plugin-bridge ancestor is a symlink escaping HOME", () => {
+  const home = tempDir("plugin-bridge-symlink-home-");
+  const evil = tempDir("plugin-bridge-symlink-evil-");
+  symlinkSync(evil, path.join(home, ".agents")); // ~/.agents -> outside dir
+  const { candidates, localOnly } = buildPluginCandidates(plan, manifest, {});
+
+  assert.ok(symlinkContainmentFindings(candidates, home).length > 0, "symlinked ~/.agents must be flagged");
+
+  const result = gateAndApply(candidates, localOnly, home, { schemaVersion: 1, generatedBy: "test", entries: {} });
+  assert.equal(result.refused, true, "the write must refuse a symlinked plugin-bridge ancestor");
+  assert.deepEqual(listFiles(evil), [], "nothing may be written through the symlink");
+
+  rmSync(home, { recursive: true, force: true });
+  rmSync(evil, { recursive: true, force: true });
+});
+
+test("[finding 3] rejects a template path that escapes the bridge dir before reading", () => {
+  const traversalPlan = {
+    templates: [{
+      id: "evil",
+      kind: "skill",
+      consumedBy: "both",
+      template: "../resource-manifest.json",
+      destination: `${PLUGIN_BRIDGE_ROOT}/loom-nucleus/skills/x/SKILL.md`,
+      dispositionHarness: "codex",
+    }],
+  };
+  assert.throws(() => buildPluginCandidates(traversalPlan, manifest, {}), /must not contain '\.\.'/u);
+
+  const absolutePlan = {
+    templates: [{
+      id: "abs",
+      kind: "skill",
+      consumedBy: "both",
+      template: "/etc/passwd",
+      destination: `${PLUGIN_BRIDGE_ROOT}/loom-nucleus/skills/x/SKILL.md`,
+      dispositionHarness: "codex",
+    }],
+  };
+  assert.throws(() => buildPluginCandidates(absolutePlan, manifest, {}), /must be relative/u);
+});
+
+test("[finding 4] gate forbidden-key-scans Markdown YAML frontmatter but allows clean/frontmatter-less md", () => {
+  const mdCandidate = (content) => ({
+    id: `codex:md:${content.length}`,
+    harness: "codex",
+    boundaryId: null,
+    forbiddenKeys: [],
+    source: "test/agent.md",
+    content,
+    renderedRelPath: "plugin-bridge/loom-nucleus/agents/omp-evil.md",
+    destination: "~/.agents/plugins/loom-nucleus/agents/omp-evil.md",
+    disposition: "adapt",
+    operation: "create-file",
+    appliable: true,
+  });
+  const withModel = renderAndGate([mdCandidate("---\nname: omp-evil\nmodel: gpt-4o\n---\n# body\n")], []);
+  assert.ok(withModel.some((finding) => finding.includes("forbidden key model")), withModel.join("\n"));
+  const withAuth = renderAndGate([mdCandidate("---\nname: omp-evil\nauth: required\n---\n# body\n")], []);
+  assert.ok(withAuth.some((finding) => finding.includes("forbidden key auth")), withAuth.join("\n"));
+  assert.deepEqual(
+    renderAndGate([mdCandidate("---\nname: omp-ok\ndescription: x\ntools: [Read, Grep]\n---\n# body\n")], []),
+    [],
+    "clean frontmatter must pass",
+  );
+  assert.deepEqual(
+    renderAndGate([mdCandidate("# just a heading\nno frontmatter here\n")], []),
+    [],
+    "frontmatter-less markdown must pass",
+  );
+});
+
+test("[finding 5] resolveDisposition is the engine's and always filters by harness", () => {
+  const localOnly = localOnlyPatterns(manifest);
+  assert.equal(resolveDisposition(`${PLUGIN_BRIDGE_ROOT}/marketplace.json`, "codex", manifest, localOnly), "adapt");
+  // A mismatched harness must not match the codex-owned row: the engine always filters by harness.
+  assert.equal(resolveDisposition(`${PLUGIN_BRIDGE_ROOT}/marketplace.json`, "claude", manifest, localOnly), "reference-only");
+  const { candidates } = buildPluginCandidates(plan, manifest, {});
+  const claudeMarket = candidates.find((candidate) => candidate.id.includes("claude-marketplace"));
+  assert.equal(claudeMarket.disposition, "reference-only");
+  assert.equal(claudeMarket.appliable, false);
 });
