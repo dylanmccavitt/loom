@@ -92,7 +92,6 @@ npm run check
 
 | Area | Command |
 | --- | --- |
-| Agent recipe skill | `node --test tests/agent-recipes-skill.test.mjs` |
 | Automation routing fixtures | `node --test tests/automation-routing.test.mjs` |
 | Automation workflow benchmark | `node --test tests/automation-workflow-benchmark.test.mjs` |
 | Claude adapter plan | `node --test tests/claude-adapter-plan.test.mjs` |
@@ -101,7 +100,6 @@ npm run check
 | Harness manifest | `node --test tests/harness-manifest.test.mjs` |
 | Harness safety gate | `node --test tests/harness-safety-gate.test.mjs` |
 | Install command | `node --test tests/install-command.test.mjs` |
-| Issue execution skill | `node --test tests/issue-execution-skill.test.mjs` |
 | OMP built-ins snapshot | `node --test tests/omp-builtins-snapshot.test.mjs` |
 | Render harness nucleus | `node --test tests/render-harness-nucleus.test.mjs` |
 | Runtime adapter | `node --test tests/runtime-adapter.test.mjs` |

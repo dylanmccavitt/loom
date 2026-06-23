@@ -14,11 +14,6 @@ supports two paths:
 - Audit the current agent thread from the visible transcript, terminal,
   files touched, command outputs, and proof gaps.
 
-Keep this skill separate from `session-tree-map`. Use `session-tree-map` when
-the requested output is a conversation tree or clickable session map. Use this
-skill when the requested output is a diagnostic workflow, report inspection, or
-workflow-quality debugging pass.
-
 ## Oracle Path
 
 When the user asks to mirror or verify `omp` `/debug`, use `omp` as the source of
@@ -116,8 +111,8 @@ specific fix for the next run.
 
 ## Guardrails
 
-- Do not modify `session-tree-map` or `project-structure-map` while using this
-  skill unless the user explicitly asks for that skill to change.
+- Do not modify other skills' files while using this skill unless the user
+  explicitly asks for that skill to change.
 - Treat `omp` report bundles as sensitive. Redact secrets, account ids, tokens,
   cookies, private prompts, and raw thinking text.
 - Prefer low-impact report dumps before CPU profiling or heap snapshots.

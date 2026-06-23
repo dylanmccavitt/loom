@@ -8,11 +8,10 @@
       "thread-control",
       "handoff",
       "tdd",
-      "to-issues",
-      "to-prd",
+      "ghosts",
+      "blueprint",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
@@ -24,26 +23,24 @@
     "forbiddenRoutes": [
       "diagnose",
       "tdd",
-      "to-issues",
-      "to-prd",
+      "ghosts",
+      "blueprint",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
     "input": "split this PRD into implementation tickets",
     "expectedRoutes": [
-      "to-issues"
+      "ghosts"
     ],
     "forbiddenRoutes": [
       "handoff",
       "diagnose",
       "tdd",
-      "to-prd",
+      "blueprint",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
@@ -56,11 +53,10 @@
       "computer-use",
       "handoff",
       "tdd",
-      "to-issues",
-      "to-prd",
+      "ghosts",
+      "blueprint",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
@@ -73,26 +69,24 @@
       "chrome-devtools",
       "handoff",
       "tdd",
-      "to-issues",
-      "to-prd",
+      "ghosts",
+      "blueprint",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
     "input": "write a PRD from this conversation",
     "expectedRoutes": [
-      "to-prd"
+      "blueprint"
     ],
     "forbiddenRoutes": [
       "handoff",
       "diagnose",
       "tdd",
-      "to-issues",
+      "ghosts",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
@@ -103,26 +97,24 @@
     "forbiddenRoutes": [
       "handoff",
       "diagnose",
-      "to-issues",
-      "to-prd",
+      "ghosts",
+      "blueprint",
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
     "input": "/spawn review agents",
     "expectedRoutes": [
-      "agent-recipes"
+      "robots"
     ],
     "forbiddenRoutes": [
       "handoff",
       "diagnose",
       "tdd",
-      "to-issues",
-      "to-prd",
-      "execute-plan",
-      "issue-execution"
+      "ghosts",
+      "blueprint",
+      "execute-plan"
     ]
   },
   {
@@ -134,36 +126,33 @@
       "handoff",
       "diagnose",
       "tdd",
-      "to-issues",
-      "to-prd",
-      "agent-recipes",
-      "issue-execution"
+      "ghosts",
+      "blueprint",
+      "robots"
     ]
   },
   {
     "input": "split the current plan into implementation tickets",
     "expectedRoutes": [
-      "to-issues"
+      "ghosts"
     ],
     "forbiddenRoutes": [
       "execute-plan",
-      "agent-recipes",
-      "issue-execution"
+      "robots"
     ]
   },
   {
     "input": "start issue 42 and work it to PR",
     "expectedRoutes": [
-      "issue-execution"
+      "robots"
     ],
     "forbiddenRoutes": [
       "handoff",
       "diagnose",
       "tdd",
-      "to-issues",
-      "to-prd",
-      "execute-plan",
-      "agent-recipes"
+      "ghosts",
+      "blueprint",
+      "execute-plan"
     ]
   }
 ]
