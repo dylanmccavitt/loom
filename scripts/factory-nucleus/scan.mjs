@@ -125,6 +125,28 @@ function isPointerIdentity(value) {
   return /^[A-Za-z0-9][A-Za-z0-9_-]*$/u.test(value);
 }
 
+function hasIndentedContent(lines, startIndex) {
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trim().startsWith("#")) continue;
+    if (line === line.trimStart()) return false;
+    return true;
+  }
+  return false;
+}
+
+function pointerBlockIdentityKeys(lines) {
+  const keys = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trim().startsWith("#") || line !== line.trimStart()) continue;
+    const match = line.trim().match(/^["']?([A-Za-z][A-Za-z0-9_-]*)["']?:(?:\s*(.*))?$/u);
+    if (!match || !POINTER_IDENTITY_KEYS.has(match[1]) || match[2]?.trim()) continue;
+    if (hasIndentedContent(lines, index)) keys.push(match[1]);
+  }
+  return keys;
+}
+
 
 function discoverPointer(root) {
   const pointerPath = path.join(root, ".loom.yml");
@@ -145,33 +167,37 @@ function discoverPointer(root) {
   } catch {
     return { present: true, status: "unreadable" };
   }
-  const topLevelLines = text
-    .split(/\r?\n/u)
+  const lines = text.split(/\r?\n/u);
+  const topLevelLines = lines
     .filter((line) => line.trim() && !line.trim().startsWith("#") && line === line.trimStart());
   const parsedEntries = topLevelLines.map((line) => line.trim().match(/^["']?([A-Za-z][A-Za-z0-9_-]*)["']?:(?:\s*(.*))?$/u));
   const entries = parsedEntries
     .filter(Boolean)
     .map((match) => ({ key: match[1], value: match[2]?.replace(/^["']|["']$/gu, "") ?? "" }));
   const malformedTopLevelCount = parsedEntries.filter((match) => !match).length;
+  const blockIdentityKeys = pointerBlockIdentityKeys(lines);
+  const identityEntries = entries.filter((entry) => POINTER_IDENTITY_KEYS.has(entry.key) && entry.value.trim());
+  const invalidIdentityKeys = identityEntries
+    .filter((entry) => !isPointerIdentity(entry.value.trim()))
+    .map((entry) => entry.key);
   const policyKeys = entries
     .map((entry) => entry.key)
     .filter((key) => !POINTER_IDENTITY_KEYS.has(key));
-  if (policyKeys.length > 0 || malformedTopLevelCount > 0) {
+  const ignoredKeys = [...new Set([
+    ...policyKeys,
+    ...invalidIdentityKeys,
+    ...blockIdentityKeys,
+    ...(malformedTopLevelCount > 0 ? ["unparsed"] : []),
+  ])];
+  if (ignoredKeys.length > 0) {
     return {
       present: true,
       status: "ignored-policy",
-      ignoredKeys: [...new Set([...policyKeys, ...(malformedTopLevelCount > 0 ? ["unparsed"] : [])])].map(redactSecrets),
+      ignoredKeys: ignoredKeys.map(redactSecrets),
     };
   }
-  const identity = entries.find((entry) => POINTER_IDENTITY_KEYS.has(entry.key) && entry.value.trim())?.value.trim();
+  const identity = identityEntries[0]?.value.trim();
   if (!identity) return { present: true, status: "missing-identity" };
-  if (!isPointerIdentity(identity)) {
-    return {
-      present: true,
-      status: "ignored-policy",
-      ignoredKeys: ["identity"],
-    };
-  }
   return {
     present: true,
     status: "valid",

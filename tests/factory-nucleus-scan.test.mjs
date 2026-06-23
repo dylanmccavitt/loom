@@ -352,7 +352,7 @@ test("factory scan rejects structured pointer identity values", () => {
   const privatePath = "/Users/alice/private";
   withTempRepo({
     "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
-    ".loom.yml": `factory: { id: test, repo: { root: ${privatePath} }, commands: { test: npm test } }\n`,
+    ".loom.yml": `id: safe\nfactory: { id: test, repo: { root: ${privatePath} }, commands: { test: npm test } }\n`,
   }, (root) => {
     const before = walkFiles(root);
     withScanSave(root, ({ home, result }) => {
@@ -365,16 +365,35 @@ test("factory scan rejects structured pointer identity values", () => {
       const savedText = readFileSync(state.scan, "utf8");
       const savedScan = JSON.parse(savedText);
 
-      assert.match(result.stdout, /Pointer: ignored policy-bearing \.loom\.yml \(identity\)/u);
+      assert.match(result.stdout, /Pointer: ignored policy-bearing \.loom\.yml \(factory\)/u);
       assert.doesNotMatch(result.stdout, new RegExp(privatePath.replaceAll("/", "\\/"), "u"));
       assert.doesNotMatch(savedText, new RegExp(privatePath.replaceAll("/", "\\/"), "u"));
+      assert.ok(savedScan.science.missingUnlocks.includes("factory envelope"));
       assert.deepEqual(savedScan.pointer, {
         present: true,
         status: "ignored-policy",
-        ignoredKeys: ["identity"],
+        ignoredKeys: ["factory"],
       });
     });
     assertNoUserFileWrites(root, before);
+  });
+});
+
+test("factory scan rejects block-valued pointer identity keys", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    ".loom.yml": "id: safe\nfactory:\n  commands:\n    test: npm test\n",
+  }, (root) => {
+    const result = runScan(root);
+    const scan = scanFactory({ root, generatedAt });
+
+    assert.match(result.stdout, /Pointer: ignored policy-bearing \.loom\.yml \(factory\)/u);
+    assert.deepEqual(scan.pointer, {
+      present: true,
+      status: "ignored-policy",
+      ignoredKeys: ["factory"],
+    });
+    assert.ok(scan.science.missingUnlocks.includes("factory envelope"));
   });
 });
 
