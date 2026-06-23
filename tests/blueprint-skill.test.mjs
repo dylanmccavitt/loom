@@ -23,9 +23,9 @@ test("blueprint spec requires acceptance criteria, non-goals, and a proof plan",
   assert.match(skill, /proof plan/iu);
 });
 
-test("blueprint specs in the repo domain glossary read from the contract", () => {
+test("blueprint specs in the repo domain glossary read from the envelope", () => {
   assert.match(skill, /domain glossary/u);
-  assert.match(skill, /read the contract/u);
+  assert.match(skill, /read the envelope/u);
 });
 
 test("blueprint publishes the spec as a Linear document via save_document", () => {

@@ -11,7 +11,7 @@ the gain, and stop when the next point of speed costs more than it returns.
 
 ## Read first
 
-Read the repo contract `assembler` generated for the build/run/profile commands;
+Read the repo envelope `assembler` generated for the build/run/profile commands;
 never hardcode them.
 
 ## Process

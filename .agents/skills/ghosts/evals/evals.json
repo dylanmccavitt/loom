@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Turn the offline-mode PRD into issues.",
-      "expected_output": "Activates ghosts: reads the repo contract and the blueprint PRD, splits the plan into tracer-bullet vertical slices (each cutting through every layer end-to-end and demoable on its own, preferring many thin slices), marks each HITL or AFK, sets dependencies, and publishes Linear issues/sub-issues with save_issue in dependency order (blockers first) with blocked-by relations, labels, project, milestone, and estimate from the contract. Does not implement and does not rescope the PRD.",
+      "expected_output": "Activates ghosts: reads the repo envelope and the blueprint PRD, splits the plan into tracer-bullet vertical slices (each cutting through every layer end-to-end and demoable on its own, preferring many thin slices), marks each HITL or AFK, sets dependencies, and publishes Linear issues/sub-issues with save_issue in dependency order (blockers first) with blocked-by relations, labels, project, milestone, and estimate from the envelope. Does not implement and does not rescope the PRD.",
       "files": []
     },
     {
@@ -22,13 +22,13 @@
     {
       "id": 4,
       "prompt": "Implement issue ABC-12.",
-      "expected_output": "Does NOT activate ghosts. Recognizes this as executing a single existing issue end-to-end and routes to the robots skill; ghosts stamps planned work but never implements.",
+      "expected_output": "Does NOT activate ghosts. Recognizes this as executing a single existing issue end-to-end and routes to the roboports skill; ghosts stamps planned work but never implements.",
       "files": []
     },
     {
       "id": 5,
       "prompt": "Sort and prioritize the open issues, mark what's ready to pick up.",
-      "expected_output": "Does NOT activate ghosts. This is prioritizing/state-triage of issues that already exist, which routes to the dispatch skill rather than stamping new ghosts.",
+      "expected_output": "Does NOT activate ghosts. This is prioritizing/state-triage of issues that already exist, which routes to the inserter skill rather than stamping new ghosts.",
       "files": []
     }
   ]

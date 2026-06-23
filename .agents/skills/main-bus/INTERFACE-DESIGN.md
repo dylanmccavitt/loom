@@ -30,7 +30,7 @@ and a distinct design constraint:
 - Agent 3: "Optimise for the most common consumer — make the default case trivial."
 - Agent 4 (if cross-seam): "Design around ports & adapters."
 
-Include both [LANGUAGE.md](LANGUAGE.md) vocabulary and the contract's domain
+Include both [LANGUAGE.md](LANGUAGE.md) vocabulary and the envelope's domain
 glossary in each brief so every design names things consistently with both the
 architecture language and the project's own words.
 

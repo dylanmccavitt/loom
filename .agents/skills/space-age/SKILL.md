@@ -23,18 +23,18 @@ gate/merge to `rocket-launch`.
   planet to planet. You promote the artifact that already passed — you carry it
   forward, you do not rebuild it at each stop.
 
-## Required reading: the repo contract
+## Required reading: the repo envelope
 
-Read the repo contract `assembler` generated before moving anything: the
+Read the repo envelope `assembler` generated before moving anything: the
 environment list and promotion path, each environment's commands/CI, the merge
 policy, and (for multi-repo work) the cross-repo dependency graph. Never hardcode
-environments, pipelines, or commands; read them from the contract. If it is
+environments, pipelines, or commands; read them from the envelope. If it is
 missing, route to `assembler` first.
 
 ## The promotion path
 
 Lay out the ordered hops between planets (e.g. staging → prod → edge) from the
-contract. The path is a DAG, not a single line when repos fan out: each hop
+envelope. The path is a DAG, not a single line when repos fan out: each hop
 carries the same built artifact forward to the next planet.
 
 ## Per-planet gates
@@ -53,14 +53,14 @@ that destination's gates before the artifact lands there:
 
 When a change spans repos/services, **cross-repo changes are dependency-ordered**:
 land each repo after the repos it depends on, so a dependent never ships against
-a contract that has not landed yet. Walk the dependency graph from the contract,
+an envelope that has not landed yet. Walk the dependency graph from the envelope,
 ship the base repos through `rocket-launch` first, and only then the dependents.
-Each repo still rides its own one-issue-one-branch-one-PR bridge via `robots`.
+Each repo still rides its own one-issue-one-branch-one-PR bridge via `roboports`.
 
 ## Routing
 
 - A single PR ship on one planet is `rocket-launch`, not this skill.
-- Implementing the feature itself is `robots`.
+- Implementing the feature itself is `roboports`.
 - This skill engages only when work crosses an environment or a repo boundary.
 
 ## Invariants
@@ -70,5 +70,5 @@ Each repo still rides its own one-issue-one-branch-one-PR bridge via `robots`.
 - Cross-repo changes are dependency-ordered; dependents land after what they
   depend on.
 - Reuses `rocket-launch` per hop rather than reinventing merge/gate logic.
-- Reads the repo contract for environments, pipelines, and commands; never
+- Reads the repo envelope for environments, pipelines, and commands; never
   hardcodes them.

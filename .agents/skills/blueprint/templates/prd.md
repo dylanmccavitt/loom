@@ -2,7 +2,7 @@
 
 > Synthesized from existing context by `blueprint`; no interview performed.
 > Published as a Linear document on the project `prospect` created.
-> Use the repo domain glossary from the `assembler` contract for every term below.
+> Use the repo domain glossary from the `assembler` envelope for every term below.
 
 ## Problem
 

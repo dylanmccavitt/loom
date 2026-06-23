@@ -40,13 +40,13 @@ test("space-age orders cross-repo changes by dependency", () => {
   assert.match(skill, /dependents land after/u);
 });
 
-test("space-age reads the repo contract for environments and never hardcodes them", () => {
-  assert.match(skill, /repo contract/u);
+test("space-age reads the repo envelope for environments and never hardcodes them", () => {
+  assert.match(skill, /repo envelope/u);
   assert.match(skill, /[Nn]ever hardcode/u);
 });
 
 test("space-age routes single-PR ships and feature work elsewhere", () => {
-  for (const route of ["rocket-launch", "robots"]) {
+  for (const route of ["rocket-launch", "roboports"]) {
     assert.ok(skill.includes(`\`${route}\``), `${route} route missing`);
   }
 });

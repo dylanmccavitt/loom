@@ -27,7 +27,7 @@ test("ghosts publishes to Linear in dependency order with blocked-by", () => {
   assert.match(skill, /Publish with `save_issue`, \*\*blockers first\*\*/u);
   assert.match(skill, /blockedBy/u);
   assert.match(skill, /parent/u);
-  assert.ok(skill.includes("repo contract"), "repo contract reference missing");
+  assert.ok(skill.includes("repo envelope"), "repo envelope reference missing");
 });
 
 test("ghosts does not implement and does not rescope the parent", () => {
@@ -36,8 +36,8 @@ test("ghosts does not implement and does not rescope the parent", () => {
   assert.match(skill, /Does not rescope the parent/u);
 });
 
-test("ghosts routes execution to robots", () => {
-  assert.ok(skill.includes("`robots`"), "robots route missing");
-  assert.match(skill, /is `robots`, not this skill/u);
+test("ghosts routes execution to roboports", () => {
+  assert.ok(skill.includes("`roboports`"), "roboports route missing");
+  assert.match(skill, /is `roboports`, not this skill/u);
   assert.ok(skill.includes("`blueprint`"), "blueprint source route missing");
 });

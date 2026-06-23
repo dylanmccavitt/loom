@@ -22,8 +22,8 @@ test("prospect creates the Linear home plus a brief", () => {
   assert.match(skill, /save_document/u);
 });
 
-test("prospect reads the assembler contract and never hardcodes the team", () => {
-  assert.match(skill, /read the repo contract/iu);
+test("prospect reads the assembler envelope and never hardcodes the team", () => {
+  assert.match(skill, /read the repo envelope/iu);
   assert.match(skill, /never hardcodes a team/u);
 });
 

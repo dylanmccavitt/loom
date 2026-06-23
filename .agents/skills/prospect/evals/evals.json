@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Kick off a new idea: offline mode for the editor. Get it captured as planning work.",
-      "expected_output": "Reads the repo contract, briefly frames the idea's intent and unknowns, creates the Linear home (initiative or project per the contract) plus an idea/brief document via save_initiative/save_project and save_document, returns the created ids/links, and hands off to research or blueprint. Does not implement and does not create issues.",
+      "expected_output": "Reads the repo envelope, briefly frames the idea's intent and unknowns, creates the Linear home (initiative or project per the envelope) plus an idea/brief document via save_initiative/save_project and save_document, returns the created ids/links, and hands off to research or blueprint. Does not implement and does not create issues.",
       "files": []
     },
     {
@@ -16,7 +16,7 @@
     {
       "id": 3,
       "prompt": "kick of a brand new initiaive for collaborative cursors",
-      "expected_output": "Activates despite the misspellings, reads the contract for the target team and initiative-vs-project choice, creates the Linear home plus a brief document, and returns the links. No issues are created and no implementation begins.",
+      "expected_output": "Activates despite the misspellings, reads the envelope for the target team and initiative-vs-project choice, creates the Linear home plus a brief document, and returns the links. No issues are created and no implementation begins.",
       "files": []
     },
     {

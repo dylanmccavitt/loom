@@ -1,6 +1,6 @@
 ---
 name: rocket-launch
-description: Ship a ready change off-planet by enforcing the launch gates, merging the PR, and letting the bridge close its Linear issue. Use when a change is ready to ship — merge the PR, run the review gate, and close out the Linear issue; not for opening a draft or work that is not ready (that stays with `robots`).
+description: Ship a ready change off-planet by enforcing the launch gates, merging the PR, and letting the bridge close its Linear issue. Use when a change is ready to ship — merge the PR, run the review gate, and close out the Linear issue; not for opening a draft or work that is not ready (that stays with `roboports`).
 ---
 
 # Rocket Launch
@@ -17,7 +17,7 @@ The branch name carries the Linear issue id and the PR's magic words auto-close 
 
 Before shipping, read:
 
-1. The repo contract `assembler` generated (Linear team/project/label map, commands, CI, merge policy). Do not hardcode commands, trackers, or merge style — read the contract. If it is missing, route to `assembler` first.
+1. The repo envelope `assembler` generated (Linear team/project/label map, commands, CI, merge policy). Do not hardcode commands, trackers, or merge style — read the envelope. If it is missing, route to `assembler` first.
 2. The Linear issue with its full acceptance criteria, and the PR (branch, diff, CI status, review threads).
 
 ## Launch gates
@@ -30,13 +30,13 @@ ALL gates must be green before merge. A single red gate blocks the launch.
 4. **CI** — GitHub CI is green on the PR head.
 5. **Minimal diff** — a `bus-first` pass over the diff: minimal, no stray abstraction, nothing the issue did not ask for.
 
-If any gate is red: stop, report which gate failed and why, and route the fix back to `robots`. Do not merge.
+If any gate is red: stop, report which gate failed and why, and route the fix back to `roboports`. Do not merge.
 
 ## Launch
 
 Once every gate is green:
 
-1. Merge the PR per the contract's merge policy.
+1. Merge the PR per the envelope's merge policy.
 2. Confirm the bridge closed the Linear issue (branch id + PR magic words). If it did not auto-close, repair the link rather than closing the issue by hand.
 3. Post a Linear status update (`save_status_update`) recording the ship: what merged, the gate outcomes, the proof, and the PR link.
 4. Leave a human-reviewable record: gates run and their results, the merge commit / PR link, and any follow-ups.
@@ -45,5 +45,5 @@ Once every gate is green:
 
 - Never merges with a red gate.
 - Never silently closes the issue: closeout goes through the bridge (merge) and the acceptance check, recorded in a Linear status update.
-- Ships only what is ready — an unready change, a draft, or unfinished work routes back to `robots`, never a forced merge.
+- Ships only what is ready — an unready change, a draft, or unfinished work routes back to `roboports`, never a forced merge.
 - Leaves a human-reviewable record of the gates and the merge.

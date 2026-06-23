@@ -12,7 +12,7 @@ have *vertically* (raise the tier of the unit), and *salvage* what is dead or
 duplicated — without changing what the code does.
 
 This skill is **behavior-preserving**: it adds no features, changes no outputs,
-and alters no contract. The existing tests stay green before and after. It does
+and alters no envelope. The existing tests stay green before and after. It does
 not edit or delete real code while being validated; during real work it upgrades
 or recycles one unit at a time against a green bar.
 
@@ -56,7 +56,7 @@ unreferenced before recycling it.
 
 ## Behavior-preserving checks
 
-Refactor against a green bar. Read the repo contract for the targeted checks, run
+Refactor against a green bar. Read the repo envelope for the targeted checks, run
 them before and after, and confirm identical behavior — same tests, same outputs.
 There is no new behavior to assert, so add no test that asserts new behavior;
 the existing tests must stay green. If a change needs to alter behavior, it is
@@ -71,8 +71,8 @@ not this skill.
   `main-bus` — it plans the bus; `quality` refactors units in place against the
   bus that already exists.
 - A genuine bug, failing check, or regression? That is `diagnose` (then
-  `robots`), not a behavior-preserving refactor.
-- Adding *new* behavior or a new endpoint? That is `robots` — `quality` changes
+  `roboports`), not a behavior-preserving refactor.
+- Adding *new* behavior or a new endpoint? That is `roboports` — `quality` changes
   no behavior.
 
 ## Invariants

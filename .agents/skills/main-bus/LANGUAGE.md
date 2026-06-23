@@ -3,7 +3,7 @@
 Shared vocabulary for every suggestion this skill makes. Use these terms exactly
 — don't substitute "component", "service", "API", or "boundary". Consistent
 language is the whole point. Name the *materials* (what flows on the lanes) with
-the repo contract's domain glossary; name the *structure* with the terms below.
+the repo envelope's domain glossary; name the *structure* with the terms below.
 
 ## Terms
 
