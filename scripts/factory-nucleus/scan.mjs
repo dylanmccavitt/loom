@@ -1,13 +1,28 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 import { resolveFactoryStatePaths, withArtifactMetadata } from "./schema.mjs";
 
-const USAGE = "Usage: node scripts/factory-nucleus/scan.mjs [--root <path>] [--save]";
+const USAGE = "Usage: node scripts/factory-nucleus/scan.mjs [--root <path>] [--save] [--content-scan]";
 const COMMAND_KINDS = Object.freeze(["build", "test", "lint"]);
+const CONTENT_SCAN_IGNORES = new Set([".git", ".github", ".agents", "node_modules", "dist", "build", "coverage", ".loom"]);
+const CONTENT_SCAN_EXTENSIONS = new Set([
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".ts",
+  ".tsx",
+  ".json",
+  ".md",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".txt",
+  ".env",
+]);
 const SECRET_ASSIGNMENT_PATTERN = /\b(api[_-]?key|token|secret|password|credential|private[_-]?key)\b\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{12,}["']?/giu;
 const SECRET_VALUE_PATTERNS = Object.freeze([
   /(^|[^A-Za-z0-9])(gh[pousr]_[A-Za-z0-9_]{12,})/gu,
@@ -64,7 +79,7 @@ function gitOutput(root, args) {
 }
 
 function readArgs(argv) {
-  const options = { root: process.cwd(), save: false };
+  const options = { root: process.cwd(), save: false, content: false };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--help" || arg === "-h") {
@@ -73,6 +88,10 @@ function readArgs(argv) {
     }
     if (arg === "--save") {
       options.save = true;
+      continue;
+    }
+    if (arg === "--content-scan") {
+      options.content = true;
       continue;
     }
     if (arg !== "--root") {
@@ -223,6 +242,68 @@ function computeScience({ stack, commands, dirty, protectedSurfaces, root }) {
   return { level, missingUnlocks };
 }
 
+function isContentScanFile(filePath) {
+  const name = path.basename(filePath);
+  if (name.startsWith(".env")) return true;
+  return CONTENT_SCAN_EXTENSIONS.has(path.extname(name));
+}
+
+function collectContentScanFiles(root) {
+  const result = git(root, ["ls-files", "-z"]);
+  if (result.status !== 0) return [];
+  return result.stdout
+    .split("\0")
+    .filter(Boolean)
+    .filter((relativePath) => !relativePath.split("/").some((segment) => CONTENT_SCAN_IGNORES.has(segment)))
+    .filter(isContentScanFile)
+    .map((relativePath) => path.join(root, relativePath));
+}
+
+
+function isInsidePath(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function scanContentSignals(root) {
+  const realRoot = realpathSync(root);
+  const signals = [];
+  let scannedFiles = 0;
+  let skippedFiles = 0;
+  for (const filePath of collectContentScanFiles(root).sort()) {
+    const relativePath = path.relative(root, filePath);
+    let stat;
+    let realFilePath;
+    try {
+      stat = lstatSync(filePath);
+      realFilePath = realpathSync(filePath);
+    } catch {
+      skippedFiles += 1;
+      continue;
+    }
+    if (!stat.isFile() || stat.size > 128 * 1024 || !isInsidePath(realRoot, realFilePath)) {
+      skippedFiles += 1;
+      continue;
+    }
+    scannedFiles += 1;
+    const content = readFileSync(realFilePath, "utf8");
+    if (redactSecrets(content) !== content) {
+      signals.push({
+        kind: "secret-like-content",
+        path: redactSecrets(relativePath),
+        redacted: true,
+      });
+    }
+  }
+  return {
+    enabled: true,
+    scannedFiles,
+    skippedFiles,
+    redactedSignals: signals,
+  };
+}
+
+
 export function redactSecrets(value) {
   let text = String(value);
   text = text.replace(SECRET_ASSIGNMENT_PATTERN, (_, key) => `${key}=[REDACTED]`);
@@ -242,7 +323,7 @@ function redactScanArtifact(value) {
 }
 
 
-export function scanFactory({ root = process.cwd(), generatedAt } = {}) {
+export function scanFactory({ root = process.cwd(), generatedAt, content = false } = {}) {
   const requestedRoot = path.resolve(root);
   const repoRoot = path.resolve(gitOutput(requestedRoot, ["rev-parse", "--show-toplevel"]) || requestedRoot);
   const packageJson = safeJsonFile(path.join(repoRoot, "package.json"));
@@ -273,6 +354,7 @@ export function scanFactory({ root = process.cwd(), generatedAt } = {}) {
     remoteApis: {
       called: false,
     },
+    content: content ? scanContentSignals(repoRoot) : { enabled: false },
   }, generatedAt);
 }
 
@@ -316,6 +398,14 @@ export function formatScanSummary(scan) {
   const modeLine = scan.localState.writes
     ? "Mode: scan-save (writes local scan state only; no target-repo writes)"
     : "Mode: zero-footprint (no target-repo or local-state writes)";
+  const contentLines = scan.content?.enabled
+    ? [
+      "Content signals:",
+      `  scanned files: ${scan.content.scannedFiles}`,
+      `  redacted secret-like signals: ${scan.content.redactedSignals.length}`,
+      ...scan.content.redactedSignals.map((signal) => `  - ${signal.path}: ${signal.kind} redacted`),
+    ]
+    : [];
 
   return redactSecrets([
     "Factory scan",
@@ -334,6 +424,7 @@ export function formatScanSummary(scan) {
     `Science level: ${scan.science.level}`,
     "Missing unlocks:",
     ...missingUnlockLines,
+    ...contentLines,
     "",
   ].join("\n"));
 }
@@ -344,7 +435,7 @@ export function main(argv = process.argv.slice(2)) {
     process.stdout.write(`${USAGE}\n`);
     return 0;
   }
-  let scan = scanFactory({ root: options.root });
+  let scan = scanFactory({ root: options.root, content: options.content });
   if (options.save) scan = saveScanState(scan, { root: options.root });
   process.stdout.write(formatScanSummary(scan));
   return 0;

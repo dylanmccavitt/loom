@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -79,6 +79,20 @@ function withScanSave(root, callback) {
   const home = mkdtempSync(path.join(tmpdir(), "factory-scan-save-home-"));
   try {
     const result = spawnSync(process.execPath, [factoryCli, "scan", "--root", root, "--save"], {
+      encoding: "utf8",
+      env: { ...process.env, HOME: home },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    callback({ home, result });
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+}
+
+function withFactoryScan(root, args, callback) {
+  const home = mkdtempSync(path.join(tmpdir(), "factory-scan-cli-home-"));
+  try {
+    const result = spawnSync(process.execPath, [factoryCli, "scan", "--root", root, ...args], {
       encoding: "utf8",
       env: { ...process.env, HOME: home },
     });
@@ -269,5 +283,137 @@ test("factory scan --save redacts secret-looking branch names in saved scan stat
       assert.equal(savedScan.git.currentBranch, "feature/key_[REDACTED]");
       assert.equal(savedScan.git.defaultBranch, "feature/key_[REDACTED]");
     });
+  });
+});
+
+test("factory scan skips content inspection unless explicitly requested", () => {
+  const fakeToken = `ghp_${"12345678901234567890"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    "src/secret.js": `const token = "${fakeToken}";\n`,
+  }, (root) => {
+    const before = walkFiles(root);
+    const result = runScan(root);
+    const scan = scanFactory({ root, generatedAt });
+
+    assert.equal(scan.content.enabled, false);
+    assert.doesNotMatch(result.stdout, /Content signals/u);
+    assert.doesNotMatch(result.stdout, new RegExp(fakeToken, "u"));
+    assertNoUserFileWrites(root, before);
+  });
+});
+
+test("factory scan --content-scan reports redacted content-derived signals", () => {
+  const fakeToken = `ghp_${"12345678901234567890"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    "src/secret.js": `const token = "${fakeToken}";\n`,
+  }, (root) => {
+    withFactoryScan(root, ["--content-scan"], ({ home, result }) => {
+      assert.deepEqual(readdirSync(home), [], "content scan without --save must not create local state files");
+      assert.match(result.stdout, /Content signals:/u);
+      assert.match(result.stdout, /redacted secret-like signals: 1/u);
+      assert.match(result.stdout, /src\/secret\.js: secret-like-content redacted/u);
+      assert.doesNotMatch(result.stdout, new RegExp(fakeToken, "u"));
+    });
+  });
+});
+
+test("factory scan --content-scan --save omits secret-looking values from saved state", () => {
+  const fakeToken = `ghp_${"12345678901234567890"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    "src/secret.js": `const token = "${fakeToken}";\n`,
+  }, (root) => {
+    const before = walkFiles(root);
+    withFactoryScan(root, ["--content-scan", "--save"], ({ home }) => {
+      const state = resolveFactoryStatePaths({
+        homeDir: home,
+        targetRepoPath: root,
+        factoryId: path.basename(root),
+        generatedAt,
+      });
+      const savedText = readFileSync(state.scan, "utf8");
+      const savedScan = JSON.parse(savedText);
+
+      assert.equal(existsSync(state.envelope), false, "content scan save must not create an envelope");
+      assert.doesNotMatch(savedText, new RegExp(fakeToken, "u"));
+      assert.equal(savedScan.content.enabled, true);
+      assert.equal(savedScan.content.redactedSignals.length, 1);
+      assert.equal(savedScan.content.redactedSignals[0].path, "src/secret.js");
+      assert.equal(savedScan.content.redactedSignals[0].redacted, true);
+    });
+    assertNoUserFileWrites(root, before);
+  });
+});
+
+test("factory scan --content-scan skips tracked files missing from the working tree", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    "src/deleted.js": "console.log('tracked then deleted');\n",
+  }, (root) => {
+    rmSync(path.join(root, "src/deleted.js"));
+    const before = walkFiles(root);
+    withFactoryScan(root, ["--content-scan"], ({ result }) => {
+      assert.match(result.stdout, /Content signals:/u);
+      assert.doesNotMatch(result.stdout, /ENOENT/u);
+    });
+    const scan = scanFactory({ root, content: true, generatedAt });
+    assert.equal(scan.content.skippedFiles, 1);
+    assertNoUserFileWrites(root, before);
+  });
+});
+
+test("factory scan --content-scan skips tracked symlinks before reading content", () => {
+  const fakeToken = `ghp_${"12345678901234567890"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+  }, (root) => {
+    const outside = mkdtempSync(path.join(tmpdir(), "factory-content-outside-"));
+    try {
+      const outsideSecret = path.join(outside, "credentials.js");
+      writeFileSync(outsideSecret, `const token = "${fakeToken}";\n`);
+      mkdirSync(path.join(root, "src"), { recursive: true });
+      symlinkSync(outsideSecret, path.join(root, "src/config.js"));
+      run("git", ["add", "src/config.js"], { cwd: root });
+      run("git", ["-c", "user.email=factory@example.invalid", "-c", "user.name=Factory Test", "commit", "-q", "-m", "add symlink"], { cwd: root });
+
+      withFactoryScan(root, ["--content-scan"], ({ result }) => {
+        assert.match(result.stdout, /Content signals:/u);
+        assert.match(result.stdout, /redacted secret-like signals: 0/u);
+        assert.doesNotMatch(result.stdout, new RegExp(fakeToken, "u"));
+      });
+      const scan = scanFactory({ root, content: true, generatedAt });
+      assert.equal(scan.content.skippedFiles, 1);
+      assert.equal(scan.content.redactedSignals.length, 0);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
+  });
+});
+
+test("factory scan --content-scan skips tracked paths through symlinked ancestors", () => {
+  const fakeToken = `ghp_${"12345678901234567890"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    "src/config.js": "console.log('inside repo');\n",
+  }, (root) => {
+    const outside = mkdtempSync(path.join(tmpdir(), "factory-content-ancestor-"));
+    try {
+      writeFileSync(path.join(outside, "config.js"), `const token = "${fakeToken}";\n`);
+      rmSync(path.join(root, "src"), { recursive: true, force: true });
+      symlinkSync(outside, path.join(root, "src"));
+
+      withFactoryScan(root, ["--content-scan"], ({ result }) => {
+        assert.match(result.stdout, /Content signals:/u);
+        assert.match(result.stdout, /redacted secret-like signals: 0/u);
+        assert.doesNotMatch(result.stdout, new RegExp(fakeToken, "u"));
+      });
+      const scan = scanFactory({ root, content: true, generatedAt });
+      assert.equal(scan.content.skippedFiles, 1);
+      assert.equal(scan.content.redactedSignals.length, 0);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
   });
 });
