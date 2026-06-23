@@ -180,6 +180,7 @@ test("factory bind-tracker --provider github records the detected source repo br
     const home = mkdtempSync(path.join(tmpdir(), "factory-bind-github-home-"));
     try {
       initEnvelope({ root, homeDir: home, generatedAt });
+      const beforeRepo = walkFiles(root);
       const result = spawnSync(
         process.execPath,
         [factoryCli, "bind-tracker", "--root", root, "--provider", "github"],
@@ -194,6 +195,7 @@ test("factory bind-tracker --provider github records the detected source repo br
       assert.match(envelopeYaml, /provider: github/u);
       assert.match(envelopeYaml, /repo: "acme\/widgets"/u);
       assert.doesNotMatch(envelopeYaml, /team:/u);
+      assert.deepEqual(walkFiles(root), beforeRepo);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
@@ -243,4 +245,35 @@ test("factory bind-tracker before init-envelope reports a missing envelope", () 
       rmSync(home, { recursive: true, force: true });
     }
   });
+});
+
+test("factory bind-tracker rejects invalid binds and leaves the envelope unchanged", () => {
+  const cases = [
+    { args: ["--provider", "bitbucket"], message: /unknown tracker provider: bitbucket/u },
+    { args: ["--provider", "linear"], message: /linear bind requires --team and --project/u },
+    { args: ["--provider", "github"], message: /could not detect a GitHub source repo/u },
+  ];
+  for (const { args, message } of cases) {
+    withTempRepo({
+      "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    }, (root) => {
+      const home = mkdtempSync(path.join(tmpdir(), "factory-bind-reject-home-"));
+      try {
+        initEnvelope({ root, homeDir: home, generatedAt });
+        const state = resolveFactoryStatePaths({ homeDir: home, targetRepoPath: root, factoryId: path.basename(root) });
+        const before = readFileSync(state.envelope, "utf8");
+        const result = spawnSync(
+          process.execPath,
+          [factoryCli, "bind-tracker", "--root", root, ...args],
+          { encoding: "utf8", env: { ...process.env, HOME: home } },
+        );
+        assert.equal(result.status, 1, result.stdout);
+        assert.match(result.stderr, message);
+        assert.equal(readFileSync(state.envelope, "utf8"), before);
+        assert.match(before, /provider: none/u);
+      } finally {
+        rmSync(home, { recursive: true, force: true });
+      }
+    });
+  }
 });
