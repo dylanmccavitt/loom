@@ -153,6 +153,19 @@ function hasIndentedContent(lines, startIndex) {
   return false;
 }
 
+function hasLeadingIndentedContent(lines) {
+  let sawTopLevel = false;
+  for (const line of lines) {
+    if (!line.trim() || line.trim().startsWith("#")) continue;
+    if (line === line.trimStart()) {
+      sawTopLevel = true;
+      continue;
+    }
+    if (!sawTopLevel) return true;
+  }
+  return false;
+}
+
 function pointerBlockIdentityKeys(lines) {
   const keys = [];
   for (let index = 0; index < lines.length; index += 1) {
@@ -190,7 +203,7 @@ function discoverPointer(root) {
     .filter((line) => line.trim() && !line.trim().startsWith("#") && line === line.trimStart());
   const parsedEntries = topLevelLines.map(parsePointerEntry);
   const entries = parsedEntries.filter(Boolean);
-  const malformedTopLevelCount = parsedEntries.filter((match) => !match).length;
+  const malformedTopLevelCount = parsedEntries.filter((match) => !match).length + (hasLeadingIndentedContent(lines) ? 1 : 0);
   const blockIdentityKeys = pointerBlockIdentityKeys(lines);
   const identityEntries = entries.filter((entry) => POINTER_IDENTITY_KEYS.has(entry.key) && entry.value.trim());
   const invalidIdentityKeys = identityEntries

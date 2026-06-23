@@ -368,6 +368,24 @@ test("factory scan rejects unbalanced pointer quotes", () => {
   }
 });
 
+test("factory scan rejects leading indented pointer content", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    ".loom.yml": "  commands:\n    test: npm test\nfactory: prod\n",
+  }, (root) => {
+    const result = runScan(root);
+    const scan = scanFactory({ root, generatedAt });
+
+    assert.match(result.stdout, /Pointer: ignored policy-bearing \.loom\.yml \(unparsed\)/u);
+    assert.deepEqual(scan.pointer, {
+      present: true,
+      status: "ignored-policy",
+      ignoredKeys: ["unparsed"],
+    });
+    assert.ok(scan.science.missingUnlocks.includes("factory envelope"));
+  });
+});
+
 test("factory scan rejects structured pointer identity values", () => {
   const privatePath = "/Users/alice/private";
   withTempRepo({
