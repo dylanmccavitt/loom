@@ -93,8 +93,10 @@ test("github plans the close-keyword branch bridge and verifies closeout", () =>
   });
 
   assert.equal(verifyCloseout({ ghostId: "#2", branch: bridge.branch, prBody: `${bridge.closingKeyword}\n`, merged: true }).closed, true);
-  // Number boundary: #2 must not match issue #20.
-  assert.equal(verifyCloseout({ ghostId: "#2", branch: "acme/20-other", prBody: "Closes #20", merged: true }).closed, false);
+  // Number boundary: #2 must not match issue #20 (branch side; body keyword is valid).
+  assert.equal(verifyCloseout({ ghostId: "#2", branch: "acme/20-other", prBody: bridge.closingKeyword, merged: true }).closed, false);
+  // Number boundary: #2 must not match issue #20 (body side; branch is valid).
+  assert.equal(verifyCloseout({ ghostId: "#2", branch: bridge.branch, prBody: "Closes #20", merged: true }).closed, false);
   assert.equal(verifyCloseout({ ghostId: "#2", branch: bridge.branch, prBody: "no keyword", merged: true }).closed, false);
   assert.equal(verifyCloseout({ ghostId: "#2", branch: bridge.branch, prBody: bridge.closingKeyword, merged: false }).closed, false);
 });
