@@ -9,10 +9,10 @@ const USAGE = "Usage: node scripts/factory-nucleus/scan.mjs [--root <path>]";
 const COMMAND_KINDS = Object.freeze(["build", "test", "lint"]);
 const SECRET_ASSIGNMENT_PATTERN = /\b(api[_-]?key|token|secret|password|credential|private[_-]?key)\b\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{12,}["']?/giu;
 const SECRET_VALUE_PATTERNS = Object.freeze([
-  /\bgh[pousr]_[A-Za-z0-9_]{12,}\b/gu,
-  /\bgithub_pat_[A-Za-z0-9_]{12,}\b/gu,
-  /\bsk-[A-Za-z0-9_-]{12,}\b/gu,
-  /\bAKIA[0-9A-Z]{8,}\b/gu,
+  /gh[pousr]_[A-Za-z0-9_]{12,}/gu,
+  /github_pat_[A-Za-z0-9_]{12,}/gu,
+  /sk-[A-Za-z0-9_-]{12,}/gu,
+  /AKIA[0-9A-Z]{8,}/gu,
 ]);
 
 const PROTECTED_SURFACES = Object.freeze([
