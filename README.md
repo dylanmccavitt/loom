@@ -104,6 +104,7 @@ npm run check
 | Issue execution skill | `node --test tests/issue-execution-skill.test.mjs` |
 | OMP built-ins snapshot | `node --test tests/omp-builtins-snapshot.test.mjs` |
 | Render harness nucleus | `node --test tests/render-harness-nucleus.test.mjs` |
+| Runtime adapter | `node --test tests/runtime-adapter.test.mjs` |
 | Skill validation | `node --test tests/skill-validation.test.mjs` |
 | Thread-control skill | `node --test tests/thread-control-skill.test.mjs` |
 
