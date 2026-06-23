@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -259,25 +259,34 @@ function collectContentScanFiles(root) {
     .map((relativePath) => path.join(root, relativePath));
 }
 
+
+function isInsidePath(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 function scanContentSignals(root) {
+  const realRoot = realpathSync(root);
   const signals = [];
   let scannedFiles = 0;
   let skippedFiles = 0;
   for (const filePath of collectContentScanFiles(root).sort()) {
     const relativePath = path.relative(root, filePath);
     let stat;
+    let realFilePath;
     try {
       stat = lstatSync(filePath);
+      realFilePath = realpathSync(filePath);
     } catch {
       skippedFiles += 1;
       continue;
     }
-    if (!stat.isFile() || stat.size > 128 * 1024) {
+    if (!stat.isFile() || stat.size > 128 * 1024 || !isInsidePath(realRoot, realFilePath)) {
       skippedFiles += 1;
       continue;
     }
     scannedFiles += 1;
-    const content = readFileSync(filePath, "utf8");
+    const content = readFileSync(realFilePath, "utf8");
     if (redactSecrets(content) !== content) {
       signals.push({
         kind: "secret-like-content",

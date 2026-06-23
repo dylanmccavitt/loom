@@ -391,3 +391,29 @@ test("factory scan --content-scan skips tracked symlinks before reading content"
     }
   });
 });
+
+test("factory scan --content-scan skips tracked paths through symlinked ancestors", () => {
+  const fakeToken = `ghp_${"12345678901234567890"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    "src/config.js": "console.log('inside repo');\n",
+  }, (root) => {
+    const outside = mkdtempSync(path.join(tmpdir(), "factory-content-ancestor-"));
+    try {
+      writeFileSync(path.join(outside, "config.js"), `const token = "${fakeToken}";\n`);
+      rmSync(path.join(root, "src"), { recursive: true, force: true });
+      symlinkSync(outside, path.join(root, "src"));
+
+      withFactoryScan(root, ["--content-scan"], ({ result }) => {
+        assert.match(result.stdout, /Content signals:/u);
+        assert.match(result.stdout, /redacted secret-like signals: 0/u);
+        assert.doesNotMatch(result.stdout, new RegExp(fakeToken, "u"));
+      });
+      const scan = scanFactory({ root, content: true, generatedAt });
+      assert.equal(scan.content.skippedFiles, 1);
+      assert.equal(scan.content.redactedSignals.length, 0);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
+  });
+});
