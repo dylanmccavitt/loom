@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "generatedForIssue": "LOO-8",
+  "pluginName": "loom-nucleus",
+  "pluginVersion": "0.1.0",
+  "summary": "Cross-harness plugin bridge: install the loom-nucleus skill/adapted-agent/hook nucleus into the Codex and Claude plugin + marketplace surfaces through portable, co-located dual-manifest plugin source, reusing the render -> gate -> apply executor (scripts/render-harness-nucleus.mjs) for every write.",
+  "sourceInputs": [
+    "docs/harness/plugin-bridge-design.md",
+    "docs/harness/omp-builtins/portability-matrix.json",
+    "docs/harness/omp-builtins/source.json",
+    "docs/harness/codex-adapter-plan/adapter-plan.json",
+    "docs/harness/claude-adapter-plan.md",
+    "docs/harness/resource-manifest.json"
+  ],
+  "officialDocs": [
+    { "harness": "codex", "topic": "Build plugins", "url": "https://developers.openai.com/codex/plugins/build" },
+    { "harness": "codex", "topic": "Plugins", "url": "https://developers.openai.com/codex/plugins" },
+    { "harness": "codex", "topic": "Hooks", "url": "https://developers.openai.com/codex/hooks" },
+    { "harness": "claude", "topic": "Create plugins", "url": "https://code.claude.com/docs/en/plugins" },
+    { "harness": "claude", "topic": "Plugin marketplaces", "url": "https://code.claude.com/docs/en/plugin-marketplaces" },
+    { "harness": "claude", "topic": "Hooks reference", "url": "https://code.claude.com/docs/en/hooks" }
+  ],
+  "decisions": {
+    "dualManifest": "YES. One component root (loom-nucleus/) carries sibling .codex-plugin/plugin.json and .claude-plugin/plugin.json over shared skills/, agents/, hooks/ (design 2.1). Codex consumes skills + hooks; Claude additionally consumes agents.",
+    "writeBoth": "Write BOTH the marketplace catalog AND the loom-nucleus plugin source to a live home path (resolved open question 6).",
+    "marketplaceRoot": "~/.agents/plugins",
+    "pluginSourceRoot": "~/.agents/plugins/loom-nucleus",
+    "sourcePathReconciliation": "Plugin source is co-located UNDER the personal marketplace root, so the Codex marketplace source.path stays './loom-nucleus' (./-prefixed and inside the marketplace root, reconciling the Codex 'keep source.path inside that root' guidance with the 'can point elsewhere' note from design 3.4). The design also names ~/.codex/plugins/<name>/ as a non-cache personal source dir; co-locating under ~/.agents/plugins keeps one cross-harness root and a relative source path.",
+    "claudeMarketplace": "Repo-scoped .claude-plugin/marketplace.json is tracked in-repo (also read by Codex as a legacy-compatible repo marketplace) and is rendered + gated + reported, never written to HOME.",
+    "versionPinning": "Pin an explicit plugin version (0.1.0) rather than relying on commit-SHA versioning (resolved open question 7).",
+    "stopHookTrust": "Ship the Stop verifier dormant. Document a one-time manual /hooks trust step; AFK auto-arming of the verifier is deferred (resolved open questions 8: option (a)).",
+    "stopHookSemantics": "The Stop verifier reports (non-zero exit + structured reason) and does not block turn completion (design 4.3 default).",
+    "neverWrite": [
+      "~/.codex/plugins/cache/",
+      "~/.claude/plugins/cache/",
+      "~/.claude/plugins/data/",
+      "~/.codex/auth.json",
+      "~/.claude/settings.local.json"
+    ]
+  },
+  "componentRoot": "loom-nucleus",
+  "templates": [
+    {
+      "id": "codex-plugin-manifest",
+      "kind": "plugin-manifest",
+      "consumedBy": "codex",
+      "template": "loom-nucleus/.codex-plugin/plugin.json",
+      "destination": "~/.agents/plugins/loom-nucleus/.codex-plugin/plugin.json",
+      "dispositionHarness": "codex",
+      "notes": "Codex identity. No agents pointer: Codex custom agents are TOML config, not plugin components (design 1.1)."
+    },
+    {
+      "id": "claude-plugin-manifest",
+      "kind": "plugin-manifest",
+      "consumedBy": "claude",
+      "template": "loom-nucleus/.claude-plugin/plugin.json",
+      "destination": "~/.agents/plugins/loom-nucleus/.claude-plugin/plugin.json",
+      "dispositionHarness": "codex",
+      "notes": "Claude identity. Bundles agents/ via the agents pointer (design 1.2)."
+    },
+    {
+      "id": "codex-marketplace",
+      "kind": "marketplace",
+      "consumedBy": "codex",
+      "template": ".agents/plugins/marketplace.json",
+      "destination": "~/.agents/plugins/marketplace.json",
+      "dispositionHarness": "codex",
+      "notes": "Codex-native personal marketplace. Entry carries source/policy/category; source.path './loom-nucleus' stays inside the marketplace root."
+    },
+    {
+      "id": "claude-marketplace",
+      "kind": "marketplace",
+      "consumedBy": "claude",
+      "template": ".claude-plugin/marketplace.json",
+      "destination": ".claude-plugin/marketplace.json",
+      "dispositionHarness": "claude",
+      "notes": "Repo-scoped Claude marketplace (also read by Codex). Rendered + gated + reported; not a HOME write."
+    },
+    {
+      "id": "skill-omp-btw",
+      "kind": "skill",
+      "consumedBy": "both",
+      "template": "loom-nucleus/skills/omp-btw/SKILL.md",
+      "destination": "~/.agents/plugins/loom-nucleus/skills/omp-btw/SKILL.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "skill-omp-complaint-to-rule",
+      "kind": "skill",
+      "consumedBy": "both",
+      "template": "loom-nucleus/skills/omp-complaint-to-rule/SKILL.md",
+      "destination": "~/.agents/plugins/loom-nucleus/skills/omp-complaint-to-rule/SKILL.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "skill-omp-guided-goal",
+      "kind": "skill",
+      "consumedBy": "both",
+      "template": "loom-nucleus/skills/omp-guided-goal/SKILL.md",
+      "destination": "~/.agents/plugins/loom-nucleus/skills/omp-guided-goal/SKILL.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "skill-omp-handoff",
+      "kind": "skill",
+      "consumedBy": "both",
+      "template": "loom-nucleus/skills/omp-handoff/SKILL.md",
+      "destination": "~/.agents/plugins/loom-nucleus/skills/omp-handoff/SKILL.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "skill-omp-plan",
+      "kind": "skill",
+      "consumedBy": "both",
+      "template": "loom-nucleus/skills/omp-plan/SKILL.md",
+      "destination": "~/.agents/plugins/loom-nucleus/skills/omp-plan/SKILL.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "skill-omp-tangent",
+      "kind": "skill",
+      "consumedBy": "both",
+      "template": "loom-nucleus/skills/omp-tangent/SKILL.md",
+      "destination": "~/.agents/plugins/loom-nucleus/skills/omp-tangent/SKILL.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "agent-omp-designer",
+      "kind": "agent",
+      "consumedBy": "claude",
+      "template": "loom-nucleus/agents/omp-designer.md",
+      "destination": "~/.agents/plugins/loom-nucleus/agents/omp-designer.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "agent-omp-explorer",
+      "kind": "agent",
+      "consumedBy": "claude",
+      "template": "loom-nucleus/agents/omp-explorer.md",
+      "destination": "~/.agents/plugins/loom-nucleus/agents/omp-explorer.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "agent-omp-librarian",
+      "kind": "agent",
+      "consumedBy": "claude",
+      "template": "loom-nucleus/agents/omp-librarian.md",
+      "destination": "~/.agents/plugins/loom-nucleus/agents/omp-librarian.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "agent-omp-planner",
+      "kind": "agent",
+      "consumedBy": "claude",
+      "template": "loom-nucleus/agents/omp-planner.md",
+      "destination": "~/.agents/plugins/loom-nucleus/agents/omp-planner.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "agent-omp-reviewer",
+      "kind": "agent",
+      "consumedBy": "claude",
+      "template": "loom-nucleus/agents/omp-reviewer.md",
+      "destination": "~/.agents/plugins/loom-nucleus/agents/omp-reviewer.md",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "hooks",
+      "kind": "hook",
+      "consumedBy": "both",
+      "template": "loom-nucleus/hooks/hooks.json",
+      "destination": "~/.agents/plugins/loom-nucleus/hooks/hooks.json",
+      "dispositionHarness": "codex"
+    },
+    {
+      "id": "verifier",
+      "kind": "verifier",
+      "consumedBy": "both",
+      "template": "loom-nucleus/hooks/verify-loom-install.mjs",
+      "destination": "~/.agents/plugins/loom-nucleus/hooks/verify-loom-install.mjs",
+      "dispositionHarness": "codex"
+    }
+  ],
+  "skills": [
+    { "name": "omp-btw", "ompCommand": "btw", "recommendation": "adapt" },
+    { "name": "omp-guided-goal", "ompCommand": "guided-goal", "recommendation": "adapt" },
+    { "name": "omp-handoff", "ompCommand": "handoff", "recommendation": "adapt" },
+    { "name": "omp-complaint-to-rule", "ompCommand": "omfg", "recommendation": "adapt" },
+    { "name": "omp-plan", "ompCommand": "plan", "recommendation": "adapt" },
+    { "name": "omp-tangent", "ompCommand": "tan", "recommendation": "adapt" }
+  ],
+  "agents": [
+    { "name": "omp-designer", "ompAgent": "designer", "decision": "adapt", "packaged": true, "consumedBy": "claude" },
+    { "name": "omp-explorer", "ompAgent": "explore", "decision": "adapt", "packaged": true, "consumedBy": "claude" },
+    { "name": "omp-librarian", "ompAgent": "librarian", "decision": "adapt", "packaged": true, "consumedBy": "claude" },
+    { "name": "omp-planner", "ompAgent": "plan", "decision": "adapt", "packaged": true, "consumedBy": "claude" },
+    { "name": "omp-reviewer", "ompAgent": "reviewer", "decision": "adapt", "packaged": true, "consumedBy": "claude" },
+    { "name": null, "ompAgent": "oracle", "decision": "drop", "packaged": false },
+    { "name": null, "ompAgent": "task", "decision": "keep-native", "packaged": false },
+    { "name": null, "ompAgent": "quick_task", "decision": "keep-native", "packaged": false }
+  ],
+  "expectedBundledAgents": [
+    "designer",
+    "explore",
+    "librarian",
+    "oracle",
+    "plan",
+    "quick_task",
+    "reviewer",
+    "task"
+  ]
+}

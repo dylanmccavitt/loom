@@ -61,7 +61,7 @@ const APPROVAL_POLICY =
 
 // Provider/model/auth/telemetry/profile-routing keys that must never appear in ANY rendered or
 // written config (TOML or YAML), on top of each template boundary's own forbiddenKeys.
-const FORBIDDEN_GLOBAL_KEYS = [
+export const FORBIDDEN_GLOBAL_KEYS = [
   "model",
   "model_provider",
   "model_providers",
@@ -139,15 +139,15 @@ function repoPath(relative) {
   return path.isAbsolute(relative) ? relative : path.join(REPO_ROOT, relative);
 }
 
-function sha256(content) {
+export function sha256(content) {
   return createHash("sha256").update(content).digest("hex");
 }
 
-function resolveHomeRoot(options) {
+export function resolveHomeRoot(options) {
   return options.home ? path.resolve(options.home) : process.env.HOME ?? homedir();
 }
 
-function pathExists(filePath) {
+export function pathExists(filePath) {
   try {
     lstatSync(filePath);
     return true;
@@ -158,7 +158,7 @@ function pathExists(filePath) {
 }
 
 // Join relPath under root, refusing any result that escapes root (path traversal backstop).
-function safeJoin(root, relPath) {
+export function safeJoin(root, relPath) {
   const base = path.resolve(root);
   const target = path.resolve(base, relPath);
   if (target !== base && !target.startsWith(base + path.sep)) {
@@ -169,12 +169,12 @@ function safeJoin(root, relPath) {
 
 // Live HOME path for a home-anchored ("~/...") display destination; null for project-scoped
 // or otherwise non-home destinations that cannot be applied against a single HOME.
-function resolveLivePath(displayDestination, homeRoot) {
+export function resolveLivePath(displayDestination, homeRoot) {
   if (!displayDestination.startsWith("~/")) return null;
   return safeJoin(homeRoot, displayDestination.slice(2));
 }
 
-// --- config key inspection (forbidden-key detection over rendered TOML and YAML) --------------
+// --- config key inspection (forbidden-key detection over rendered TOML, YAML, and JSON) -------
 
 function stripTomlComments(text) {
   return text
@@ -234,19 +234,57 @@ function yamlKeys(text) {
   return keys;
 }
 
-function configKindFor(relPath) {
+function jsonKeys(text) {
+  const keys = new Set();
+  const visit = (node) => {
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item);
+    } else if (node && typeof node === "object") {
+      for (const [key, value] of Object.entries(node)) {
+        keys.add(key);
+        visit(value);
+      }
+    }
+  };
+  visit(JSON.parse(text));
+  return keys;
+}
+
+export function configKindFor(relPath) {
   const ext = path.extname(relPath);
   if (ext === ".toml") return "toml";
   if (ext === ".yml" || ext === ".yaml") return "yaml";
+  if (ext === ".json") return "json";
   return null;
 }
 
-function configKeys(content, kind) {
-  return kind === "toml" ? tomlKeys(content) : yamlKeys(content);
+export function configKeys(content, kind) {
+  if (kind === "toml") return tomlKeys(content);
+  if (kind === "json") return jsonKeys(content);
+  return yamlKeys(content);
 }
 
-function keyMatchesForbidden(key, forbidden) {
+export function keyMatchesForbidden(key, forbidden) {
   return key === forbidden || key.startsWith(`${forbidden}.`) || key.endsWith(`.${forbidden}`);
+}
+
+// YAML frontmatter block of a Markdown document (the text between the leading `---` line and the
+// next `---`). Returns null when the document has no frontmatter, so frontmatter-less Markdown is
+// left unscanned and behaves exactly as before.
+export function markdownFrontmatter(content) {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/u.exec(content);
+  return match ? match[1] : null;
+}
+
+function forbiddenKeyFindings(label, keys, candidate) {
+  const findings = [];
+  const forbidden = new Set([...(candidate.forbiddenKeys ?? []), ...FORBIDDEN_GLOBAL_KEYS]);
+  for (const forbiddenKey of forbidden) {
+    for (const key of keys) {
+      if (keyMatchesForbidden(key, forbiddenKey)) findings.push(`${label}: forbidden key ${key}`);
+    }
+  }
+  return findings;
 }
 
 // --- candidate model -------------------------------------------------------------------------
@@ -281,7 +319,7 @@ function localOnlyPatterns(manifest, plan) {
 // Disposition is resolved from the resource manifest (the source of truth for ownership).
 // Precedence: local-only patterns first, then a home-anchored manifest resource for the same
 // harness, then a documented safe fallback of reference-only (reported, never auto-applied).
-function resolveDisposition(displayDestination, harness, manifest, localOnly) {
+export function resolveDisposition(displayDestination, harness, manifest, localOnly) {
   if (pathMatchesLocalOnly(displayDestination, localOnly)) return "local-only";
   const normalized = normalizePathText(displayDestination);
   for (const resource of manifest.resources ?? []) {
@@ -405,7 +443,7 @@ function destinationSafety(candidate) {
   return null;
 }
 
-function preflightFindings(candidates) {
+export function preflightFindings(candidates) {
   const findings = [];
   for (const candidate of candidates) {
     const finding = destinationSafety(candidate);
@@ -416,7 +454,7 @@ function preflightFindings(candidates) {
 
 // --- rendering + safety gate over rendered output --------------------------------------------
 
-function renderToTemp(candidates) {
+export function renderToTemp(candidates) {
   const tempRoot = mkdtempSync(path.join(tmpdir(), "render-harness-nucleus-"));
   for (const candidate of candidates) {
     const target = safeJoin(tempRoot, candidate.renderedRelPath);
@@ -445,8 +483,8 @@ function parseRenderedTomlWithPython(tomlFiles, findings) {
 
 // Runs the #45 safety-gate rules over the RENDERED content (not the static plan): secret-looking
 // values, absolute private home paths, dangerous destination paths, local-only write targets,
-// forbidden provider/model/auth/telemetry/profile keys (TOML and YAML), and TOML parseability.
-function gateRenderedOutput(candidates, localOnly, tempRoot) {
+// forbidden provider/model/auth/telemetry/profile keys (TOML, YAML, JSON), and TOML/JSON parseability.
+export function gateRenderedOutput(candidates, localOnly, tempRoot) {
   const findings = [];
   const tomlFiles = [];
   for (const candidate of candidates) {
@@ -464,16 +502,29 @@ function gateRenderedOutput(candidates, localOnly, tempRoot) {
     }
     const kind = configKindFor(candidate.renderedRelPath);
     if (kind) {
-      const keys = configKeys(candidate.content, kind);
-      const forbidden = new Set([...(candidate.forbiddenKeys ?? []), ...FORBIDDEN_GLOBAL_KEYS]);
-      for (const forbiddenKey of forbidden) {
-        for (const key of keys) {
-          if (keyMatchesForbidden(key, forbiddenKey)) {
-            findings.push(`${label}: forbidden key ${key}`);
-          }
-        }
+      let keys = null;
+      try {
+        keys = configKeys(candidate.content, kind);
+      } catch (error) {
+        // Unparseable rendered config (e.g. malformed JSON) is a gate finding, never a throw.
+        findings.push(`${label}: invalid ${kind.toUpperCase()} (${error.message})`);
       }
+      if (keys) findings.push(...forbiddenKeyFindings(label, keys, candidate));
       if (kind === "toml") tomlFiles.push(safeJoin(tempRoot, candidate.renderedRelPath));
+    } else if (path.extname(candidate.renderedRelPath) === ".md") {
+      // Markdown components (SKILL.md, agents/*.md) can carry YAML frontmatter; forbidden-key-scan
+      // that frontmatter as YAML so model:/auth:/profile: keys never slip in. Frontmatter-less
+      // Markdown is left untouched.
+      const frontmatter = markdownFrontmatter(candidate.content);
+      if (frontmatter !== null) {
+        let keys = null;
+        try {
+          keys = configKeys(frontmatter, "yaml");
+        } catch (error) {
+          findings.push(`${label}: invalid frontmatter YAML (${error.message})`);
+        }
+        if (keys) findings.push(...forbiddenKeyFindings(label, keys, candidate));
+      }
     }
   }
   parseRenderedTomlWithPython(tomlFiles, findings);
@@ -481,7 +532,7 @@ function gateRenderedOutput(candidates, localOnly, tempRoot) {
 }
 
 // Runs preflight + render + gate; returns sorted findings without leaving any temp dir behind.
-function renderAndGate(candidates, localOnly) {
+export function renderAndGate(candidates, localOnly) {
   const preflight = preflightFindings(candidates);
   if (preflight.length > 0) return preflight;
   const tempRoot = renderToTemp(candidates);
@@ -521,11 +572,11 @@ function liveInspect(candidate, homeRoot, marker) {
 
 // --- marker manifest -------------------------------------------------------------------------
 
-function markerPath(homeRoot) {
+export function markerPath(homeRoot) {
   return path.join(homeRoot, MARKER_DIR, MARKER_FILE);
 }
 
-function loadMarker(homeRoot) {
+export function loadMarker(homeRoot) {
   const file = markerPath(homeRoot);
   if (!existsSync(file)) {
     return { schemaVersion: MARKER_SCHEMA_VERSION, generatedBy: "render-harness-nucleus", entries: {} };
@@ -541,7 +592,7 @@ function serializeMarker(marker) {
   return `${JSON.stringify({ schemaVersion: MARKER_SCHEMA_VERSION, generatedBy: "render-harness-nucleus", entries }, null, 2)}\n`;
 }
 
-function saveMarkerIfChanged(homeRoot, marker) {
+export function saveMarkerIfChanged(homeRoot, marker) {
   const file = markerPath(homeRoot);
   const serialized = serializeMarker(marker);
   if (existsSync(file) && readFileSync(file, "utf8") === serialized) return false;
@@ -550,7 +601,7 @@ function saveMarkerIfChanged(homeRoot, marker) {
   return true;
 }
 
-function backupTimestamp() {
+export function backupTimestamp() {
   return new Date().toISOString().replace(/[:.]/gu, "-");
 }
 
@@ -652,15 +703,12 @@ function runDryRun(candidates, localOnly, options, homeRoot, marker) {
   return findings.length === 0 ? 0 : 1;
 }
 
-function runWrite(candidates, localOnly, options, homeRoot, marker) {
-  // 1. Refuse unless a clean preflight + dry-run render + safety gate pass.
-  const findings = renderAndGate(candidates, localOnly);
-  if (findings.length > 0) {
-    reportFailure(options, "write", findings, { refused: true });
-    return 1;
-  }
+// --- apply engine (create-missing-only / backup-on-drift / marker idempotency) ---------------
 
-  // 2. Apply appliable candidates create-missing-only against the live HOME.
+// Pure apply loop shared by --write: creates missing live files, skips existing non-marker user
+// files, backs up + updates a drifted kit-owned marker, and records the marker. Mutates
+// `marker.entries`; persisting the marker is the caller's job. Returns { actions, backups }.
+export function applyCandidates(candidates, homeRoot, marker) {
   const actions = [];
   const backups = [];
   for (const candidate of candidates) {
@@ -703,6 +751,19 @@ function runWrite(candidates, localOnly, options, homeRoot, marker) {
     backups.push(backup);
     actions.push({ destination: candidate.destination, action: "updated", livePath, backup });
   }
+  return { actions, backups };
+}
+
+function runWrite(candidates, localOnly, options, homeRoot, marker) {
+  // 1. Refuse unless a clean preflight + dry-run render + safety gate pass.
+  const findings = renderAndGate(candidates, localOnly);
+  if (findings.length > 0) {
+    reportFailure(options, "write", findings, { refused: true });
+    return 1;
+  }
+
+  // 2. Apply appliable candidates create-missing-only against the live HOME.
+  const { actions, backups } = applyCandidates(candidates, homeRoot, marker);
   const markerChanged = saveMarkerIfChanged(homeRoot, marker);
 
   if (options.json) {
@@ -743,10 +804,12 @@ function main() {
     : runDryRun(candidates, localOnly, options, homeRoot, marker);
 }
 
-try {
-  process.exit(main());
-} catch (error) {
-  console.error(error.message);
-  console.error(USAGE);
-  process.exit(2);
+if (import.meta.url === `file://${process.argv[1]}`) {
+  try {
+    process.exit(main());
+  } catch (error) {
+    console.error(error.message);
+    console.error(USAGE);
+    process.exit(2);
+  }
 }

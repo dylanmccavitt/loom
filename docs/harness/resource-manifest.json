@@ -179,6 +179,31 @@
       "intendedRepoTarget": "docs/harness/skill-root-audit.md (future issue #43)",
       "disposition": "reference-only",
       "migrationNotes": "Do not deduplicate in issue #38. Future audit should compare names, triggers, and ownership without copying package/plugin caches."
+    },
+    {
+      "id": "codex-plugin-marketplace-and-source",
+      "sourceHarness": "codex",
+      "resourceCategory": "personal plugin marketplace catalog and co-located plugin source",
+      "currentLivePath": [
+        "~/.agents/plugins/marketplace.json",
+        "~/.agents/plugins/loom-nucleus/"
+      ],
+      "discoverySource": "Codex-native personal marketplace root (~/.agents/plugins/) per plugin-bridge-design sections 1.1/2.1; render-plugin-bridge writes the catalog and the co-located loom-nucleus plugin source here create-missing-only via the strict-manual render -> gate -> apply executor.",
+      "intendedRepoTarget": "docs/harness/plugin-bridge/",
+      "disposition": "adapt",
+      "migrationNotes": "Personal cross-harness marketplace catalog plus loom-nucleus plugin source (dual .codex-plugin/ + .claude-plugin/ manifests over a shared skills/agents/hooks root). Written only through the gated, marker-tracked, create-missing-only executor. The plugin cache subtrees (~/.codex/plugins/cache/, ~/.claude/plugins/cache/, ~/.claude/plugins/data/) stay local-only and are never write targets."
+    },
+    {
+      "id": "claude-plugin-marketplace",
+      "sourceHarness": "claude",
+      "resourceCategory": "repo plugin marketplace catalog",
+      "currentLivePath": [
+        "repo:docs/harness/plugin-bridge/.claude-plugin/marketplace.json"
+      ],
+      "discoverySource": "Claude repo marketplace catalog (.claude-plugin/marketplace.json), also read by Codex as a legacy-compatible repo marketplace; tracked in-repo source rather than a HOME write.",
+      "intendedRepoTarget": "docs/harness/plugin-bridge/.claude-plugin/marketplace.json",
+      "disposition": "track",
+      "migrationNotes": "Repo-scoped catalog listing the loom-nucleus entry with a relative source path. Rendered, gated, and reported by render-plugin-bridge; project-scoped, so it is never written to a live HOME path."
     }
   ]
 }
