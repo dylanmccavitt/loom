@@ -164,3 +164,26 @@ test("factory scan suggests protected surfaces and redacts secret-looking output
     assert.ok(existsSync(path.join(root, "package.json")));
   });
 });
+
+test("factory scan distinguishes sk tokens from ordinary task branch names", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node test.js" } }, null, 2)}\n`,
+  }, (root) => {
+    run("git", ["branch", "-m", "task-123456789012"], { cwd: root });
+    const result = runScan(root);
+
+    assert.match(result.stdout, /Branch: task-123456789012 \(default: task-123456789012\)/u);
+    assert.doesNotMatch(result.stdout, /\[REDACTED\]/u);
+  });
+
+  const fakeSkToken = `sk-${"123456789012"}`;
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node test.js" } }, null, 2)}\n`,
+  }, (root) => {
+    run("git", ["branch", "-m", `feature/key_${fakeSkToken}`], { cwd: root });
+    const result = runScan(root);
+
+    assert.match(result.stdout, /Branch: feature\/key_\[REDACTED\] \(default: feature\/key_\[REDACTED\]\)/u);
+    assert.doesNotMatch(result.stdout, new RegExp(fakeSkToken, "u"));
+  });
+});

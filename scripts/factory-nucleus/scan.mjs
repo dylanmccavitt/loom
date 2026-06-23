@@ -9,10 +9,10 @@ const USAGE = "Usage: node scripts/factory-nucleus/scan.mjs [--root <path>]";
 const COMMAND_KINDS = Object.freeze(["build", "test", "lint"]);
 const SECRET_ASSIGNMENT_PATTERN = /\b(api[_-]?key|token|secret|password|credential|private[_-]?key)\b\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{12,}["']?/giu;
 const SECRET_VALUE_PATTERNS = Object.freeze([
-  /gh[pousr]_[A-Za-z0-9_]{12,}/gu,
-  /github_pat_[A-Za-z0-9_]{12,}/gu,
-  /sk-[A-Za-z0-9_-]{12,}/gu,
-  /AKIA[0-9A-Z]{8,}/gu,
+  /(^|[^A-Za-z0-9])(gh[pousr]_[A-Za-z0-9_]{12,})/gu,
+  /(^|[^A-Za-z0-9])(github_pat_[A-Za-z0-9_]{12,})/gu,
+  /(^|[^A-Za-z0-9])(sk-[A-Za-z0-9_-]{12,})/gu,
+  /(^|[^A-Za-z0-9])(AKIA[0-9A-Z]{8,})/gu,
 ]);
 
 const PROTECTED_SURFACES = Object.freeze([
@@ -222,7 +222,7 @@ export function redactSecrets(value) {
   let text = String(value);
   text = text.replace(SECRET_ASSIGNMENT_PATTERN, (_, key) => `${key}=[REDACTED]`);
   for (const pattern of SECRET_VALUE_PATTERNS) {
-    text = text.replace(pattern, "[REDACTED]");
+    text = text.replace(pattern, (_, prefix) => `${prefix}[REDACTED]`);
   }
   return text;
 }
