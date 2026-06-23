@@ -1,0 +1,10 @@
+{
+  "name": "loom-nucleus",
+  "version": "0.1.0",
+  "description": "Portable OMP skill and adapted-agent nucleus for Claude with a Stop-hook install verifier.",
+  "license": "MIT",
+  "keywords": ["omp", "loom", "skills", "agents", "workflow"],
+  "skills": "./skills",
+  "agents": "./agents",
+  "hooks": "./hooks/hooks.json"
+}
