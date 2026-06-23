@@ -124,31 +124,33 @@ Three tiers, by blast radius:
 
 Hybrids for contrast (not adapter-required because they have a stable CLI on explicit arguments, per `portability-matrix.json`): `/resume` (`omp --resume`), `/export` of a saved file (`omp --export`), `/stats`, `/usage`, `/model`, `/plugins`, `/settings`, `/ssh`, `/setup`, `/agents`, `/marketplace`, `/join`. These should route through the CLI wrapper, not the runtime adapter, whenever the caller can supply the explicit argument.
 
-## 5. Transport comparison and recommended default
+## 5. Transport: RPC host + supplementary extension + CLI
 
-| Transport | Reach | Strengths | Weaknesses |
-| --- | --- | --- | --- |
-| Local CLI wrapper (`omp ...`) | Saved session files only | Stable, scriptable, auditable, no new daemon; aligns with the existing `cli-wrapper` class and the dry-run gate; works for `--resume`/`--export`/`--session-file`. | Most `adapter-required` rows have `stableCli: null` — the CLI cannot reach the live in-memory session, toggle runtime flags, read the live context meter, or mutate a running stream. |
-| MCP server (loopback, local-only) | Cross-harness control plane | Both Codex and Claude consume MCP natively; one typed schema satisfies the "runtime adapter command envelope" decision; centralizes selector validation, allow/deny, confirmation, and redaction; can front both the CLI and an extension hook without changing the caller contract. | Needs a running, scoped server; adds a process and attack surface; must bind loopback and never expose transcripts/auth; no `omp mcp` top-level CLI exists today (`/mcp` rationale in the matrix), so live in-process actions still need the extension hook beneath it. |
-| OMP extension hook | Live in-process session/TUI | The only transport with genuine access to live message tree, provider stream, scheduler, and selection — exactly what `adapter-required` commands need; runs inside OMP's trust boundary and can drive OMP's own confirmation UI. | OMP-specific and not callable by Codex/Claude on its own (it is the producer, not the cross-harness surface); couples to OMP internals/version; extension command registration is itself runtime state (`resource-index.json` `runtimeOnlySurfaces`: `omp-runtime-extension`). |
+> Revised after the LOO-7 spike (`omp://rpc.md`, `omp://hooks.md`, `omp://extensions.md`). The original draft assumed an extension hook plus a possible control port; the real live-control surface is **RPC mode over stdio**.
 
-**Recommended default: an MCP server as the single cross-harness adapter envelope, backed by an OMP extension hook for live in-process actions, with the local CLI wrapper as the fallback for saved-session-file ops.**
+The adapter is an **MCP server** whose single command envelope is served by layered backends:
 
-Rationale:
+| Layer | Role | Reach |
+| --- | --- | --- |
+| **MCP server** (stdio, local-only) | The one cross-harness caller contract; owns selector validation, tier gating, confirmation tokens, redaction, and the deny-by-default allow-list. | Codex/Claude consume MCP natively. |
+| **RPC host → `omp --mode rpc`** | Live session control. The host **spawns** an omp child in RPC mode and speaks newline-delimited JSON over stdio (`prompt`/`abort`/`get_state`/`set_model`/`compact`/`branch`/`switch_session`/`set_session_name`/`export_html`/`get_messages`/`get_session_stats`/`login`…), waiting for the `{type:"ready"}` frame. | A session the adapter **owns** (spawned), including opening a saved `session_file` in RPC mode. There is **no** attach-to-running-TUI and **no** control port. |
+| **Extensions API** (`ExtensionAPI`, `--extension`) — *supplementary* | Only when a need exceeds RPC: custom session-control slash commands, tool-call policy/interception, custom tools/providers, or `session_stop` continuation. Use the **current** Extensions API, not the legacy hooks subsystem (`--hook` is already aliased to `--extension`). Pin the omp version. | Live in-process; bridges UI over RPC mode. |
+| **`omp` CLI** | Pure saved-file ops (`--resume`/`--export`/`--session-file`) where an explicit argument suffices. | Saved session files only. |
 
-- The caller contract should be one typed schema, which directly answers the `openProductDecisions` "Runtime adapter command envelope" question; separate per-command tools would fragment the allow/deny and redaction policy.
-- MCP is native to both target harnesses, so neither Codex nor Claude needs a bespoke client, and the session selector, tier gating, confirmation tokens, and local-only redaction live in exactly one place.
-- MCP is a façade, not the worker: live ops delegate to the extension hook (the only layer with real runtime access), and pure saved-file ops delegate to the stable `omp` CLI. This keeps the recommendation honest given that most `adapter-required` rows have no stable CLI today.
-- The whole surface stays loopback and local-only and must pass `scripts/dry-run-harness-safety-gate.mjs` before any live effect, consistent with the repo's dry-run-to-apply model in `README.md`.
+**Recommended default:** MCP server → RPC host (`omp --mode rpc`) for live ops; `omp` CLI for saved-file ops; the Extensions API only as a supplement. Every op stays local-only and must pass `scripts/dry-run-harness-safety-gate.mjs` before any live effect.
 
-## Open questions
+Rationale: one typed MCP schema is the cross-harness contract (selector, tiers, confirmation, redaction in one place); RPC mode is the only surface with genuine live-session access and needs no new port or daemon beyond the spawned child; the extension is reserved for the few needs RPC doesn't cover, keeping the omp-version coupling minimal.
 
-- **Live control endpoint.** Does `omp/16.0.5` expose a stable local control channel for a *running* session? The `omp stats --port <port>` flag (matrix) shows OMP can bind a port, but whether that port accepts session-control commands is not in the snapshot and is not asserted here.
-- **Extension hook API.** Is there a documented, version-stable OMP extension API for registering session-control hooks? `resource-index.json` marks extension registration as runtime, plugin-owned state, so the API surface is not snapshotted.
-- **Session id semantics.** The format, uniqueness, and stability of OMP session ids across `~/.omp/agent/sessions/` are unknown; the snapshot is path-only and contents were not read.
-- **`/rename` and `/move` durability.** Whether these mutate only the live session record or also rewrite the on-disk session file atomically is unconfirmed and affects whether they are safely reversible (Tier M) versus Tier D.
-- **Concurrent live sessions.** Disambiguation policy when multiple live TUIs run at once needs a product decision beyond "refuse and return candidates."
-- **Transcript egress at all.** Whether redacted `/dump`/`/export`/`/share` is ever desirable cross-harness, or whether transcripts should never leave OMP regardless of approval, is a privacy decision deferred to the implementation issue.
+## Open questions — resolved (LOO-7 spike)
+
+Verified against omp/16.0.5 (`omp://rpc.md`, `omp://hooks.md`, `omp://extensions.md`, `omp --help`, `~/.omp/agent/sessions/`):
+
+- **Live control endpoint** — RPC mode (`omp --mode rpc`), newline-delimited JSON over stdio; no port, no TUI-attach. The adapter spawns/owns the omp child.
+- **Extension API** — the current Extensions API (`ExtensionAPI`, `--extension`) is real and packaged; the legacy hooks subsystem is superseded (`--hook`→`--extension`). Pin the omp version; treat the extension as supplementary to RPC.
+- **Session id** — `<ISO-timestamp>_<UUIDv7>.jsonl` under cwd-keyed `~/.omp/agent/sessions/<cwd>/`; id = the UUIDv7. Select via `--resume <id-prefix | filename-prefix | path>`.
+- **`/rename` vs `/move`** — rename = `set_session_name` (header metadata, reversible → Tier M); move = relocates the session file (→ Tier D).
+- **Concurrent sessions** — the adapter owns each session as a spawned RPC child, so live ops have no "which session" ambiguity; saved-file ops key on the unique `.jsonl` path. Explicit-selector + refuse-and-list is sufficient.
+- **Transcript egress** — capability exists (`get_messages`/`export_html`/`/dump`/`/export`/`/share` with secret redaction); policy is deny-by-default cross-harness, explicit approval + redaction if ever allowed.
 
 ## 6. Proposed acceptance criteria for the implementation issue
 
