@@ -121,16 +121,26 @@ function isInsidePath(parent, child) {
   const relative = path.relative(parent, child);
   return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
 }
+function isPointerIdentity(value) {
+  return /^[A-Za-z0-9][A-Za-z0-9_-]*$/u.test(value);
+}
+
 
 function discoverPointer(root) {
   const pointerPath = path.join(root, ".loom.yml");
-  if (!existsSync(pointerPath)) return { present: false };
+  let stat;
+  try {
+    stat = lstatSync(pointerPath);
+  } catch (error) {
+    if (error?.code === "ENOENT") return { present: false };
+    return { present: true, status: "unreadable" };
+  }
+  if (!stat.isFile()) return { present: true, status: "unreadable" };
   let text;
   try {
-    const stat = lstatSync(pointerPath);
     const realRoot = realpathSync(root);
     const realPointer = realpathSync(pointerPath);
-    if (!stat.isFile() || !isInsidePath(realRoot, realPointer)) return { present: true, status: "unreadable" };
+    if (!isInsidePath(realRoot, realPointer)) return { present: true, status: "unreadable" };
     text = readFileSync(realPointer, "utf8");
   } catch {
     return { present: true, status: "unreadable" };
@@ -155,6 +165,13 @@ function discoverPointer(root) {
   }
   const identity = entries.find((entry) => POINTER_IDENTITY_KEYS.has(entry.key) && entry.value.trim())?.value.trim();
   if (!identity) return { present: true, status: "missing-identity" };
+  if (!isPointerIdentity(identity)) {
+    return {
+      present: true,
+      status: "ignored-policy",
+      ignoredKeys: ["identity"],
+    };
+  }
   return {
     present: true,
     status: "valid",
@@ -265,15 +282,16 @@ function directoryHasFiles(root, relativePath) {
   return readdirSync(fullPath).length > 0;
 }
 
-function computeScience({ stack, commands, dirty, protectedSurfaces, root }) {
+function computeScience({ stack, commands, dirty, protectedSurfaces, root, pointer }) {
   const missingUnlocks = [];
+  const hasEnvelope = directoryHasFiles(root, ".agents/envelope");
   if (stack.every((entry) => entry.name === "unknown")) missingUnlocks.push("stack detection");
   for (const kind of COMMAND_KINDS) {
     if (commands[kind].status === "absent") missingUnlocks.push(`${kind} command`);
   }
   if (!directoryHasFiles(root, ".github/workflows")) missingUnlocks.push("ci workflow");
-  if (!directoryHasFiles(root, ".agents/envelope") && !hasPath(root, ".loom.yml")) missingUnlocks.push("factory envelope");
-  if (!directoryHasFiles(root, ".agents/envelope")) missingUnlocks.push("tracker bind");
+  if (!hasEnvelope && pointer?.status !== "valid") missingUnlocks.push("factory envelope");
+  if (!hasEnvelope) missingUnlocks.push("tracker bind");
   if (dirty.isDirty) missingUnlocks.push("clean worktree");
 
   let level = "pre-automation";
@@ -285,7 +303,7 @@ function computeScience({ stack, commands, dirty, protectedSurfaces, root }) {
   ) {
     level = "logistic";
   }
-  if (level === "logistic" && directoryHasFiles(root, ".agents/envelope")) level = "chemical";
+  if (level === "logistic" && hasEnvelope) level = "chemical";
 
   return { level, missingUnlocks };
 }
@@ -376,8 +394,8 @@ export function scanFactory({ root = process.cwd(), generatedAt, content = false
   const branch = currentBranch(repoRoot);
   const dirty = dirtyState(repoRoot);
   const protectedSurfaces = detectProtectedSurfaces(repoRoot);
-  const science = computeScience({ stack, commands, dirty, protectedSurfaces, root: repoRoot });
   const pointer = discoverPointer(repoRoot);
+  const science = computeScience({ stack, commands, dirty, protectedSurfaces, root: repoRoot, pointer });
 
   return withArtifactMetadata("factory-scan", {
     mode: "zero-footprint",

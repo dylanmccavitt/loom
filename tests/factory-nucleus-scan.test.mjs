@@ -322,6 +322,7 @@ test("factory scan ignores policy-bearing .loom.yml values", () => {
       assert.match(result.stdout, /Pointer: ignored policy-bearing \.loom\.yml \(tracker, commands\)/u);
       assert.doesNotMatch(result.stdout, new RegExp(fakeToken, "u"));
       assert.doesNotMatch(savedText, new RegExp(fakeToken, "u"));
+      assert.ok(savedScan.science.missingUnlocks.includes("factory envelope"));
       assert.deepEqual(savedScan.pointer, {
         present: true,
         status: "ignored-policy",
@@ -347,6 +348,36 @@ test("factory scan treats quoted pointer policy keys as policy-bearing", () => {
   });
 });
 
+test("factory scan rejects structured pointer identity values", () => {
+  const privatePath = "/Users/alice/private";
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+    ".loom.yml": `factory: { id: test, repo: { root: ${privatePath} }, commands: { test: npm test } }\n`,
+  }, (root) => {
+    const before = walkFiles(root);
+    withScanSave(root, ({ home, result }) => {
+      const state = resolveFactoryStatePaths({
+        homeDir: home,
+        targetRepoPath: root,
+        factoryId: path.basename(root),
+        generatedAt,
+      });
+      const savedText = readFileSync(state.scan, "utf8");
+      const savedScan = JSON.parse(savedText);
+
+      assert.match(result.stdout, /Pointer: ignored policy-bearing \.loom\.yml \(identity\)/u);
+      assert.doesNotMatch(result.stdout, new RegExp(privatePath.replaceAll("/", "\\/"), "u"));
+      assert.doesNotMatch(savedText, new RegExp(privatePath.replaceAll("/", "\\/"), "u"));
+      assert.deepEqual(savedScan.pointer, {
+        present: true,
+        status: "ignored-policy",
+        ignoredKeys: ["identity"],
+      });
+    });
+    assertNoUserFileWrites(root, before);
+  });
+});
+
 test("factory scan does not follow symlinked .loom.yml pointers", () => {
   withTempRepo({
     "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
@@ -367,6 +398,20 @@ test("factory scan does not follow symlinked .loom.yml pointers", () => {
     } finally {
       rmSync(outside, { recursive: true, force: true });
     }
+  });
+});
+
+test("factory scan reports dangling .loom.yml symlinks as unreadable", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+  }, (root) => {
+    symlinkSync(path.join(root, "missing.yml"), path.join(root, ".loom.yml"));
+
+    const result = runScan(root);
+    const scan = scanFactory({ root, generatedAt });
+
+    assert.match(result.stdout, /Pointer: unreadable/u);
+    assert.deepEqual(scan.pointer, { present: true, status: "unreadable" });
   });
 });
 
