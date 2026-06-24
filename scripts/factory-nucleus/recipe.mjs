@@ -151,7 +151,7 @@ export function planGhostToLaunch({ ghost, tracker, blueprint, branchPrefix = DE
   }
   const plannedActions = referenced.map((id) => plannedAction(id, ghost, branch, blueprint));
 
-  const plan = withArtifactMetadata("recipe-plan", { recipe: RECIPE_NAME, mode: "plan", stages, plannedActions }, generatedAt);
+  const plan = withArtifactMetadata("recipe-plan", { recipe: RECIPE_NAME, mode: "plan", launchState: "launch-ready", stages, plannedActions }, generatedAt);
   const result = validateRecipePlan(plan);
   if (!result.ok) throw new Error(`invalid ghost-to-launch plan for ${ghost.id}: ${result.errors.join("; ")}`);
   return plan;

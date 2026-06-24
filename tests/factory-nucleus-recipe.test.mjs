@@ -90,6 +90,18 @@ test("a ready ghost produces a valid ghost-to-launch plan with all stages in ord
   }
 });
 
+test("ghost-to-launch plan stops at launch-ready without implying a merge", () => {
+  const tracker = linearTracker();
+  const ghost = tracker.getGhost("LOO-2");
+  const plan = planGhostToLaunch({ ghost, tracker, generatedAt });
+
+  assert.equal(plan.launchState, "launch-ready");
+  assert.ok(plan.plannedActions.filter((a) => a.durable).every((a) => a.id === "branch" || a.id === "pr"), "only branch/pr are durable; no merge write");
+  assert.ok(!plan.plannedActions.some((a) => a.id === "merge"), "no action with id merge");
+  assert.ok(!plan.plannedActions.some((a) => a.id === "launched"), "no action with id launched");
+  assert.equal(validateRecipePlan(plan).ok, true);
+});
+
 test("ghost-to-launch plan includes a proof circuit and a standalone proof-pass stage", () => {
   const tracker = linearTracker();
   const ghost = tracker.getGhost("LOO-2");
