@@ -40,6 +40,8 @@ export const GHOST_STATES = Object.freeze([
   "canceled",
 ]);
 
+export const LAUNCH_STATES = Object.freeze(["launch-ready", "launched"]);
+
 const metadataProperties = {
   schemaVersion: { type: "integer", const: SCHEMA_VERSION },
   kind: { type: "string", enum: ARTIFACT_KINDS },
@@ -199,6 +201,7 @@ export const RECIPE_PLAN_SCHEMA = Object.freeze({
     kind: { type: "string", const: "recipe-plan" },
     recipe: { type: "string", minLength: 1 },
     mode: { type: "string", const: "plan" },
+    launchState: { type: "string", enum: LAUNCH_STATES },
     stages: {
       type: "array",
       minItems: 1,

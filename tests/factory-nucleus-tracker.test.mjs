@@ -4,11 +4,13 @@ import { test } from "node:test";
 import { validateAdapterGhost } from "../scripts/factory-nucleus/schema.mjs";
 import {
   GHOST_STATES,
+  LAUNCH_STATES,
   TRACKER_CONTRACT,
   assessReadiness,
   bodyClosesGhost,
   branchCarriesGhostId,
   branchForGhost,
+  classifyLaunch,
   closingKeywordForGhost,
   createInMemoryTracker,
   planBridge,
@@ -162,4 +164,12 @@ test("in-memory tracker rejects malformed fixture data", () => {
     /duplicate ghost id/u,
   );
   assert.throws(() => planBridge({ branchPrefix: "factory" }), /a ghost with an id is required/u);
+});
+
+test("classifyLaunch distinguishes launch-ready from launched", () => {
+  assert.equal(classifyLaunch({ state: "done" }), "launched");
+  assert.equal(classifyLaunch({ state: "in-review" }), "launch-ready");
+  assert.equal(classifyLaunch({ state: "ready" }), null);
+  assert.equal(classifyLaunch(undefined), null);
+  assert.ok(LAUNCH_STATES.includes("launch-ready") && LAUNCH_STATES.includes("launched"));
 });

@@ -7,9 +7,9 @@
 // Comment, status-update, and bridge primitives PLAN writes as inert data;
 // concrete adapters perform them later.
 
-import { GHOST_STATES, validateAdapterGhost, withArtifactMetadata } from "./schema.mjs";
+import { GHOST_STATES, LAUNCH_STATES, validateAdapterGhost, withArtifactMetadata } from "./schema.mjs";
 
-export { GHOST_STATES };
+export { GHOST_STATES, LAUNCH_STATES };
 
 // Methods every tracker adapter must implement to satisfy the shared contract.
 export const TRACKER_CONTRACT = Object.freeze([
@@ -80,6 +80,15 @@ export function assessReadiness(ghost, lookup = () => null) {
     else if (dependency.state !== DONE_STATE) reasons.push(`blocked by ${dependencyId} (${dependency.state})`);
   }
   return { ready: reasons.length === 0, reasons };
+}
+
+// Classify a ghost's launch state: launched (merged/closed) vs launch-ready
+// (work complete, PR open, NOT yet merged). Returns null for other states.
+// launch-ready never implies a merge happened.
+export function classifyLaunch(ghost) {
+  if (ghost?.state === "done") return "launched";
+  if (ghost?.state === "in-review") return "launch-ready";
+  return null;
 }
 
 export function planComment({ ghostId, body } = {}) {
