@@ -754,3 +754,15 @@ test("scan emits a non-authoritative diagnostic max-subagent recommendation", ()
     assert.match(result.stdout, /Max subagents \(diagnostic, non-authoritative\): \d+/u);
   });
 });
+
+test("recipe planning never consumes the scan recommendation (envelope cap stays authoritative)", () => {
+  // Acceptance: the envelope agents.maxSubagents cap governs recipe planning.
+  // The scan recommendation is diagnostic only, so the planning module must not
+  // reference it. (Idiom mirrors the radar source-purity test.)
+  const recipeSource = readFileSync(new URL("../scripts/factory-nucleus/recipe.mjs", import.meta.url), "utf8");
+  assert.doesNotMatch(
+    recipeSource,
+    /recommendations/u,
+    "recipe planning must not consume the scan recommendation; the envelope agents.maxSubagents cap is authoritative",
+  );
+});
