@@ -480,6 +480,12 @@ test("permitsAutonomousMerge requires explicit permission and all quality gates"
 
   // No args at all denies (never enabled by default).
   assert.equal(permitsAutonomousMerge(), false);
+
+  // Truthy-but-not-true signals must NOT arm the safety-critical merge gate.
+  assert.equal(
+    permitsAutonomousMerge({ envelope: { delivery: { autoMerge: true } }, ciGreen: 1, radarClean: "yes", proofProven: {} }),
+    false,
+  );
 });
 
 test("autonomous merge is not enabled by default (plan stops at launch-ready)", () => {
