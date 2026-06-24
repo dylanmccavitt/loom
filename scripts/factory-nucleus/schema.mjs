@@ -209,6 +209,20 @@ export const RECIPE_PLAN_SCHEMA = Object.freeze({
           circuits: stringArray,
           proof: stringArray,
           plannedActions: stringArray,
+          subagents: {
+            type: "array",
+            minItems: 1,
+            items: {
+              type: "object",
+              required: ["role", "scope", "objective"],
+              properties: {
+                role: { type: "string", minLength: 1 },
+                scope: stringArray,
+                objective: { type: "string", minLength: 1 },
+              },
+              additionalProperties: false,
+            },
+          },
         },
         additionalProperties: false,
       },
