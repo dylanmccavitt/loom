@@ -28,6 +28,9 @@ const DEFAULT_BRANCH_PREFIX = "factory";
 // GitHub write actions (branch + PR) gated by the envelope's branch circuit.
 const GITHUB_WRITE_ACTIONS = Object.freeze(["branch", "pr"]);
 
+// ghost-to-launch's requested subagent topology (the recipe's desired count).
+export const RECIPE_DESIRED_SUBAGENTS = 3;
+
 // The ordered ghost-to-launch pipeline. Each stage names its step, the circuits
 // that gate it, and the ids of the planned actions it would drive. `blueprintAware`
 // stages additionally read the blueprint when one is supplied.
@@ -117,6 +120,16 @@ export function permitsAutonomousMerge({ envelope, ciGreen, radarClean, proofPro
   );
 }
 
+// Effective max subagents = the minimum of the recipe's requested topology and
+// the envelope's authoritative cap (envelope.agents.maxSubagents). V1 circuits
+// carry no numeric subagent limit, so they do not further constrain this.
+export function selectMaxSubagents({ envelope, requested = RECIPE_DESIRED_SUBAGENTS } = {}) {
+  const limits = [requested];
+  const cap = envelope?.agents?.maxSubagents;
+  if (Number.isInteger(cap)) limits.push(cap);
+  return Math.min(...limits);
+}
+
 // Produce a schema-valid ghost-to-launch recipe-plan for one ready ghost. Pure:
 // no filesystem, no network, no mutation of the ghost or tracker. Throws if the
 // ghost is not ready (by neutral state, and by tracker readiness when a tracker
@@ -135,6 +148,7 @@ export function planGhostToLaunch({ ghost, tracker, blueprint, branchPrefix = DE
   const branch = branchForGhost({ ghostId: ghost.id, title: ghost.title, branchPrefix });
   const writesAllowed = permitsGithubWrites(envelope);
   const launched = permitsAutonomousMerge({ envelope, ...launch });
+  const maxSubagents = selectMaxSubagents({ envelope });
 
   const stages = GHOST_TO_LAUNCH_STAGES.map((spec) => {
     const plannedActions = [...spec.actions];
@@ -165,7 +179,7 @@ export function planGhostToLaunch({ ghost, tracker, blueprint, branchPrefix = DE
   }
   const plannedActions = referenced.map((id) => plannedAction(id, ghost, branch, blueprint));
 
-  const plan = withArtifactMetadata("recipe-plan", { recipe: RECIPE_NAME, mode: "plan", launchState: launched ? "launched" : "launch-ready", stages, plannedActions }, generatedAt);
+  const plan = withArtifactMetadata("recipe-plan", { recipe: RECIPE_NAME, mode: "plan", launchState: launched ? "launched" : "launch-ready", maxSubagents, stages, plannedActions }, generatedAt);
   const result = validateRecipePlan(plan);
   if (!result.ok) throw new Error(`invalid ghost-to-launch plan for ${ghost.id}: ${result.errors.join("; ")}`);
   return plan;

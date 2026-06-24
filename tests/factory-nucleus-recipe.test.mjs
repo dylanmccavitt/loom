@@ -19,6 +19,8 @@ import {
   renderPlanSummary,
   resolveStageWriteScopes,
   savePlan,
+  RECIPE_DESIRED_SUBAGENTS,
+  selectMaxSubagents,
 } from "../scripts/factory-nucleus/recipe.mjs";
 
 const generatedAt = "2026-06-23T00:00:00.000Z";
@@ -519,4 +521,30 @@ test("a failing quality gate keeps the plan at launch-ready", () => {
 
   assert.equal(plan.launchState, "launch-ready");
   assert.equal(validateRecipePlan(plan).ok, true);
+});
+
+test("plan max subagents is the min of envelope cap and recipe request", () => {
+  // Unit: selectMaxSubagents picks the smaller of requested and the envelope cap.
+  assert.equal(selectMaxSubagents(), RECIPE_DESIRED_SUBAGENTS);
+  assert.equal(selectMaxSubagents({ envelope: { agents: { maxSubagents: 1 } } }), 1);
+  assert.equal(selectMaxSubagents({ envelope: { agents: { maxSubagents: 10 } } }), RECIPE_DESIRED_SUBAGENTS);
+  assert.equal(selectMaxSubagents({ envelope: {} }), RECIPE_DESIRED_SUBAGENTS);
+  assert.equal(selectMaxSubagents({ requested: 5 }), 5);
+  // Guard edges: an integer cap of 0 is honored (conservative lockdown); a
+  // non-integer cap is ignored so it never corrupts the min.
+  assert.equal(selectMaxSubagents({ envelope: { agents: { maxSubagents: 0 } } }), 0);
+  assert.equal(selectMaxSubagents({ envelope: { agents: { maxSubagents: 2.5 } } }), RECIPE_DESIRED_SUBAGENTS);
+
+  // Plan: maxSubagents reflects min(envelope cap, recipe request) and validates.
+  const capped = planGhostToLaunch({ ghost: linearTracker().getGhost("LOO-2"), tracker: linearTracker(), generatedAt, envelope: { agents: { maxSubagents: 1 } } });
+  assert.equal(capped.maxSubagents, 1);
+  assert.equal(validateRecipePlan(capped).ok, true);
+
+  const roomy = planGhostToLaunch({ ghost: linearTracker().getGhost("LOO-2"), tracker: linearTracker(), generatedAt, envelope: { agents: { maxSubagents: 10 } } });
+  assert.equal(roomy.maxSubagents, RECIPE_DESIRED_SUBAGENTS);
+  assert.equal(validateRecipePlan(roomy).ok, true);
+
+  const uncapped = planGhostToLaunch({ ghost: linearTracker().getGhost("LOO-2"), tracker: linearTracker(), generatedAt });
+  assert.equal(uncapped.maxSubagents, RECIPE_DESIRED_SUBAGENTS);
+  assert.equal(validateRecipePlan(uncapped).ok, true);
 });
