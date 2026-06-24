@@ -202,6 +202,7 @@ export const RECIPE_PLAN_SCHEMA = Object.freeze({
     recipe: { type: "string", minLength: 1 },
     mode: { type: "string", const: "plan" },
     launchState: { type: "string", enum: LAUNCH_STATES },
+    maxSubagents: { type: "integer", minimum: 0 },
     stages: {
       type: "array",
       minItems: 1,

@@ -187,6 +187,12 @@ test("recipe-plan launchState is optional and enum-checked", () => {
   assert.equal(validateRecipePlan(recipePlan).ok, true);
 });
 
+test("recipe-plan maxSubagents is optional and minimum 0", () => {
+  assert.equal(validateRecipePlan({ ...recipePlan, maxSubagents: 2 }).ok, true);
+  assert.equal(validateRecipePlan({ ...recipePlan, maxSubagents: -1 }).ok, false);
+  assert.equal(validateRecipePlan(recipePlan).ok, true);
+});
+
 test("recipe-plan stages carry optional subagent role/scope/objective and reject prompt bodies", () => {
   const withSubagents = {
     ...recipePlan,
