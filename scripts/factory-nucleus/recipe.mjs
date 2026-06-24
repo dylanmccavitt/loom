@@ -138,7 +138,9 @@ function gitToplevel(root) {
 }
 
 function slugGhost(ghostId) {
-  return String(ghostId).toLowerCase().replace(/[^a-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "");
+  const slug = String(ghostId).toLowerCase().replace(/[^a-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "");
+  if (!slug) throw new Error("ghost id must contain at least one alphanumeric character");
+  return slug;
 }
 
 // Save a recipe-plan under local factory state (homeDir/.loom/...), keyed by the
