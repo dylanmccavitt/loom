@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Structured run summaries for Factory Nucleus.
 //
 // A run summary records proof, result, and gaps for a delivery run and saves it
