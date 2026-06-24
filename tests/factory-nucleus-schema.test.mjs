@@ -168,6 +168,18 @@ test("recipe and generated recipe-plan schemas validate ghost-to-launch fixtures
   assert.equal(validateRecipePlan(recipePlan).ok, true, validateRecipePlan(recipePlan).errors.join("\n"));
 });
 
+test("recipe plan requires a proof circuit", () => {
+  assert.equal(validateRecipePlan(recipePlan).ok, true, validateRecipePlan(recipePlan).errors.join("\n"));
+
+  const withoutProof = {
+    ...recipePlan,
+    stages: recipePlan.stages.map((stage) => ({ ...stage, circuits: ["branch-isolated"] })),
+  };
+  const result = validateRecipePlan(withoutProof);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((error) => error.includes("proof")), result.errors.join("\n"));
+});
+
 test("recipe-plan stages carry optional subagent role/scope/objective and reject prompt bodies", () => {
   const withSubagents = {
     ...recipePlan,

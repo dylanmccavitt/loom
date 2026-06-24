@@ -16,7 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { redactSecrets } from "./scan.mjs";
-import { resolveFactoryStatePaths, validateRecipePlan, withArtifactMetadata } from "./schema.mjs";
+import { PROOF_CIRCUIT, resolveFactoryStatePaths, validateRecipePlan, withArtifactMetadata } from "./schema.mjs";
 import { branchForGhost } from "./tracker.mjs";
 import { createGithubTracker } from "./tracker-github.mjs";
 import { createLinearTracker } from "./tracker-linear.mjs";
@@ -31,10 +31,10 @@ const DEFAULT_BRANCH_PREFIX = "factory";
 export const GHOST_TO_LAUNCH_STAGES = Object.freeze([
   Object.freeze({ name: "radar-preflight", circuits: Object.freeze(["radar-clean", "tracker-bound"]), actions: Object.freeze(["read-radar"]), blueprintAware: true }),
   Object.freeze({ name: "inserter-readiness", circuits: Object.freeze(["tracker-bound"]), actions: Object.freeze(["assess-readiness"]) }),
-  Object.freeze({ name: "roboports-implementation", circuits: Object.freeze(["branch-isolated", "proof-required"]), actions: Object.freeze(["branch", "pr"]), subagents: Object.freeze([Object.freeze({ role: "implementer", scope: Object.freeze(["acceptance-criteria"]), objective: "Implement the ghost's acceptance criteria on its isolated branch", reads: Object.freeze(["acceptance-criteria"]), writes: Object.freeze(["src"]) }), Object.freeze({ role: "test-author", scope: Object.freeze(["tests"]), objective: "Add tests that prove the acceptance criteria", reads: Object.freeze(["src"]), writes: Object.freeze(["tests"]) })]) }),
+  Object.freeze({ name: "roboports-implementation", circuits: Object.freeze(["branch-isolated", PROOF_CIRCUIT]), actions: Object.freeze(["branch", "pr"]), subagents: Object.freeze([Object.freeze({ role: "implementer", scope: Object.freeze(["acceptance-criteria"]), objective: "Implement the ghost's acceptance criteria on its isolated branch", reads: Object.freeze(["acceptance-criteria"]), writes: Object.freeze(["src"]) }), Object.freeze({ role: "test-author", scope: Object.freeze(["tests"]), objective: "Add tests that prove the acceptance criteria", reads: Object.freeze(["src"]), writes: Object.freeze(["tests"]) })]) }),
   Object.freeze({ name: "radar-drift-check", circuits: Object.freeze(["radar-clean"]), actions: Object.freeze(["check-drift"]) }),
-  Object.freeze({ name: "proof-pass", circuits: Object.freeze(["proof-required"]), actions: Object.freeze(["run-proof"]), proof: Object.freeze(["targeted node --test", "npm run check"]), subagents: Object.freeze([Object.freeze({ role: "proof-runner", scope: Object.freeze(["proof"]), objective: "Run targeted and full proof checks and record evidence", reads: Object.freeze(["src", "tests"]) })]) }),
-  Object.freeze({ name: "rocket-launch-eligibility", circuits: Object.freeze(["merge-gated", "proof-required"]), actions: Object.freeze(["check-merge"]) }),
+  Object.freeze({ name: "proof-pass", circuits: Object.freeze([PROOF_CIRCUIT]), actions: Object.freeze(["run-proof"]), proof: Object.freeze(["targeted node --test", "npm run check"]), subagents: Object.freeze([Object.freeze({ role: "proof-runner", scope: Object.freeze(["proof"]), objective: "Run targeted and full proof checks and record evidence", reads: Object.freeze(["src", "tests"]) })]) }),
+  Object.freeze({ name: "rocket-launch-eligibility", circuits: Object.freeze(["merge-gated", PROOF_CIRCUIT]), actions: Object.freeze(["check-merge"]) }),
   Object.freeze({ name: "radar-post-launch-sync", circuits: Object.freeze(["radar-clean"]), actions: Object.freeze(["sync-radar"]) }),
 ]);
 

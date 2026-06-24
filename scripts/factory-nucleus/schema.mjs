@@ -28,6 +28,8 @@ export const CIRCUIT_GATES = Object.freeze([
 
 export const CIRCUIT_OUTCOMES = Object.freeze(["allow", "block", "escalate"]);
 
+export const PROOF_CIRCUIT = "proof-required";
+
 export const GHOST_STATES = Object.freeze([
   "triage",
   "backlog",
@@ -525,6 +527,16 @@ function addRecipePlanActionReferenceErrors(value, errors) {
   });
 }
 
+function addRecipePlanProofCircuitErrors(value, errors) {
+  if (!Array.isArray(value?.stages)) return;
+  const hasProofCircuit = value.stages.some(
+    (stage) => Array.isArray(stage?.circuits) && stage.circuits.includes(PROOF_CIRCUIT),
+  );
+  if (!hasProofCircuit) {
+    errors.push(`$.stages: recipe plan must include a stage with the ${PROOF_CIRCUIT} proof circuit`);
+  }
+}
+
 
 export function validateEnvelopeYaml(input) {
   try {
@@ -545,6 +557,7 @@ export function validateRecipe(value) {
 export function validateRecipePlan(value) {
   const result = validateArtifact(value, RECIPE_PLAN_SCHEMA);
   addRecipePlanActionReferenceErrors(value, result.errors);
+  addRecipePlanProofCircuitErrors(value, result.errors);
   result.ok = result.errors.length === 0;
   return result;
 }
