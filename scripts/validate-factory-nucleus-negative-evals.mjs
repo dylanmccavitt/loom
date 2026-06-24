@@ -18,17 +18,29 @@ const docPath = path.join(repoRoot, "docs/factory-nucleus/negative-evals.md");
 
 // Eval reference format in the map: `<test file>` — "<test title>"
 const EVAL_REF = /`(tests\/[A-Za-z0-9._/-]+\.test\.mjs)`\s+—\s+"([^"]+)"/gu;
-// Each unsafe behavior is a numbered "### N." section.
-const BEHAVIOR_HEADING = /^### \d+\./gmu;
+// Each unsafe behavior is a numbered "### N." section heading.
+const BEHAVIOR_HEADING = /^### \d+\.[^\n]*$/mu;
 const EXPECTED_BEHAVIORS = 8;
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
 
 export function evaluate(doc, readFile) {
   const failures = [];
 
-  const behaviors = (doc.match(BEHAVIOR_HEADING) || []).length;
-  if (behaviors !== EXPECTED_BEHAVIORS) {
-    failures.push(`expected ${EXPECTED_BEHAVIORS} unsafe-behavior sections, found ${behaviors}`);
+  // Require every unsafe-behavior section to cite at least one eval, so a
+  // behavior cannot silently lose its coverage (heading kept, citation dropped,
+  // or the `—` reference format broken).
+  const sections = doc.split(BEHAVIOR_HEADING).slice(1);
+  if (sections.length !== EXPECTED_BEHAVIORS) {
+    failures.push(`expected ${EXPECTED_BEHAVIORS} unsafe-behavior sections, found ${sections.length}`);
   }
+  sections.forEach((section, index) => {
+    if ([...section.matchAll(EVAL_REF)].length === 0) {
+      failures.push(`unsafe-behavior section ${index + 1} cites no eval`);
+    }
+  });
 
   const refs = [...doc.matchAll(EVAL_REF)].map((match) => ({ file: match[1], title: match[2] }));
   if (refs.length === 0) failures.push("no eval references found in the coverage map");
@@ -47,12 +59,14 @@ export function evaluate(doc, readFile) {
       failures.push(`missing test file: ${file}`);
       continue;
     }
-    if (!source.includes(`test("${title}"`)) {
+    // Match an uncommented declaration: line start + optional indent + test("<title>".
+    const declared = new RegExp(`^\\s*test\\("${escapeRegExp(title)}"`, "mu");
+    if (!declared.test(source)) {
       failures.push(`stale reference — ${file} no longer defines: "${title}"`);
     }
   }
 
-  return { behaviors, checks: refs.length, failures };
+  return { behaviors: sections.length, checks: refs.length, failures };
 }
 
 const invokedDirectly = process.argv[1]
