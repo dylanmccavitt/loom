@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
-import { validateRecipePlan } from "../scripts/factory-nucleus/schema.mjs";
+import { PROOF_CIRCUIT, validateRecipePlan } from "../scripts/factory-nucleus/schema.mjs";
 import { branchForGhost } from "../scripts/factory-nucleus/tracker.mjs";
 import { createGithubTracker } from "../scripts/factory-nucleus/tracker-github.mjs";
 import { createLinearTracker } from "../scripts/factory-nucleus/tracker-linear.mjs";
@@ -87,6 +87,19 @@ test("a ready ghost produces a valid ghost-to-launch plan with all stages in ord
   for (const stage of plan.stages) {
     for (const id of stage.plannedActions) assert.ok(ids.has(id), `unresolved action ${id}`);
   }
+});
+
+test("ghost-to-launch plan includes a proof circuit and a standalone proof-pass stage", () => {
+  const tracker = linearTracker();
+  const ghost = tracker.getGhost("LOO-2");
+  const plan = planGhostToLaunch({ ghost, tracker, generatedAt });
+
+  assert.ok(
+    plan.stages.some((stage) => Array.isArray(stage.circuits) && stage.circuits.includes(PROOF_CIRCUIT)),
+    "plan has a stage carrying the proof circuit",
+  );
+  assert.ok(plan.stages.some((stage) => stage.name === "proof-pass"), "plan has a standalone proof-pass stage");
+  assert.equal(validateRecipePlan(plan).ok, true, validateRecipePlan(plan).errors.join("\n"));
 });
 
 test("the roboports stage carries the id-bridge branch and PR as the only durable actions", () => {
