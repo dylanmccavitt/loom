@@ -96,7 +96,7 @@ test("ghost-to-launch plan stops at launch-ready without implying a merge", () =
   const plan = planGhostToLaunch({ ghost, tracker, generatedAt });
 
   assert.equal(plan.launchState, "launch-ready");
-  assert.ok(plan.plannedActions.every((a) => a.kind !== "merge"), "no planned action is a merge");
+  assert.ok(plan.plannedActions.filter((a) => a.durable).every((a) => a.id === "branch" || a.id === "pr"), "only branch/pr are durable; no merge write");
   assert.ok(!plan.plannedActions.some((a) => a.id === "merge"), "no action with id merge");
   assert.ok(!plan.plannedActions.some((a) => a.id === "launched"), "no action with id launched");
   assert.equal(validateRecipePlan(plan).ok, true);

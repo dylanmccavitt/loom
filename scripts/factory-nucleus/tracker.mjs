@@ -86,7 +86,7 @@ export function assessReadiness(ghost, lookup = () => null) {
 // (work complete, PR open, NOT yet merged). Returns null for other states.
 // launch-ready never implies a merge happened.
 export function classifyLaunch(ghost) {
-  if (ghost?.state === "done") return "launched";
+  if (ghost?.state === DONE_STATE) return "launched";
   if (ghost?.state === "in-review") return "launch-ready";
   return null;
 }
