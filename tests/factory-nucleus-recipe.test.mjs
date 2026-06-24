@@ -109,6 +109,34 @@ test("the roboports stage carries the id-bridge branch and PR as the only durabl
   assert.deepEqual(plan.plannedActions.filter((action) => action.durable).map((action) => action.id), ["branch", "pr"]);
 });
 
+test("plan decomposes the roboports stage into bounded subagents with no prompt bodies", () => {
+  const tracker = linearTracker();
+  const ghost = tracker.getGhost("LOO-2");
+  const plan = planGhostToLaunch({ ghost, tracker, generatedAt });
+
+  const roboports = plan.stages.find((stage) => stage.name === "roboports-implementation");
+  assert.ok(Array.isArray(roboports.subagents) && roboports.subagents.length >= 2, "roboports stage carries bounded non-trivial decomposition");
+  for (const sub of roboports.subagents) {
+    assert.equal(typeof sub.role, "string");
+    assert.ok(sub.role.length > 0, "subagent role is non-empty");
+    assert.equal(typeof sub.objective, "string");
+    assert.ok(sub.objective.length > 0, "subagent objective is non-empty");
+    assert.ok(Array.isArray(sub.scope) && sub.scope.length > 0, "subagent scope is a non-empty array");
+  }
+
+  const proofPass = plan.stages.find((stage) => stage.name === "proof-pass");
+  assert.ok(Array.isArray(proofPass.subagents) && proofPass.subagents.length >= 1, "proof-pass stage carries at least one subagent");
+
+  // No subagent anywhere in the plan exposes a full prompt body.
+  const allSubagents = plan.stages.flatMap((stage) => stage.subagents ?? []);
+  for (const sub of allSubagents) {
+    assert.ok(!("prompt" in sub) && !("body" in sub), "subagent carries role/scope/objective only, no prompt body");
+  }
+
+  const check = validateRecipePlan(plan);
+  assert.equal(check.ok, true, check.errors.join("\n"));
+});
+
 test("an optional blueprint adds a read-blueprint action to radar preflight", () => {
   const tracker = linearTracker();
   const ghost = tracker.getGhost("LOO-2");

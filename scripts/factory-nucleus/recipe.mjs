@@ -31,9 +31,9 @@ const DEFAULT_BRANCH_PREFIX = "factory";
 export const GHOST_TO_LAUNCH_STAGES = Object.freeze([
   Object.freeze({ name: "radar-preflight", circuits: Object.freeze(["radar-clean", "tracker-bound"]), actions: Object.freeze(["read-radar"]), blueprintAware: true }),
   Object.freeze({ name: "inserter-readiness", circuits: Object.freeze(["tracker-bound"]), actions: Object.freeze(["assess-readiness"]) }),
-  Object.freeze({ name: "roboports-implementation", circuits: Object.freeze(["branch-isolated", "proof-required"]), actions: Object.freeze(["branch", "pr"]) }),
+  Object.freeze({ name: "roboports-implementation", circuits: Object.freeze(["branch-isolated", "proof-required"]), actions: Object.freeze(["branch", "pr"]), subagents: Object.freeze([Object.freeze({ role: "implementer", scope: Object.freeze(["acceptance-criteria"]), objective: "Implement the ghost's acceptance criteria on its isolated branch" }), Object.freeze({ role: "test-author", scope: Object.freeze(["tests"]), objective: "Add tests that prove the acceptance criteria" })]) }),
   Object.freeze({ name: "radar-drift-check", circuits: Object.freeze(["radar-clean"]), actions: Object.freeze(["check-drift"]) }),
-  Object.freeze({ name: "proof-pass", circuits: Object.freeze(["proof-required"]), actions: Object.freeze(["run-proof"]), proof: Object.freeze(["targeted node --test", "npm run check"]) }),
+  Object.freeze({ name: "proof-pass", circuits: Object.freeze(["proof-required"]), actions: Object.freeze(["run-proof"]), proof: Object.freeze(["targeted node --test", "npm run check"]), subagents: Object.freeze([Object.freeze({ role: "proof-runner", scope: Object.freeze(["proof"]), objective: "Run targeted and full proof checks and record evidence" })]) }),
   Object.freeze({ name: "rocket-launch-eligibility", circuits: Object.freeze(["merge-gated", "proof-required"]), actions: Object.freeze(["check-merge"]) }),
   Object.freeze({ name: "radar-post-launch-sync", circuits: Object.freeze(["radar-clean"]), actions: Object.freeze(["sync-radar"]) }),
 ]);
@@ -90,6 +90,7 @@ export function planGhostToLaunch({ ghost, tracker, blueprint, branchPrefix = DE
     if (spec.blueprintAware && blueprint) plannedActions.push("read-blueprint");
     const stage = { name: spec.name, status: "planned", circuits: [...spec.circuits], plannedActions };
     if (spec.proof) stage.proof = [...spec.proof];
+    if (spec.subagents) stage.subagents = spec.subagents.map((sub) => ({ role: sub.role, scope: [...sub.scope], objective: sub.objective }));
     return stage;
   });
 

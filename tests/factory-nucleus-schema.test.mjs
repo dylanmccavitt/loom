@@ -168,6 +168,31 @@ test("recipe and generated recipe-plan schemas validate ghost-to-launch fixtures
   assert.equal(validateRecipePlan(recipePlan).ok, true, validateRecipePlan(recipePlan).errors.join("\n"));
 });
 
+test("recipe-plan stages carry optional subagent role/scope/objective and reject prompt bodies", () => {
+  const withSubagents = {
+    ...recipePlan,
+    stages: [{ ...recipePlan.stages[0], subagents: [{ role: "implementer", scope: ["tests"], objective: "do x" }] }],
+  };
+  const okResult = validateRecipePlan(withSubagents);
+  assert.equal(okResult.ok, true, okResult.errors.join("\n"));
+
+  const withPromptBody = {
+    ...recipePlan,
+    stages: [{ ...recipePlan.stages[0], subagents: [{ role: "implementer", scope: ["tests"], objective: "do x", prompt: "You are an implementer; do everything." }] }],
+  };
+  const promptResult = validateRecipePlan(withPromptBody);
+  assert.equal(promptResult.ok, false);
+  assert.ok(promptResult.errors.some((error) => error.includes("subagents[0].prompt") && error.includes("unknown property")), promptResult.errors.join("\n"));
+
+  const missingObjective = {
+    ...recipePlan,
+    stages: [{ ...recipePlan.stages[0], subagents: [{ role: "implementer", scope: ["tests"] }] }],
+  };
+  const missingResult = validateRecipePlan(missingObjective);
+  assert.equal(missingResult.ok, false);
+  assert.ok(missingResult.errors.some((error) => error.includes("subagents[0].objective") && error.includes("required")), missingResult.errors.join("\n"));
+});
+
 test("recipe stages and recipe-plan stages reject dangling references", () => {
   const danglingCircuitRecipe = {
     ...recipe,
