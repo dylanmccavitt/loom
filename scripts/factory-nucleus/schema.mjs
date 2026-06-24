@@ -298,6 +298,20 @@ export const ADAPTER_GHOST_SCHEMA = Object.freeze({
   additionalProperties: false,
 });
 
+export const RUN_SUMMARY_SCHEMA = Object.freeze({
+  type: "object",
+  required: ["schemaVersion", "kind", "generatedAt", "proof", "result", "gaps"],
+  properties: {
+    ...metadataProperties,
+    kind: { type: "string", const: "run-summary" },
+    proof: stringArray,
+    result: { type: "string", minLength: 1 },
+    gaps: optionalStringArray,
+    ghostId: { type: "string", minLength: 1 },
+  },
+  additionalProperties: false,
+});
+
 function yamlLines(input) {
   return String(input)
     .split(/\r?\n/u)
@@ -572,6 +586,10 @@ export function validateCircuit(value) {
 
 export function validateAdapterGhost(value) {
   return validateArtifact(value, ADAPTER_GHOST_SCHEMA);
+}
+
+export function validateRunSummary(value) {
+  return validateArtifact(value, RUN_SUMMARY_SCHEMA);
 }
 
 export function validateArtifactMetadata(value, expectedKind) {
