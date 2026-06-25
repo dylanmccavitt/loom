@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "generatedForIssue": "LOO-96",
+  "name": "shared-nucleus-agent-contract",
+  "status": "contract-only",
+  "namingRules": {
+    "theme": "Factorio workflow nouns",
+    "forbiddenPrefixes": [
+      "omp-",
+      "codex-",
+      "claude-"
+    ],
+    "canonicalNamesAreSharedAcrossHarnesses": true,
+    "directOmpBundledRolePortsAreSuperseded": true
+  },
+  "model": {
+    "skills": "routing, playbooks, triggers, and guardrails",
+    "agents": "delegated specialists executing bounded work packets",
+    "harnessAdapters": "format translators only; they must preserve canonical names and behavior contracts"
+  },
+  "agents": [
+    {
+      "name": "blueprint",
+      "role": "Spec synthesizer",
+      "purpose": "Turns current context into a PRD/spec with acceptance criteria, non-goals, and proof plan.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "source context",
+        "product constraints",
+        "known decisions"
+      ],
+      "outputPacket": [
+        "spec summary",
+        "acceptance criteria",
+        "non-goals",
+        "proof plan"
+      ]
+    },
+    {
+      "name": "ghosts",
+      "role": "Issue decomposer",
+      "purpose": "Splits an approved plan/spec into dependency-ordered Linear issues and sub-issues.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "approved plan or spec",
+        "tracker/project context"
+      ],
+      "outputPacket": [
+        "issue DAG",
+        "slice descriptions",
+        "blocked-by map"
+      ]
+    },
+    {
+      "name": "inserter",
+      "role": "Triage router",
+      "purpose": "Classifies, prioritizes, labels, and routes incoming tracker work.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "issue or backlog item",
+        "triage state map"
+      ],
+      "outputPacket": [
+        "classification",
+        "route",
+        "blockers",
+        "next state"
+      ]
+    },
+    {
+      "name": "roboports",
+      "role": "Issue delivery coordinator",
+      "purpose": "Runs one tracked issue through branch/worktree, implementation, proof, review, and PR readiness.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "issue id",
+        "acceptance criteria",
+        "repo envelope"
+      ],
+      "outputPacket": [
+        "changed files",
+        "proof evidence",
+        "PR link",
+        "remaining risk"
+      ]
+    },
+    {
+      "name": "radar",
+      "role": "Drift scanner",
+      "purpose": "Checks repo/tracker/proof drift and recommends the next route without mutating state.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "tracker state",
+        "repo state",
+        "proof evidence"
+      ],
+      "outputPacket": [
+        "drift class",
+        "evidence",
+        "recommended route"
+      ]
+    },
+    {
+      "name": "lab",
+      "role": "Proof specialist",
+      "purpose": "Runs proof-only validation and records behavior evidence without expanding scope.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "behavior claim",
+        "proof plan",
+        "target environment"
+      ],
+      "outputPacket": [
+        "commands/scenarios run",
+        "observed result",
+        "proof gaps"
+      ]
+    },
+    {
+      "name": "biters",
+      "role": "General adversarial reviewer",
+      "purpose": "Attacks correctness, regression, maintainability, scope, and missing-test risks before merge.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "diff or PR",
+        "acceptance criteria",
+        "proof evidence"
+      ],
+      "outputPacket": [
+        "ordered findings",
+        "suggested fixes",
+        "residual risk"
+      ]
+    },
+    {
+      "name": "spitters",
+      "role": "Security attacker",
+      "purpose": "Runs AppSec/adversarial security review across trust boundaries and abuse paths.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "diff or surface",
+        "assets",
+        "trust boundaries"
+      ],
+      "outputPacket": [
+        "security findings",
+        "attack path",
+        "severity",
+        "mitigation"
+      ]
+    },
+    {
+      "name": "spidertron",
+      "role": "UI workflow tester",
+      "purpose": "Drives browser/desktop UI workflows and captures user-visible proof.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "workflow steps",
+        "app target",
+        "expected user-visible state"
+      ],
+      "outputPacket": [
+        "observations",
+        "screenshots/logs if available",
+        "failures",
+        "proof status"
+      ]
+    },
+    {
+      "name": "bus-first",
+      "role": "Minimal-diff tightener",
+      "purpose": "Applies reuse-before-build doctrine and flags needless abstraction or scope creep.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "diff",
+        "acceptance criteria",
+        "existing patterns"
+      ],
+      "outputPacket": [
+        "cuts to make",
+        "rung rationale",
+        "protected guards"
+      ]
+    },
+    {
+      "name": "repair-pack",
+      "role": "Narrow finding fixer",
+      "purpose": "Fixes exactly one concrete review/proof finding from a fresh compact packet.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "finding packet",
+        "allowed files",
+        "proof check"
+      ],
+      "outputPacket": [
+        "fix summary",
+        "changed files",
+        "proof run",
+        "remaining risk"
+      ]
+    },
+    {
+      "name": "main-bus",
+      "role": "Architecture seam planner",
+      "purpose": "Plans shared lanes/seams so features plug into existing structure instead of parallel spaghetti.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "architecture problem",
+        "existing docs/code constraints"
+      ],
+      "outputPacket": [
+        "minimal restructure",
+        "seams",
+        "ADR/doc update need"
+      ]
+    },
+    {
+      "name": "science-pack",
+      "role": "Research spike",
+      "purpose": "Resolves one open unknown with source-grounded findings before build.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "question",
+        "decision needed",
+        "timebox"
+      ],
+      "outputPacket": [
+        "answer",
+        "sources/evidence",
+        "decision impact"
+      ]
+    },
+    {
+      "name": "belt",
+      "role": "Handoff carrier",
+      "purpose": "Moves durable context between agents/threads with concise state, proof, risks, and next actions.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "work state",
+        "artifacts",
+        "open risks"
+      ],
+      "outputPacket": [
+        "handoff packet",
+        "resume steps",
+        "artifact links"
+      ]
+    },
+    {
+      "name": "recycler",
+      "role": "Behavior-preserving refactorer",
+      "purpose": "Deletes, consolidates, or clarifies existing code without changing behavior.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "target code",
+        "behavior invariants",
+        "tests"
+      ],
+      "outputPacket": [
+        "refactor summary",
+        "deleted duplication",
+        "proof"
+      ]
+    },
+    {
+      "name": "modules",
+      "role": "Measured performance optimizer",
+      "purpose": "Optimizes a proven bottleneck with before/after measurement and stops when returns diminish.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "bottleneck evidence",
+        "benchmark command",
+        "constraints"
+      ],
+      "outputPacket": [
+        "before/after results",
+        "change summary",
+        "remaining bottlenecks"
+      ]
+    },
+    {
+      "name": "rocket-launch",
+      "role": "Launch gatekeeper",
+      "purpose": "Ships a ready PR only after review/proof/CI gates and tracker bridge are satisfied.",
+      "nonGoals": [
+        "Do not merge PRs unless this agent is rocket-launch.",
+        "Do not close tracker issues unless explicitly assigned by the workflow gate.",
+        "Do not live-apply to real HOME.",
+        "Do not widen scope beyond the assigned packet."
+      ],
+      "inputPacket": [
+        "PR link",
+        "proof packet",
+        "tracker issue"
+      ],
+      "outputPacket": [
+        "merge/closeout result",
+        "status update",
+        "blocked gate if any"
+      ]
+    }
+  ],
+  "supersededCandidates": [
+    {
+      "harness": "codex",
+      "candidate": "omp-designer",
+      "reason": "Direct OMP designer role port; future UI workflow proof belongs to shared spidertron."
+    },
+    {
+      "harness": "codex",
+      "candidate": "omp-planner",
+      "reason": "Direct OMP planning role port; future planning work is split across blueprint, ghosts, roboports, and main-bus."
+    },
+    {
+      "harness": "codex",
+      "candidate": "omp-reviewer",
+      "reason": "Direct OMP reviewer role port; future review work is split across biters, spitters, bus-first, and lab."
+    },
+    {
+      "harness": "codex",
+      "candidate": "omp-librarian",
+      "reason": "Potential OMP research role port; future research belongs to shared science-pack."
+    }
+  ],
+  "activation": {
+    "nativeAgentRendering": "future issue",
+    "evalHarness": "future issue",
+    "liveHomeApply": "forbidden in this contract slice"
+  }
+}
