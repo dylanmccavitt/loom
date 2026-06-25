@@ -18,14 +18,12 @@ display:
 task: 
   eager: preferred
   agentModelOverrides: 
+    designer: anthropic/claude-opus-4-7
+    librarian: anthropic/claude-sonnet-4.6:inherit
     oracle: openai-codex/gpt-5.5:high
     plan: openai-codex/gpt-5.5:high
     reviewer: anthropic/claude-opus-4-8:high
     task: anthropic/claude-opus-4-8:medium
-    designer: anthropic/claude-opus-4-7
-    explore: anthropic/claude-haiku-4-5:low
-    librarian: anthropic/claude-haiku-4-5:low
-    quick_task: anthropic/claude-haiku-4-5:low
 mcp: 
   discoveryMode: true
 advisor: 
@@ -38,10 +36,12 @@ inspect_image:
 checkpoint: 
   enabled: true
 modelRoles: 
-  plan: openai-codex/gpt-5.5:off
-  slow: anthropic/claude-opus-4-8:xhigh
-  smol: cursor/gemini-3.5-flash
+  plan: openai-codex/gpt-5.5:inherit
+  slow: openai-codex/gpt-5.5
+  smol: google-antigravity/gemini-3.5-flash
   advisor: anthropic/claude-opus-4-7
+  default: openai-codex/gpt-5.5
+  designer: google-antigravity/claude-opus-4-6
 dev: 
   autoqa: 
     consent: denied
