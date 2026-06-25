@@ -1,7 +1,7 @@
 providers: 
   webSearch: codex
 theme: 
-  dark: dark-tundra
+  dark: dark-ocean
 setupVersion: 1
 disabledProviders: 
   - claude-plugins
@@ -14,8 +14,18 @@ statusLine:
   sessionAccent: true
 display: 
   showTokenUsage: true
+  shimmer: kitt
 task: 
   eager: preferred
+  agentModelOverrides: 
+    oracle: openai-codex/gpt-5.5:high
+    plan: openai-codex/gpt-5.5:high
+    reviewer: anthropic/claude-opus-4-8:high
+    task: anthropic/claude-opus-4-8:medium
+    designer: anthropic/claude-opus-4-7
+    explore: anthropic/claude-haiku-4-5:low
+    librarian: anthropic/claude-haiku-4-5:low
+    quick_task: anthropic/claude-haiku-4-5:low
 mcp: 
   discoveryMode: true
 advisor: 
@@ -27,3 +37,23 @@ inspect_image:
   enabled: true
 checkpoint: 
   enabled: true
+modelRoles: 
+  plan: openai-codex/gpt-5.5:off
+  slow: anthropic/claude-opus-4-8:xhigh
+  smol: cursor/gemini-3.5-flash
+  advisor: anthropic/claude-opus-4-7
+dev: 
+  autoqa: 
+    consent: denied
+browser: 
+  headless: true
+colorBlindMode: true
+tui: 
+  tight: false
+hideThinkingBlock: false
+readLineNumbers: true
+retry: 
+  fallbackChains: 
+    openai-codex/gpt-5.5: 
+      - anthropic/claude-opus-4-8
+      - anthropic/claude-opus-4-7
