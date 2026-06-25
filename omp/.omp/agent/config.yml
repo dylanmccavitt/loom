@@ -20,16 +20,16 @@ task:
   agentModelOverrides: 
     oracle: openai-codex/gpt-5.5:high
     plan: openai-codex/gpt-5.5:high
-    reviewer: anthropic/claude-opus-4-8:high
-    task: anthropic/claude-opus-4-8:medium
-    designer: anthropic/claude-opus-4-7
-    explore: anthropic/claude-haiku-4-5:low
-    librarian: anthropic/claude-haiku-4-5:low
-    quick_task: anthropic/claude-haiku-4-5:low
+    reviewer: openai-codex/gpt-5.5:high
+    task: openai-codex/gpt-5.5:medium
+    designer: anthropic/claude-opus-4-8
+    explore: google-antigravity/gemini-3.5-flash:low
+    librarian: google-antigravity/gemini-3.5-flash:low
+    quick_task: google-antigravity/gemini-3.5-flash:low
 mcp: 
   discoveryMode: true
 advisor: 
-  enabled: true
+  enabled: false
   subagents: false
 github: 
   enabled: true
@@ -38,10 +38,10 @@ inspect_image:
 checkpoint: 
   enabled: true
 modelRoles: 
+  default: openai-codex/gpt-5.5:medium
   plan: openai-codex/gpt-5.5:off
   slow: anthropic/claude-opus-4-8:xhigh
-  smol: cursor/gemini-3.5-flash
-  advisor: anthropic/claude-opus-4-7
+  smol: google-antigravity/gemini-3.5-flash:low
 dev: 
   autoqa: 
     consent: denied
@@ -55,5 +55,6 @@ readLineNumbers: true
 retry: 
   fallbackChains: 
     openai-codex/gpt-5.5: 
-      - anthropic/claude-opus-4-8
-      - anthropic/claude-opus-4-7
+      - anthropic/claude-opus-4-6
+    anthropic/claude-opus-4-8: 
+      - anthropic/claude-opus-4-6
