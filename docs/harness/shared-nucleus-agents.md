@@ -1,6 +1,6 @@
 # Shared nucleus agent contract
 
-Issues: LOO-96 base contract; LOO-97 autonomous delegation DAG; LOO-98 repair-pack finding-fix loop. Status: contract-only. This document defines the canonical shared agent model; it does not render or activate native OMP, Codex, or Claude agent files.
+Issues: LOO-96 base contract; LOO-97 autonomous delegation DAG; LOO-98 repair-pack finding-fix loop; LOO-99 offline shared-agent eval harness. Status: contract plus offline eval harness; this document defines the canonical shared agent model and does not render or activate native OMP, Codex, or Claude agent files.
 
 Source pattern: [Teaching agents product design at Vercel](https://vercel.com/blog/teaching-agents-product-design-at-vercel).
 

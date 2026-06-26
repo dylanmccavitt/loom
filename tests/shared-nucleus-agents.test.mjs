@@ -43,7 +43,7 @@ const FORBIDDEN_PREFIXES = ["omp-", "codex-", "claude-"];
 
 test("shared nucleus agent contract records the canonical Factorio roster", () => {
   assert.equal(contract.schemaVersion, 4);
-  assert.equal(contract.generatedForIssue, "LOO-98");
+  assert.equal(contract.generatedForIssue, "LOO-99");
   assert.equal(contract.status, "contract-only");
   assert.deepEqual(contract.agents.map((agent) => agent.name), EXPECTED_ROSTER);
   assert.equal(new Set(contract.agents.map((agent) => agent.name)).size, EXPECTED_ROSTER.length);
@@ -296,9 +296,9 @@ test("direct OMP-prefixed Codex role candidates are marked superseded", () => {
   }
 });
 
-test("contract slice does not claim rendering evals linters intake automation or live activation", () => {
+test("contract slice does not claim rendering linters intake automation or live activation", () => {
   assert.equal(contract.activation.nativeAgentRendering, "future issue");
-  assert.equal(contract.activation.evalHarness, "future issue");
+  assert.match(contract.activation.evalHarness, /scripts\/validate-shared-agent-evals\.mjs/u);
   assert.equal(contract.activation.lintRules, "future issue when rules are mechanical");
   assert.equal(contract.activation.evidenceIntakeAutomation, "future issue");
   assert.equal(contract.activation.liveHomeApply, "forbidden in this contract slice");
