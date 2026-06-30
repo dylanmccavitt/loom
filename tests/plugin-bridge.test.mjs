@@ -24,6 +24,7 @@ const plan = JSON.parse(readFileSync(repoFile("docs/harness/plugin-bridge/plan.j
 const manifest = JSON.parse(readFileSync(repoFile("docs/harness/resource-manifest.json"), "utf8"));
 const matrix = JSON.parse(readFileSync(repoFile("docs/harness/omp-builtins/portability-matrix.json"), "utf8"));
 const source = JSON.parse(readFileSync(repoFile("docs/harness/omp-builtins/source.json"), "utf8"));
+const shared = JSON.parse(readFileSync(repoFile("docs/harness/shared-nucleus-agents.json"), "utf8"));
 
 function tempDir(prefix) {
   return mkdtempSync(path.join(tmpdir(), prefix));
@@ -83,7 +84,7 @@ function botched(destination, content = JSON.stringify({ name: "loom-nucleus" })
 
 // --- mapping completeness -----------------------------------------------------------------------
 
-test("skill set matches the 6 portability-matrix skill candidates with no missing/dup/renamed", () => {
+test("plugin skills include OMP skill candidates and canonical shared agent packages", () => {
   const matrixSkillCommands = matrix.commands
     .filter((command) => command.portabilityClass === "skill")
     .map((command) => command.name)
@@ -93,15 +94,19 @@ test("skill set matches the 6 portability-matrix skill candidates with no missin
   const planSkillCommands = plan.skills.map((skill) => skill.ompCommand).sort();
   assert.deepEqual(planSkillCommands, matrixSkillCommands, "plan skill ompCommands must equal the matrix skill commands");
 
-  // No duplicate plan skill names, and every name maps to a present SKILL.md directory.
   const planSkillNames = plan.skills.map((skill) => skill.name).sort();
   assert.equal(new Set(planSkillNames).size, planSkillNames.length, "duplicate plan skill name");
+
+  const sharedAgentNames = shared.agents.map((agent) => agent.name).sort();
+  const packagedAgentNames = plan.agents.map((agent) => agent.name).sort();
+  assert.deepEqual(packagedAgentNames, sharedAgentNames, "plan agents must match the shared nucleus roster");
+  assert.ok(plan.agents.every((agent) => agent.packaged === true && agent.consumedBy === "both"), "shared agents must be packaged for both harnesses");
 
   const skillDirs = readdirSync(path.join(bridgeDir, "loom-nucleus", "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  assert.deepEqual(skillDirs, planSkillNames, "SKILL.md directories must match the plan skill names exactly");
+  assert.deepEqual(skillDirs, [...planSkillNames, ...sharedAgentNames].sort(), "plugin skills directory must contain OMP skills plus shared agent packages");
 
   for (const name of planSkillNames) {
     const skillFile = path.join(bridgeDir, "loom-nucleus", "skills", name, "SKILL.md");
@@ -109,44 +114,31 @@ test("skill set matches the 6 portability-matrix skill candidates with no missin
   }
 });
 
-test("agent set matches the 8 bundled agents with documented keep/adapt/drop and packaged files", () => {
-  const bundled = [...source.expectedBundledAgents].sort();
-  const planAgentNames = plan.agents.map((agent) => agent.ompAgent).sort();
-  assert.deepEqual(planAgentNames, bundled, "plan must cover exactly the 8 bundled OMP agents");
+test("canonical shared agent packages have required shape and unprefixed names", () => {
+  const requiredFiles = [
+    "AGENTS.md",
+    "SKILL.md",
+    "references/agent-judgment.md",
+    "references/rules.md",
+    "references/patterns.md",
+    "references/glossary.md",
+    "references/coverage-gaps.md",
+  ];
 
-  // Documented #41/#42 decisions: 5 adapt, oracle drop, task/quick_task keep-native.
-  const expectedDecisions = {
-    designer: "adapt",
-    explore: "adapt",
-    librarian: "adapt",
-    plan: "adapt",
-    reviewer: "adapt",
-    oracle: "drop",
-    task: "keep-native",
-    quick_task: "keep-native",
-  };
   for (const agent of plan.agents) {
-    assert.equal(agent.decision, expectedDecisions[agent.ompAgent], `unexpected decision for ${agent.ompAgent}`);
-    if (agent.decision === "adapt") {
-      assert.equal(agent.packaged, true, `${agent.ompAgent} adapt must be packaged`);
-      assert.ok(typeof agent.name === "string" && agent.name.startsWith("omp-"), `${agent.ompAgent} must be renamed omp-*`);
-    } else {
-      assert.equal(agent.packaged, false, `${agent.ompAgent} ${agent.decision} must not be packaged`);
-      assert.equal(agent.name, null, `${agent.ompAgent} must have no plugin name`);
+    assert.doesNotMatch(agent.name, /^(omp|codex|claude)-/u, `shared agent must not be harness-prefixed: ${agent.name}`);
+    const rootDir = path.join(bridgeDir, "loom-nucleus", "skills", agent.name);
+    for (const rel of requiredFiles) {
+      assert.ok(readFileSync(path.join(rootDir, rel), "utf8").length > 0, `${agent.name} missing ${rel}`);
     }
+    assert.equal(frontmatterName(path.join(rootDir, "SKILL.md")), agent.name, `SKILL.md frontmatter name must equal package name (${agent.name})`);
+    const exemplar = path.join(rootDir, "exemplars", `pr-${agent.name}.md`);
+    assert.ok(readFileSync(exemplar, "utf8").includes("No accepted PR exemplar"), `${agent.name} exemplar index missing`);
   }
 
-  // Packaged agent names must match the agents/*.md files present, no missing/dup/renamed.
-  const packagedNames = plan.agents.filter((agent) => agent.packaged).map((agent) => agent.name).sort();
-  const agentFiles = readdirSync(path.join(bridgeDir, "loom-nucleus", "agents"), { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => entry.name.replace(/\.md$/u, ""))
-    .sort();
-  assert.deepEqual(agentFiles, packagedNames, "agents/*.md files must match the packaged adapted agents");
-  for (const name of packagedNames) {
-    const agentFile = path.join(bridgeDir, "loom-nucleus", "agents", `${name}.md`);
-    assert.equal(frontmatterName(agentFile), name, `agent frontmatter name must equal its filename (${name})`);
-  }
+  const agentsDir = path.join(bridgeDir, "loom-nucleus", "agents");
+  assert.throws(() => readdirSync(agentsDir), /ENOENT/u, "legacy Claude agents/*.md ports must not remain in the plugin source");
+  assert.ok(plan.supersededOmpAgentPorts.every((entry) => entry.decision === "superseded-by-shared-agent-packages"));
 });
 
 // --- gate rejects botched targets ---------------------------------------------------------------
@@ -196,7 +188,7 @@ test("rendered plugin and marketplace manifests parse and carry required fields"
 
   const claudePlugin = parse("claude-plugin-manifest");
   assert.equal(claudePlugin.name, "loom-nucleus");
-  assert.ok(claudePlugin.agents.startsWith("./"), "Claude plugin must bundle a ./-relative agents pointer");
+  assert.ok(!("agents" in claudePlugin), "Claude plugin uses canonical skill packages instead of legacy agents pointer");
   assert.ok(claudePlugin.skills.startsWith("./"), "skills pointer must be ./-relative");
 
   const codexMarket = parse("codex-marketplace");
@@ -250,8 +242,9 @@ test("--write applies create-missing-only and a second run is a clean no-op", ()
   const first = runJson(["--home", home, "--write"]);
   assert.equal(first.result.status, 0, first.result.stderr);
   assert.equal(first.manifest.result, "pass");
+  const expectedAppliable = buildPluginCandidates(plan, manifest, {}).candidates.filter((candidate) => candidate.appliable).length;
   const created = first.manifest.actions.filter((action) => action.action === "created");
-  assert.equal(created.length, 16, "fresh apply must create the 16 appliable targets");
+  assert.equal(created.length, expectedAppliable, "fresh apply must create every appliable target");
   assert.equal(first.manifest.markerChanged, true);
 
   // The catalog and co-located plugin source both landed under the personal marketplace root.
@@ -263,7 +256,7 @@ test("--write applies create-missing-only and a second run is a clean no-op", ()
   const second = runJson(["--home", home, "--write"]);
   assert.equal(second.result.status, 0, second.result.stderr);
   assert.equal(second.manifest.actions.filter((action) => action.action === "created").length, 0, "second run must create nothing");
-  assert.equal(second.manifest.actions.filter((action) => action.action === "already-applied").length, 16, "second run must be all already-applied");
+  assert.equal(second.manifest.actions.filter((action) => action.action === "already-applied").length, expectedAppliable, "second run must be all already-applied");
   assert.equal(second.manifest.markerChanged, false, "marker must be unchanged on the second run");
 
   rmSync(home, { recursive: true, force: true });
@@ -398,8 +391,8 @@ test("[finding 4] gate forbidden-key-scans Markdown YAML frontmatter but allows 
     forbiddenKeys: [],
     source: "test/agent.md",
     content,
-    renderedRelPath: "plugin-bridge/loom-nucleus/agents/omp-evil.md",
-    destination: "~/.agents/plugins/loom-nucleus/agents/omp-evil.md",
+    renderedRelPath: "plugin-bridge/loom-nucleus/skills/evil/SKILL.md",
+    destination: "~/.agents/plugins/loom-nucleus/skills/evil/SKILL.md",
     disposition: "adapt",
     operation: "create-file",
     appliable: true,

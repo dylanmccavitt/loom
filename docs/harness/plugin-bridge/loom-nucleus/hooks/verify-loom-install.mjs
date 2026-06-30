@@ -3,11 +3,12 @@
 //
 // What it checks (all without writing anything):
 //   1. The Codex + Claude plugin.json wrappers parse and the loom-nucleus identity is well-formed
-//      (Codex: name + version, no agents pointer; Claude: name + ./-relative agents pointer).
+//      (Codex: name + version, no agents pointer; Claude: name, version, skills, hooks, and no legacy agents pointer).
 //   2. The marketplace catalog parses and carries a well-formed loom-nucleus entry (name + source).
-//   3. The loaded skill/agent component names match the expected sets recorded from
-//      docs/harness/omp-builtins/portability-matrix.json (6 skill candidates) and source.json
-//      (8 bundled agents, 5 adapted/packaged), so a dropped/duplicated/renamed component is caught.
+//   3. The loaded skill package names match the expected sets recorded from
+//      docs/harness/omp-builtins/portability-matrix.json (6 skill candidates) and
+//      docs/harness/shared-nucleus-agents.json (canonical shared-agent packages),
+//      so a dropped/duplicated/renamed component is caught.
 //   4. The ~/.loom-harness/applied-manifest.json marker hashes match the installed files this plugin
 //      owns (no drift, no partial write).
 //   5. The installed manifests carry no forbidden provider/model/auth keys and no non-portable
@@ -27,37 +28,45 @@ import { fileURLToPath } from "node:url";
 
 export const PLUGIN_NAME = "loom-nucleus";
 
-// The 6 skill candidates (portability-matrix.json commands with portabilityClass "skill") mapped to
-// their adapter-plan futureSkillName.
-export const EXPECTED_SKILLS = [
+// The 6 OMP command-derived skill candidates remain portable plugin skills.
+export const EXPECTED_OMP_SKILLS = [
   "omp-btw",
   "omp-complaint-to-rule",
   "omp-guided-goal",
   "omp-handoff",
   "omp-plan",
-  "omp-tangent",
+  "omp-tangent"
 ];
 
-// The 8 bundled OMP agents (source.json) and their plugin decision. "adapt" agents are packaged as
-// Claude agents/<name>.md; "drop"/"keep-native" agents are not packaged.
-export const BUNDLED_AGENT_DECISIONS = {
-  designer: "adapt",
-  explore: "adapt",
-  librarian: "adapt",
-  oracle: "drop",
-  plan: "adapt",
-  quick_task: "keep-native",
-  reviewer: "adapt",
-  task: "keep-native",
-};
+// LOO-101 renders every canonical shared nucleus agent as a Vercel-shaped skill package.
+export const EXPECTED_SHARED_AGENT_PACKAGES = [
+  "belt",
+  "biters",
+  "blueprint",
+  "bus-first",
+  "ghosts",
+  "inserter",
+  "lab",
+  "main-bus",
+  "modules",
+  "radar",
+  "recycler",
+  "repair-pack",
+  "roboports",
+  "rocket-launch",
+  "science-pack",
+  "spidertron",
+  "spitters"
+];
 
-// The 5 adapted agents packaged into the plugin (the "adapt" rows above, renamed with the omp- prefix).
-export const EXPECTED_ADAPTED_AGENTS = [
-  "omp-designer",
-  "omp-explorer",
-  "omp-librarian",
-  "omp-planner",
-  "omp-reviewer",
+export const REQUIRED_SHARED_AGENT_PACKAGE_FILES = [
+  "AGENTS.md",
+  "SKILL.md",
+  "references/agent-judgment.md",
+  "references/rules.md",
+  "references/patterns.md",
+  "references/glossary.md",
+  "references/coverage-gaps.md",
 ];
 
 // Provider/model/auth/telemetry/profile keys forbidden in any installed manifest (mirrors the engine's
@@ -171,7 +180,7 @@ function checkPluginManifest(label, file, { requireVersion, allowAgents }) {
       reasons.push(`${label}: agents pointer must be a ./-relative string`);
     }
   } else if ("agents" in parsed) {
-    reasons.push(`${label}: Codex plugin manifest must not declare an agents pointer`);
+    reasons.push(`${label}: plugin manifest must not declare an agents pointer`);
   }
   reasons.push(...gateReasons(label, parsed));
   return reasons;
@@ -267,14 +276,20 @@ function checkComponents(root) {
   const reasons = [];
   const skillsDir = path.join(root, "skills");
   const skills = listSkillNames(skillsDir);
-  reasons.push(...setDiffReasons("skills", EXPECTED_SKILLS, skills));
-  for (const name of EXPECTED_SKILLS) {
+  const expectedSkills = [...EXPECTED_OMP_SKILLS, ...EXPECTED_SHARED_AGENT_PACKAGES].sort();
+  reasons.push(...setDiffReasons("skills", expectedSkills, skills));
+  for (const name of EXPECTED_OMP_SKILLS) {
     if (skills.includes(name) && !existsSync(path.join(skillsDir, name, "SKILL.md"))) {
       reasons.push(`skills: ${name} has no SKILL.md`);
     }
   }
-  const agents = listAgentNames(path.join(root, "agents"));
-  reasons.push(...setDiffReasons("agents", EXPECTED_ADAPTED_AGENTS, agents));
+  for (const name of EXPECTED_SHARED_AGENT_PACKAGES) {
+    for (const rel of REQUIRED_SHARED_AGENT_PACKAGE_FILES) {
+      if (!existsSync(path.join(skillsDir, name, rel))) {
+        reasons.push(`skills: ${name} missing ${rel}`);
+      }
+    }
+  }
   return reasons;
 }
 
@@ -322,7 +337,7 @@ export function verifyInstall({ root, home, marketplace }) {
   const marketplaceFile = marketplace ?? path.join(ownedRoot, "marketplace.json");
   const reasons = [];
   reasons.push(...checkPluginManifest("codex-plugin", path.join(root, ".codex-plugin", "plugin.json"), { requireVersion: true, allowAgents: false }));
-  reasons.push(...checkPluginManifest("claude-plugin", path.join(root, ".claude-plugin", "plugin.json"), { requireVersion: false, allowAgents: true }));
+  reasons.push(...checkPluginManifest("claude-plugin", path.join(root, ".claude-plugin", "plugin.json"), { requireVersion: false, allowAgents: false }));
   reasons.push(...checkMarketplace("marketplace", marketplaceFile));
   reasons.push(...checkHooks("hooks", path.join(root, "hooks", "hooks.json")));
   reasons.push(...checkComponents(root));

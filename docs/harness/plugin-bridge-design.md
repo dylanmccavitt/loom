@@ -173,7 +173,7 @@ unrelated installers:
 
 1. **Codex reads `.claude-plugin/marketplace.json`** as a legacy-compatible repo
    marketplace location. One repo-root marketplace file can therefore be visible
-   to both harnesses (Codex additionally prefers `.agents/plugins/marketplace.json`).
+   to both harnesses (Codex additionally prefers `.agents/plugins/marketplace.json`). LOO-101 uses Claude plugin skills for shared-agent packages instead of the optional `agents/` component.
 2. **Shared manifest field vocabulary**: `name`, `version`, `description`,
    `author`, `homepage`, `repository`, `license`, `keywords`, `skills`,
    `mcpServers`, `hooks` mean the same thing in both `plugin.json` dialects. The
@@ -208,17 +208,12 @@ unrelated installers:
 
 ## 2. Mapping the Loom nucleus onto each plugin schema
 
-Loom's nucleus has three parts: **skills** (6 portable command-derived skill
-candidates), **agents** (the canonical shared nucleus model from
-`docs/harness/shared-nucleus-agents.*`, while this LOO-100 cleanup only retires direct
-OMP bundled-agent **Codex custom-agent** targets), and **config**
-(`omp/.omp/agent/` portable base). The mapping respects each harness's component model
-rather than copying frontmatter blindly.
+Loom's nucleus has three parts: **skills** (6 portable command-derived skill candidates), **shared agent packages** (the canonical shared nucleus model from `docs/harness/shared-nucleus-agents.*`), and **config** (`omp/.omp/agent/` portable base). The mapping respects each harness's component model and treats native agent files as harness-specific adapter format, not canonical behavior source.
 
 | Loom nucleus piece | Source of truth | Codex plugin surface | Claude plugin surface |
 | --- | --- | --- | --- |
 | Skill candidates `omp-btw`, `omp-guided-goal`, `omp-handoff`, `omp-complaint-to-rule`, `omp-plan`, `omp-tangent` | `docs/harness/omp-builtins/portability-matrix.json`; shared `.agents/skills/<name>` | plugin `skills/<name>/SKILL.md` via `plugin.json#skills` | plugin `skills/<name>/SKILL.md` via `plugin.json#skills` |
-| Shared nucleus agents such as `spidertron`, `science-pack`, `main-bus`, `biters`, `spitters`, `bus-first`, and `lab` | `docs/harness/shared-nucleus-agents.*`; superseded #41 Codex OMP role-port context | **Not an OMP-prefixed custom-agent target.** Future Codex activation renders per-agent Vercel-shaped packages with canonical names and no harness prefixes; the Codex plugin may reference them via `interface`/skills, never bundle direct `omp-*` custom-agent ports. | Existing #42 Claude plugin agent templates remain Claude-adapter context until LOO-101 replaces them with canonical shared packages. |
+| Shared nucleus agents such as `spidertron`, `science-pack`, `main-bus`, `biters`, `spitters`, `bus-first`, and `lab` | `docs/harness/shared-nucleus-agents.*` | Canonical Vercel-shaped packages under plugin `skills/{agent-name}/`; Codex may load them as plugin skills and must not get direct `omp-*` custom-agent ports. | Canonical Vercel-shaped packages under plugin `skills/{agent-name}/`; LOO-101 supersedes the #42 `agents/omp-*.md` Claude role ports. |
 | Dropped agent `oracle`; kept-native `task`, `quick_task`, (Codex) `explore` | source.json | not packaged | not packaged |
 | Library/API research deps (for shared `science-pack`) | #41/#42 plus `docs/harness/shared-nucleus-agents.*` | plugin `.mcp.json` via `plugin.json#mcpServers` (optional) | plugin `.mcp.json` via `plugin.json#mcpServers` (optional) |
 | Verified-loop check (§4) | this design | plugin `hooks/hooks.json` `Stop` handler (`type:"command"`) | plugin `hooks/hooks.json` `Stop` handler |
@@ -228,7 +223,7 @@ rather than copying frontmatter blindly.
 ### 2.1 Packaging decision: one "loom-nucleus" plugin, dual manifest
 
 Recommended unit: a single logical plugin named **`loom-nucleus`** whose component
-root holds `skills/`, `hooks/`, and (Claude only) `agents/`, fronted by both
+root holds `skills/` and `hooks/`, fronted by both
 wrapper manifests:
 
 ```
@@ -236,11 +231,13 @@ loom-nucleus/
 ├── .codex-plugin/plugin.json      # Codex identity: name, version, skills, hooks, interface
 ├── .claude-plugin/plugin.json     # Claude identity: name, version, skills, agents, hooks
 ├── skills/
-│   ├── omp-handoff/SKILL.md
-│   └── omp-plan/SKILL.md          # (+ remaining skill candidates)
-├── agents/                        # consumed by Claude only; Codex ignores
-│   ├── omp-planner.md
-│   └── omp-reviewer.md            # current #42 Claude adapter context; LOO-101 replaces with canonical shared agents
+│   ├── omp-handoff/SKILL.md          # OMP command-derived skill candidate
+│   ├── blueprint/                    # canonical shared-agent package
+│   │   ├── AGENTS.md
+│   │   ├── SKILL.md
+│   │   ├── references/
+│   │   └── exemplars/
+│   └── lab/                          # (+ remaining shared-agent packages)
 └── hooks/
     └── hooks.json                 # Stop verifier (both harnesses)
 ```
@@ -269,9 +266,7 @@ a `local` `source.path` (Codex entry adds `policy` + `category`; Claude entry ad
   *skills* inside the plugin (so a Codex user gets them without separately
   installing `.codex/agents/*.toml`), or stay config-only? Affects whether the
   plugin's `skills/` set differs per harness.
-- **[Open]** One `loom-nucleus` plugin vs. splitting skills and agents into
-  separate plugins for finer enable/disable. Default: one plugin; revisit if the
-  skill/agent sets diverge per harness.
+- **[Resolved by LOO-101]** Keep one `loom-nucleus` plugin. Shared agents render as canonical skill packages, so Codex and Claude consume the same component tree without a separate Claude `agents/` bundle.
 
 ---
 
@@ -320,8 +315,7 @@ TOML/YAML. To carry plugin manifests it needs:
 
 - **A plugin-bridge plan + templates** input (analogous to
   `docs/harness/codex-adapter-plan/`): the `loom-nucleus` `plugin.json`
-  wrapper(s), `marketplace.json`(s), `skills/*/SKILL.md`, `agents/*.md`,
-  `hooks/hooks.json`. The executor's `buildCandidates` is currently hardwired to
+  wrapper(s), `marketplace.json`(s), `skills/*/SKILL.md`, canonical `skills/{agent-name}/{AGENTS.md,references/*,exemplars/*}`, `hooks/hooks.json`. The executor's `buildCandidates` is currently hardwired to
   Codex `templateBoundaries` + the OMP source tree, so this is a new candidate
   source, not a tweak.
 - **JSON gating.** `configKindFor` returns only `toml`/`yaml`/`null`, so today
@@ -494,8 +488,7 @@ should satisfy:
 1. **Tracked plugin-bridge source** added under `docs/harness/plugin-bridge/`
    (plan JSON + templates): `loom-nucleus` `.codex-plugin/plugin.json` and
    `.claude-plugin/plugin.json`, a Codex `marketplace.json` and a Claude
-   `.claude-plugin/marketplace.json`, the 6 skill `SKILL.md` templates, the
-   adapted-agent `.md` templates (Claude), and `hooks/hooks.json` with the `Stop`
+   `.claude-plugin/marketplace.json`, the 6 OMP skill `SKILL.md` templates, the canonical shared-agent Vercel-shaped packages under `skills/{agent-name}/`, and `hooks/hooks.json` with the `Stop`
    verifier handler — all parseable, none containing model/provider/auth keys,
    secrets, or private home paths.
 2. **Manifests validate against the documented schemas**: each `plugin.json`
