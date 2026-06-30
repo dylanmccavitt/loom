@@ -114,7 +114,7 @@ test("plugin skills include OMP skill candidates and canonical shared agent pack
   }
 });
 
-test("canonical shared agent packages are Vercel-shaped and unprefixed", () => {
+test("canonical shared agent packages have required shape and unprefixed names", () => {
   const requiredFiles = [
     "AGENTS.md",
     "SKILL.md",
