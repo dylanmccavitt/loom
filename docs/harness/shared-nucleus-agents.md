@@ -1,6 +1,6 @@
 # Shared nucleus agent contract
 
-Issues: LOO-96 base contract; LOO-97 autonomous delegation DAG; LOO-98 repair-pack finding-fix loop; LOO-99 offline shared-agent eval harness; LOO-103 evidence intake and decision log. Status: contract plus offline eval harness; this document defines the canonical shared agent model and does not render or activate native OMP, Codex, or Claude agent files.
+Issues: LOO-96 base contract; LOO-97 autonomous delegation DAG; LOO-98 repair-pack finding-fix loop; LOO-99 offline shared-agent eval harness; LOO-101 canonical package rendering; LOO-103 evidence intake and decision log. Status: contract plus offline eval harness plus canonical plugin package templates; this document defines the canonical shared agent model and does not render or activate native OMP, Codex, or Claude agent files.
 
 Source pattern: [Teaching agents product design at Vercel](https://vercel.com/blog/teaching-agents-product-design-at-vercel).
 
@@ -239,7 +239,7 @@ Every agent receives a bounded input packet and returns a bounded output packet.
 - `omp-reviewer` (Codex) — direct OMP reviewer role port; future review work is split across `biters`, `spitters`, `bus-first`, `lab`, and stable rule citations.
 - `omp-librarian` (Codex) — potential OMP research role port; future research belongs to shared `science-pack` and source-grounded references.
 
-These candidates may remain as historical adapter-plan context until a cleanup issue retires them from active renderer paths. They are not the desired shared nucleus agent model.
+These candidates remain only as historical adapter-plan context. LOO-101 removes them from the active plugin renderer path in favor of canonical shared-agent packages. They are not the desired shared nucleus agent model.
 
 ## Related and deferred work
 

@@ -414,7 +414,7 @@ function main() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   try {
-    process.exit(main());
+    process.exitCode = main();
   } catch (error) {
     console.error(error.message);
     console.error(USAGE);

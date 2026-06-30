@@ -66,10 +66,10 @@ The Claude adapter plan is dry-run-only. It includes parseable templates for fut
 
 ## Plugin Bridge
 
-Issue LOO-8 adds `docs/harness/plugin-bridge/` and `scripts/render-plugin-bridge.mjs`: the cross-harness plugin bridge that installs the `loom-nucleus` skill, adapted-agent, and hook nucleus into the Codex and Claude plugin and marketplace surfaces. The renderer reuses the issue #56 render -> gate -> apply executor verbatim; it adds only a new candidate source (the tracked plugin templates) and never forks the safety gate or marker model.
+Issue LOO-8 adds `docs/harness/plugin-bridge/` and `scripts/render-plugin-bridge.mjs`: the cross-harness plugin bridge that installs the `loom-nucleus` skill, canonical shared-agent package, and hook nucleus into the Codex and Claude plugin and marketplace surfaces. The renderer reuses the issue #56 render -> gate -> apply executor verbatim; it adds only a new candidate source (the tracked plugin templates) and never forks the safety gate or marker model.
 
 - `docs/harness/plugin-bridge/plan.json`: maps each tracked template to its install destination, kind, consuming harness, and disposition harness, and records the resolved packaging decisions.
-- `docs/harness/plugin-bridge/loom-nucleus/`: the dual-manifest plugin component root (`.codex-plugin/plugin.json`, `.claude-plugin/plugin.json`, six `skills/*/SKILL.md`, five adapted `agents/*.md` consumed by Claude, `hooks/hooks.json` Stop handler, and the read-only `hooks/verify-loom-install.mjs`).
+- `docs/harness/plugin-bridge/loom-nucleus/`: the dual-manifest plugin component root (`.codex-plugin/plugin.json`, `.claude-plugin/plugin.json`, six OMP command-derived `skills/*/SKILL.md` entries, canonical shared-agent Vercel-shaped packages under `skills/{agent-name}/`, `hooks/hooks.json` Stop handler, and the read-only `hooks/verify-loom-install.mjs`).
 - `docs/harness/plugin-bridge/.agents/plugins/marketplace.json` and `docs/harness/plugin-bridge/.claude-plugin/marketplace.json`: the Codex personal and Claude repo marketplace catalogs.
 
 Two new manifest rows make the personal marketplace root `~/.agents/plugins/` (catalog plus co-located `loom-nucleus/` plugin source) `adapt`/appliable and the repo Claude marketplace `track`/reported. The plugin caches (`~/.codex/plugins/cache/`, `~/.claude/plugins/cache/`, `~/.claude/plugins/data/`) stay `local-only` and are rejected as write targets by the gate. The Stop verifier ships dormant and requires a one-time `/hooks` trust step before it arms.
