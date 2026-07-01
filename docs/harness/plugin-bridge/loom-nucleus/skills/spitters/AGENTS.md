@@ -1,6 +1,6 @@
 # Spitters package governance
 
-This package is the canonical shared-agent source for `spitters` across OMP, Codex, Claude, and future adapters.
+This package is the canonical shared-agent source for `spitters` as model-agnostic guidance across adapters.
 
 ## Load order
 

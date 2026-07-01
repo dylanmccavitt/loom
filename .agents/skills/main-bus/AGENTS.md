@@ -1,6 +1,6 @@
 # Main Bus package governance
 
-This package is the canonical shared-agent source for `main-bus` across OMP, Codex, Claude, and future adapters.
+This package is the canonical shared-agent source for `main-bus` as model-agnostic guidance across adapters.
 
 ## Load order
 

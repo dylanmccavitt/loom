@@ -1,6 +1,6 @@
 # Recycler package governance
 
-This package is the canonical shared-agent source for `recycler` across OMP, Codex, Claude, and future adapters.
+This package is the canonical shared-agent source for `recycler` as model-agnostic guidance across adapters.
 
 ## Load order
 

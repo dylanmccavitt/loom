@@ -1,6 +1,6 @@
 # Roboports package governance
 
-This package is the canonical shared-agent source for `roboports` across OMP, Codex, Claude, and future adapters.
+This package is the canonical shared-agent source for `roboports` as model-agnostic guidance across adapters.
 
 ## Load order
 

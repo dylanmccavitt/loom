@@ -1,6 +1,6 @@
 # Bus First package governance
 
-This package is the canonical shared-agent source for `bus-first` across OMP, Codex, Claude, and future adapters.
+This package is the canonical shared-agent source for `bus-first` as model-agnostic guidance across adapters.
 
 ## Load order
 

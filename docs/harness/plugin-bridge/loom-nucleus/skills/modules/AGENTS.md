@@ -1,6 +1,6 @@
 # Modules package governance
 
-This package is the canonical shared-agent source for `modules` across OMP, Codex, Claude, and future adapters.
+This package is the canonical shared-agent source for `modules` as model-agnostic guidance across adapters.
 
 ## Load order
 
