@@ -26,7 +26,7 @@ The nucleus workflow should follow the OMP workflow-kit repo model, expressed in
 Portable policy:
 
 - Keep a global layer for default workflow instructions, sticky safety rules, and reusable skills.
-- Keep a project layer for repo-local instructions, repo config, `docs/agents` guidance, scope ledger, handoffs, issue/PR templates, labels, and project skills.
+- Keep a downstream project layer for repo-local instructions, repo config, optional `docs/agents` guidance when present, scope ledger, handoffs, issue/PR templates, labels, and project skills.
 - Preserve full-flow traceability from grilled plan to PRD, issues, triage, one issue/worktree/PR implementation, verification evidence, and handoff when blocked.
 - Use an idempotent apply/check model where a marker manifest defines what "applied" means and existing files are not overwritten.
 - Keep project skills exactly one directory below `nucleus/skills`, with `SKILL.md` frontmatter and concrete `Use when ...` triggers.
@@ -169,11 +169,11 @@ Before any live Codex modification is allowed:
 
 ### Render-to-write executor
 
-`scripts/render-harness-nucleus.mjs` implements this strategy end to end and is the keystone that turns the plan + checks into an instantiation:
+`scripts/render-nucleus.mjs` implements this strategy end to end and is the keystone that turns the plan + checks into an instantiation:
 
 ```sh
-node scripts/render-harness-nucleus.mjs            # dry-run: render to temp, gate, print manifest
-node scripts/render-harness-nucleus.mjs --write    # strict-manual apply (create-missing-only)
+node scripts/render-nucleus.mjs            # dry-run: render to temp, gate, print manifest
+node scripts/render-nucleus.mjs --write    # strict-manual apply (create-missing-only)
 ```
 
 In dry-run (default, AFK-safe) it renders the active Codex templates and the decided OMP source under `adapters/omp/source/` into an ephemeral temp directory, runs the dry-run safety gate over the rendered output (secret-looking values, absolute private home paths, dangerous destinations, local-only write targets, forbidden provider/model/auth/telemetry/profile keys, and TOML parseability), and prints a deterministic candidate manifest — destination, disposition, applied/not-applied, overwrite risk, required approvals, and skipped local-only surfaces — with zero writes. Disposition is resolved from the resource manifest: only `track`/`adapt` surfaces become appliable candidates, while `reference-only` and `local-only` surfaces are reported and skipped. Superseded OMP-prefixed custom-agent templates do not enter this active render path.

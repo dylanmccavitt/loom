@@ -119,12 +119,14 @@ convention, and that the kit is Linear-first with the tracker binding per repo.
 
 ## Consequences
 
-LOO-107..110 (moves) and LOO-111 (rewiring) implement this layout. LOO-112 cleans
-docs. LOO-113 consolidates duplicated safety-policy logic into `scripts/lib/`.
-LOO-114 decides the TOML parser.
+LOO-107..110 (moves) and LOO-111 (rewiring) implemented this layout. LOO-112
+cleaned docs. LOO-113 consolidated duplicated safety-policy logic into
+`scripts/lib/`.
 
-Until the moves land, the mixed layout persists; new files must already follow
-the lane map.
+2026-07-01 resolution note: LOO-114 resolved Decision 7 by vendoring
+`smol-toml` under `scripts/vendor/` and moving TOML parsing in-process.
+python3/tomllib is no longer a current setup, doctor, operator, or CI
+prerequisite.
 
 If Loom ever needs harness-specific content inside `nucleus/`, this ADR must be
 superseded.

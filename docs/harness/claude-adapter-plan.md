@@ -30,7 +30,7 @@ The nucleus workflow follows the OMP workflow-kit repo model, expressed in Claud
 Portable policy:
 
 - Keep a global layer for default workflow instructions, sticky safety rules, and reusable skills.
-- Keep a project layer for repo-local instructions, repo config, `docs/agents` guidance, scope ledger, handoffs, issue/PR templates, labels, and project skills.
+- Keep a downstream project layer for repo-local instructions, repo config, optional `docs/agents` guidance when present, scope ledger, handoffs, issue/PR templates, labels, and project skills.
 - Use an idempotent apply/check model where a marker manifest defines what "applied" means and existing files are not overwritten.
 - Preserve traceability from grilled plan to PRD, issues, triage, one issue/worktree/PR implementation, verification evidence, and handoff when blocked.
 - Keep project skills exactly one directory below `nucleus/skills`, with `SKILL.md` frontmatter and concrete `Use when ...` triggers.

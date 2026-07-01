@@ -54,15 +54,15 @@ The reference-only snapshot alternative is rejected in `docs/decisions/0001-omp-
 
 ## Codex Adapter Plan
 
-Issue #41 adds `docs/harness/codex-adapter-plan.md` and structured plan data under `docs/harness/codex-adapter-plan/`. The plan now keeps direct OMP bundled-agent custom-agent ports as superseded context, records future skill candidates from the issue #40 portability matrix, defines TOML template boundaries, and marks live `~/.codex` auth, sessions, caches, plugin cache, generated artifacts, app state, logs, databases, and private memory as local-only.
+Issue #41 adds `docs/harness/codex-adapter-plan.md` and structured plan data under `docs/harness/codex-adapter-plan/`. Active parseable templates live under `adapters/codex/templates/`; the docs tree records plan and validation context only. The plan keeps direct OMP bundled-agent custom-agent ports as superseded context, records future skill candidates from the issue #40 portability matrix, defines TOML template boundaries, and marks live `~/.codex` auth, sessions, caches, plugin cache, generated artifacts, app state, logs, databases, and private memory as local-only.
 
-The Codex adapter plan is dry-run-only. It includes active templates for future base config, the optional profile, and `skills.config` entries. Superseded `omp-*` custom-agent templates remain parseable historical fixtures only; future shared agent activation points to per-agent Vercel-shaped packages with canonical names and no harness prefixes.
+The Codex adapter plan is dry-run-only. It includes active templates for future base config, the optional profile, and `skills.config` entries under `adapters/codex/templates/`. Superseded `omp-*` custom-agent templates remain parseable historical fixtures only; future shared agent activation points to per-agent Vercel-shaped packages with canonical names and no harness prefixes.
 
 ## Claude Adapter Plan
 
-Issue #42 adds `docs/harness/claude-adapter-plan.md` and structured plan data under `docs/harness/claude-adapter-plan/`. The plan maps OMP bundled agents into Claude agent candidates, native/default keep decisions, or drop decisions; records future shared skill candidates from the issue #40 portability matrix; defines Markdown and JSON template boundaries; documents duplicate skill-root risks across Claude, Codex, shared, and repo-local skill roots; and marks live `~/.claude` project/session/history/cache/daemon/auth-adjacent/local settings surfaces as local-only.
+Issue #42 adds `docs/harness/claude-adapter-plan.md` and structured plan data under `docs/harness/claude-adapter-plan/`. Active parseable templates live under `adapters/claude/templates/`. The plan maps OMP bundled agents into Claude agent candidates, native/default keep decisions, or drop decisions; records future shared skill candidates from the issue #40 portability matrix; defines Markdown and JSON template boundaries; documents duplicate skill-root risks across Claude, Codex, shared, and repo-local skill roots; and marks live `~/.claude` project/session/history/cache/daemon/auth-adjacent/local settings surfaces as local-only.
 
-The Claude adapter plan is dry-run-only. It includes parseable templates for future instruction, settings, agent, skill, and per-skill symlink candidate surfaces, but this issue does not write or merge those templates into live `~/.claude` or project `.claude`.
+The Claude adapter plan is dry-run-only. It includes parseable templates for future instruction, settings, agent, skill, and per-skill symlink candidate surfaces under `adapters/claude/templates/`, but this issue does not write or merge those templates into live `~/.claude` or project `.claude`.
 
 ## Plugin Bridge
 
@@ -105,8 +105,8 @@ node scripts/dry-run-harness-safety-gate.mjs --check-live
 The render-to-write executor renders the planned templates plus the decided OMP source into a temp directory, runs the dry-run safety gate over the rendered output, and prints a candidate manifest keyed by disposition:
 
 ```sh
-node scripts/render-harness-nucleus.mjs            # dry-run render + gate (no writes)
-node scripts/render-harness-nucleus.mjs --write    # strict-manual apply (create-missing-only, gated)
+node scripts/render-nucleus.mjs            # dry-run render + gate (no writes)
+node scripts/render-nucleus.mjs --write    # strict-manual apply (create-missing-only, gated)
 ```
 
 The dry-run is AFK-safe and writes nothing; only `track`/`adapt` surfaces are appliable, while `reference-only` and `local-only` surfaces are reported and skipped. The `--write` path is HITL: it runs only after a clean dry-run + gate pass, never overwrites an existing non-marker live file, backs up kit-owned markers before updating, and applies idempotently against `~/.loom-harness/applied-manifest.json`.
