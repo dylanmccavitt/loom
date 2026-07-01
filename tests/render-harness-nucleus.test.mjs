@@ -5,9 +5,10 @@ import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { codexTemplatesDir } from "../scripts/lib/layout.mjs";
 
 const renderer = new URL("../scripts/render-harness-nucleus.mjs", import.meta.url).pathname;
-const templatesDir = new URL("../docs/harness/codex-adapter-plan/templates", import.meta.url).pathname;
+const templatesDir = new URL(`../${codexTemplatesDir}`, import.meta.url).pathname;
 const planPath = new URL("../docs/harness/codex-adapter-plan/adapter-plan.json", import.meta.url).pathname;
 import {
   applyCandidates,
@@ -347,7 +348,7 @@ test("preflight fails a candidate destination that escapes via path traversal", 
   const home = tempDir("render-home-");
   const evilPlan = withTempPlan({
     id: "evil-traversal",
-    templatePath: "docs/harness/codex-adapter-plan/templates/base.config.template.toml",
+    templatePath: `${codexTemplatesDir}/base.config.template.toml`,
     candidateDestinations: ["~/.codex/agents/../../../../escape.toml"],
     allowedKeys: [],
     forbiddenKeys: ["x"],
@@ -368,7 +369,7 @@ test("gate fails a candidate that targets a local-only destination", () => {
   const home = tempDir("render-home-");
   const evilPlan = withTempPlan({
     id: "evil-local-only",
-    templatePath: "docs/harness/codex-adapter-plan/templates/base.config.template.toml",
+    templatePath: `${codexTemplatesDir}/base.config.template.toml`,
     candidateDestinations: ["~/.codex/automations/evil.toml"],
     allowedKeys: [],
     forbiddenKeys: ["x"],

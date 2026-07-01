@@ -71,7 +71,7 @@
   "templateBoundaries": [
     {
       "id": "base-config",
-      "templatePath": "docs/harness/codex-adapter-plan/templates/base.config.template.toml",
+      "templatePath": "adapters/codex/templates/base.config.template.toml",
       "candidateDestinations": [
         ".codex/config.toml"
       ],
@@ -102,7 +102,7 @@
     },
     {
       "id": "profile",
-      "templatePath": "docs/harness/codex-adapter-plan/templates/profile.omp-harness.config.template.toml",
+      "templatePath": "adapters/codex/templates/profile.omp-harness.config.template.toml",
       "candidateDestinations": [
         "~/.codex/omp-harness.config.toml"
       ],
@@ -129,7 +129,7 @@
     },
     {
       "id": "custom-agent",
-      "templatePath": "docs/harness/codex-adapter-plan/templates/agents/omp-reviewer.toml",
+      "templatePath": "adapters/codex/templates/agents/omp-reviewer.toml",
       "candidateDestinations": [],
       "allowedKeys": [
         "name",
@@ -157,7 +157,7 @@
     },
     {
       "id": "skills-config",
-      "templatePath": "docs/harness/codex-adapter-plan/templates/skills.config.template.toml",
+      "templatePath": "adapters/codex/templates/skills.config.template.toml",
       "candidateDestinations": [
         "~/.codex/config.toml"
       ],
@@ -374,13 +374,13 @@
     {
       "surface": ".codex/config.toml",
       "status": "dry-run-only",
-      "sourceTemplate": "docs/harness/codex-adapter-plan/templates/base.config.template.toml",
+      "sourceTemplate": "adapters/codex/templates/base.config.template.toml",
       "notes": "May be rendered into a temp directory for validation; do not overwrite the project or user live file in this issue."
     },
     {
       "surface": "~/.codex/omp-harness.config.toml",
       "status": "dry-run-only",
-      "sourceTemplate": "docs/harness/codex-adapter-plan/templates/profile.omp-harness.config.template.toml",
+      "sourceTemplate": "adapters/codex/templates/profile.omp-harness.config.template.toml",
       "notes": "User-level profile candidate only after explicit approval; do not change Codex default provider/model."
     },
     {
@@ -392,7 +392,7 @@
     {
       "surface": "~/.codex/config.toml skills.config entries",
       "status": "dry-run-only",
-      "sourceTemplate": "docs/harness/codex-adapter-plan/templates/skills.config.template.toml",
+      "sourceTemplate": "adapters/codex/templates/skills.config.template.toml",
       "notes": "Enable/disable examples must be merged by a future renderer and must never remove duplicate skill directories."
     }
   ],

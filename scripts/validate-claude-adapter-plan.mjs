@@ -3,12 +3,13 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { claudeTemplatesDir } from "./lib/layout.mjs";
 
 const PLAN_PATH = process.env.CLAUDE_ADAPTER_PLAN_PATH ?? "docs/harness/claude-adapter-plan/adapter-plan.json";
 const SOURCE_PATH = "distributions/snapshots/omp-builtins/source.json";
 const PORTABILITY_PATH = "distributions/snapshots/omp-builtins/portability-matrix.json";
 const PLAN_MD_PATH = "docs/harness/claude-adapter-plan.md";
-const DEFAULT_TEMPLATE_DIR = "docs/harness/claude-adapter-plan/templates";
+const DEFAULT_TEMPLATE_DIR = claudeTemplatesDir;
 const TEMPLATE_DIR = process.env.CLAUDE_ADAPTER_PLAN_TEMPLATE_DIR ?? DEFAULT_TEMPLATE_DIR;
 
 const RECOMMENDATIONS = new Set(["keep", "adapt", "drop"]);
