@@ -1,5 +1,9 @@
 # Live nucleus inventory — 2026-06-25
 
+> Superseded historical snapshot: ADR 0004 and the LOO-107..111 cutover moved
+> active source to `nucleus/` and `adapters/`, and generated/checkable output to
+> `distributions/`. Old paths below are preserved only as 2026-06-25 evidence.
+
 Scope: read-only baseline for LOO-85 before any nucleus apply work. Commands below were run without `--write`; no live `~/.omp`, `~/.codex`, `~/.claude`, `.agents`, or repo config mutation was performed.
 
 ## Evidence commands

@@ -22,11 +22,11 @@ npm run check
 
 ## Tri-Harness Layers
 
-The intended shape is symmetric: OMP, Codex, and Claude are three layers of the same nucleus, each separated into tracked source, adapter plans, reference material, and local-only runtime state.
+The intended shape is symmetric: OMP, Codex, and Claude are three layers of the same nucleus, each separated into canonical source, harness adapters, generated/checkable distributions, reference material, and local-only runtime state.
 
-- OMP is the present hand-mirrored layer under [`adapters/omp/source/`](adapters/omp/source/). It carries repo-facing OMP agent instructions, rules, config, and extensions while runtime state remains outside the repo.
-- Codex is plan-stage. [`docs/harness/codex-adapter-plan.md`](docs/harness/codex-adapter-plan.md) defines how the OMP workflow nucleus maps into Codex config templates, custom agents, shared skills, and dry-run-only candidates.
-- Claude is also plan-stage, with the adapter plan merged through issue #42 / PR #50. [`docs/harness/claude-adapter-plan.md`](docs/harness/claude-adapter-plan.md) and [`docs/harness/claude-adapter-plan/`](docs/harness/claude-adapter-plan/) define Claude instruction, settings, agent, skill, and symlink candidates without writing live Claude state.
+- OMP tracked source lives under [`adapters/omp/source/`](adapters/omp/source/). It carries repo-facing OMP agent instructions, rules, config, and extensions while runtime state remains outside the repo.
+- Codex has live plugin surfaces through the `loom-nucleus` bridge and dry-run config/profile adapter candidates. [`docs/harness/codex-adapter-plan.md`](docs/harness/codex-adapter-plan.md) defines how the shared nucleus maps into Codex config templates, shared skills, and dry-run-only candidates.
+- Claude has the same live plugin package surface plus dry-run instruction/settings/agent/skill adapter candidates. [`docs/harness/claude-adapter-plan.md`](docs/harness/claude-adapter-plan.md) and [`docs/harness/claude-adapter-plan/`](docs/harness/claude-adapter-plan/) define Claude candidates without writing live Claude state.
 
 ## Dispositions
 
@@ -37,7 +37,7 @@ The canonical source is [`docs/harness/resource-manifest.md`](docs/harness/resou
 - `reference-only`: surfaces that should be inspected or snapshotted later without treating the live source as repo-owned.
 - `local-only`: runtime state, private history, auth/cache data, plugin cache, blobs, terminal state, logs, and databases that must stay out of the repo.
 
-At category level, OMP user/project resources and workflow-kit categories are `track`; OMP built-ins and installed package resources are `reference-only` with snapshots under [`docs/harness/omp-builtins/`](docs/harness/omp-builtins/). Codex config/profile surfaces are `reference-only`, while Codex agents and skill roots are `adapt`. Claude agents, skills, and settings are `adapt`; Claude local settings and runtime state are `local-only`. Cross-harness duplicate skill roots are recorded for later audit rather than normalized here.
+At category level, OMP user/project resources and workflow-kit categories are `track`; OMP built-ins and installed package resources are `reference-only` with snapshots under [`distributions/snapshots/omp-builtins/`](distributions/snapshots/omp-builtins/). Codex and Claude adapter candidates are `adapt` or `reference-only` as marked in the manifest; plugin caches and runtime state stay `local-only`. Cross-harness duplicate skill roots are recorded for later audit rather than normalized here.
 
 ## Dry-Run To Apply Model
 
@@ -45,11 +45,11 @@ Every harness change is planned and validated as a dry run before any future liv
 
 The gate reports planned OMP, Codex, and Claude candidate paths, generated config destinations, local-only skips, duplicate paths, overwrite risk, and tracked-source hygiene. It rejects dangerous destinations, local-only write targets, secret-looking values, private home paths in plan data or tracked source, auth/cache files, runtime databases, sessions, logs, histories, and whole-root Claude skill symlinks.
 
-The apply/render executor is [`scripts/render-harness-nucleus.mjs`](scripts/render-harness-nucleus.mjs). It is dry-run by default and only writes under an explicit, strict-manual `--write` approval. See [Installing the harness nucleus](#installing-the-harness-nucleus) for the gated flow.
+The apply/render executor is [`scripts/render-nucleus.mjs`](scripts/render-nucleus.mjs). It is dry-run by default and only writes under an explicit, strict-manual `--write` approval. See [Installing the harness nucleus](#installing-the-harness-nucleus) for the gated flow.
 
 ## Installing the harness nucleus
 
-The harness nucleus is installed with a single gated flow built around [`scripts/render-harness-nucleus.mjs`](scripts/render-harness-nucleus.mjs). The dry run is the default; the apply step is opt-in.
+The harness nucleus is installed with a single gated flow built around [`scripts/render-nucleus.mjs`](scripts/render-nucleus.mjs). The dry run is the default; the apply step is opt-in.
 
 1. **Dry-run (default).** Render every candidate into an ephemeral temp dir, run the read-only safety gate over the rendered output, and print the candidate manifest. Nothing is written to live `~/.omp`, `~/.codex`, `~/.claude`, or repo config.
 
@@ -65,19 +65,19 @@ The harness nucleus is installed with a single gated flow built around [`scripts
    npm run install-nucleus
    ```
 
-   `install-nucleus` is `render-harness-nucleus.mjs --write`: a strict-manual apply that refuses unless the dry-run render and safety gate pass clean. It is **create-missing-only** (never overwrites an existing non-marker live file), **backed-up** (any kit-owned marker is backed up before it is updated), and **idempotent** (a second run against the applied marker manifest is a clean no-op).
+   `install-nucleus` is `render-nucleus.mjs --write`: a strict-manual apply that refuses unless the dry-run render and safety gate pass clean. It is **create-missing-only** (never overwrites an existing non-marker live file), **backed-up** (any kit-owned marker is backed up before it is updated), and **idempotent** (a second run against the applied marker manifest is a clean no-op).
 
-Scope a different live HOME with `--home <dir>` (default `$HOME`); see `node scripts/render-harness-nucleus.mjs --help` for the full option list.
+Scope a different live HOME with `--home <dir>` (default `$HOME`); see `node scripts/render-nucleus.mjs --help` for the full option list.
 
 ## Target Directory Layout
 
-- [`adapters/omp/source/`](adapters/omp/source/) - tracked OMP mirror layer; declarative agent instructions, rules, config, and extensions; `track`.
+- [`nucleus/`](nucleus/) - model-agnostic canonical source for agents, skills, rules, workflows, and schemas; `track`.
+- [`adapters/`](adapters/) - harness-specific source, templates, and renderer entrypoints; `track` / `adapt` by manifest row.
+- [`distributions/`](distributions/) - generated/checkable output, including `loom-nucleus` plugin output and OMP reference snapshots.
 - [`docs/operator/`](docs/operator/) - operator-facing daily workflow and install/update flows.
 - [`docs/architecture/`](docs/architecture/) - compact architecture maps for Factory Nucleus and the harness bridge.
-- [`docs/harness/`](docs/harness/) - manifest, dry-run link plan, OMP snapshots, Codex plan, Claude plan, and plugin bridge details; mixed `track`, `adapt`, `reference-only`, and `local-only` documentation by category.
-- [`.agents/skills/`](.agents/skills/) - repo-local shared workflow skills with one `SKILL.md` per skill; `adapt`.
-- [`scripts/`](scripts/) - validators, refreshers, safety gate, inventory, benchmark, and doctor commands; `track`.
-- [`tests/`](tests/) - Node `node:test` suites and fixtures covering validators, plans, skills, and gates; `track`.
+- [`docs/harness/`](docs/harness/) - manifests, adapter plans, and bridge/reference context only; no active source templates or generated payloads.
+- [`.agents/skills/`](.agents/skills/) - rendered compatibility surface generated from `nucleus/skills/`; edit `nucleus/skills/` first.
 - [`scripts/autoresearch.sh`](scripts/autoresearch.sh) - full-flow traceability benchmark script; `reference-only`.
 - [`.gitignore`](.gitignore) - excludes runtime state, local overlays, common credential files, logs, databases, sessions, blobs, and caches; `track`.
 
@@ -107,7 +107,7 @@ npm run check
 | Codex plan | `node scripts/validate-codex-adapter-plan.mjs` | Validates Codex adapter plan data, templates, mappings, and forbidden keys. |
 | Claude plan | `node scripts/validate-claude-adapter-plan.mjs` | Validates Claude adapter plan data, templates, mappings, and unsafe surfaces. |
 | Skills | `node scripts/validate-skills.mjs` | Validates repo skill shape, frontmatter, naming, and secret-like content. |
-| Workflow benchmark | `node scripts/automation-workflow-benchmark.mjs` | Runs the full-flow traceability benchmark; not a dry-run gate. |
+| Docs drift | `node scripts/validate-nucleus-docs-drift.mjs` | Guards README/operator commands, stale active-path claims, and the Factorio kit roster. |
 
 ### Test Suites
 
@@ -133,5 +133,5 @@ npm run check
 - [`docs/harness/resource-manifest.md`](docs/harness/resource-manifest.md) - resource categories, dispositions, dry-run gate, and checks.
 - [`docs/harness/codex-adapter-plan.md`](docs/harness/codex-adapter-plan.md) - Codex adapter maturity, template boundaries, and dry-run strategy.
 - [`docs/harness/claude-adapter-plan.md`](docs/harness/claude-adapter-plan.md) - Claude adapter maturity, template boundaries, and dry-run strategy.
-- [`docs/harness/omp-builtins/README.md`](docs/harness/omp-builtins/README.md) - OMP built-in snapshot overview.
-- [`docs/harness/omp-builtins/portability-matrix.md`](docs/harness/omp-builtins/portability-matrix.md) - OMP command portability classes and runtime boundary.
+- [`distributions/snapshots/omp-builtins/README.md`](distributions/snapshots/omp-builtins/README.md) - OMP built-in snapshot overview.
+- [`distributions/snapshots/omp-builtins/portability-matrix.md`](distributions/snapshots/omp-builtins/portability-matrix.md) - OMP command portability classes and runtime boundary.

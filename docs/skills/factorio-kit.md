@@ -8,8 +8,10 @@ merge. Decisions are recorded in [ADR 0003](../decisions/0003-factorio-workflow-
 Factory Nucleus ships a tracker-neutral planning contract with a required picker
 before binding. See [tracker modes](../factory-nucleus/tracker-modes.md).
 
-This manifest is the build envelope. Each skill is authored eval-first: write its
-`evals.json` and content-envelope test, then iterate `SKILL.md` until both pass.
+This manifest is the build envelope, not an active adapter template. Its roster
+is validated against committed `nucleus/skills/` by `npm run check`. Each skill is
+authored eval-first: write its `evals.json` and content-envelope test, then
+iterate `SKILL.md` until both pass.
 
 ## Pipeline
 

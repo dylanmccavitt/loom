@@ -6,7 +6,7 @@ surfaces through portable plugin manifests. LOO-102 activates that design for
 scratch-HOME proof only, and LOO-105 makes `nucleus/skills/{agent-name}/` the
 canonical repo-local package source rendered into the plugin distribution tree.
 The bridge reuses the shipped render-to-write executor
-(`scripts/render-harness-nucleus.mjs`) and its strict-manual safety gate for every
+(`scripts/render-nucleus.mjs`) and its strict-manual safety gate for every
 write.
 
 LOO-102/LOO-105 write nothing to the operator's real `~/.codex`, `~/.claude`,
@@ -17,7 +17,7 @@ This bridge builds directly on the adapter plans already in this repo:
 - `docs/harness/codex-adapter-plan.md` (issue #41) — Codex agent/skill/config mapping and TOML template boundaries.
 - `docs/harness/claude-adapter-plan.md` (issue #42) — Claude agent/skill/settings mapping and Markdown/JSON template boundaries.
 - `docs/harness/resource-manifest.md` / `.json` (issue #38) — disposition model (`track`/`adapt`/`reference-only`/`local-only`) and the source of truth for ownership.
-- `scripts/render-harness-nucleus.mjs` (issue #56) — the render → gate → apply executor and `~/.loom-harness/applied-manifest.json` marker model.
+- `scripts/render-nucleus.mjs` (issue #56, later split through LOO-111) — the render → gate → apply executor and `~/.loom-harness/applied-manifest.json` marker model.
 - `scripts/lib/harness-safety.mjs` (issue #45) — shared `DANGEROUS_PATH_RULES`, secret/private-home scanners reused by the gate.
 
 > Scope note: historical sections below preserve the design rationale; the
@@ -273,7 +273,7 @@ a `local` `source.path` (Codex entry adds `policy` + `category`; Claude entry ad
 
 ---
 
-## 3. Install / verify loop reusing `render-harness-nucleus.mjs`
+## 3. Install / verify loop reusing `render-nucleus.mjs`
 
 The bridge does **not** introduce a second writer. It reuses the existing
 render → gate → apply executor and its strict-manual policy verbatim; the only
@@ -315,7 +315,7 @@ and skipped.
 
 LOO-102 turns the follow-on design into the scratch-HOME activation path:
 
-- `scripts/render-plugin-bridge.mjs` is the plugin-bridge candidate source. It imports the shared render/gate/apply primitives from `scripts/render-harness-nucleus.mjs`, so JSON/TOML/YAML/Markdown gating, marker ownership, backup-on-drift, and create-missing-only semantics stay on one bus.
+- `scripts/render-plugin-bridge.mjs` is the plugin-bridge candidate source. It imports the shared render/gate/apply primitives from `scripts/render-nucleus.mjs` and `scripts/lib/`, so JSON/TOML/YAML/Markdown gating, marker ownership, backup-on-drift, and create-missing-only semantics stay on one bus.
 - Plugin-owned templates under `adapters/plugin-bridge/` render the dual `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` wrappers, both marketplace manifests, the 6 OMP skill candidates, and `hooks/hooks.json` plus `verify-loom-install.mjs`.
 - Shared-agent packages are authored under `nucleus/skills/{agent-name}/` and derived directly into transient `distributions/loom-nucleus/skills/{agent-name}/` render candidates. The committed bridge tree no longer carries byte-copy package output.
 - `docs/harness/resource-manifest.json` marks the personal plugin marketplace/source root as `adapt`, while Codex/Claude plugin caches, auth, sessions, histories, DBs, local settings, and runtime state remain `local-only`.
@@ -434,7 +434,7 @@ in §3.3.
 
 - **No live writes outside the strict-manual gate.** Every write goes through the
   shared render/gate/apply path (`scripts/render-plugin-bridge.mjs --write`, which
-  reuses `render-harness-nucleus.mjs` primitives): create-missing-only, gated,
+  reuses `render-nucleus.mjs` primitives): create-missing-only, gated,
   marker-tracked, backup-on-drift. The Stop verifier is read-only/report-only.
 - No plugin publishing to the official Codex Plugin Directory or Claude community
   marketplace; no enabling/disabling of third-party plugins; no edits to live

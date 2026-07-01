@@ -4,12 +4,12 @@ Loom tracks declarative harness surfaces and keeps runtime state local-only.
 
 ## Layers
 
+- `nucleus/` — model-agnostic canonical source for agents, skills, rules, workflows, and schemas.
 - `adapters/omp/source/` — tracked OMP adapter source.
+- `adapters/{codex,claude,plugin-bridge}/` — harness-specific adapter templates and plugin bridge source.
+- `distributions/` — generated/checkable output, including `loom-nucleus` plugin output and OMP reference snapshots.
 - `docs/harness/resource-manifest.{md,json}` — resource ownership and disposition.
-- `docs/harness/*-adapter-plan.md` — Codex and Claude adapter boundaries.
-- `adapters/plugin-bridge/` — packaged plugin bridge templates; `docs/harness/plugin-bridge/` keeps design docs only.
-- `scripts/render-harness-nucleus.mjs` — dry-run/apply renderer.
-- `scripts/render-plugin-bridge.mjs` — plugin bridge renderer.
+- `scripts/render-nucleus.mjs` and `scripts/render-plugin-bridge.mjs` — dry-run/apply renderers.
 
 ## Safety model
 

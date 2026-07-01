@@ -7,15 +7,15 @@ explicit live apply.
 
 ## Architecture in one screen
 
-- `loom` is the version-controlled nucleus repo. It owns declarative sources,
-  adapter plans, package templates, renderers, validators, and operator docs.
-- The Factorio workflow kit lives as reusable skills under `.agents/skills/`.
-  LOO-105 made `.agents/skills/<agent>/` the canonical authoring source for
-  shared-agent packages.
+- `loom` is the version-controlled nucleus repo. It owns canonical source under
+  `nucleus/`, harness adapters under `adapters/`, generated/checkable output
+  under `distributions/`, renderers, validators, and operator docs.
+- The Factorio workflow kit is authored under `nucleus/skills/` and rendered to
+  `.agents/skills/` as the OMP compatibility surface.
 - OMP, Codex, and Claude are target harnesses. They consume rendered or linked
   surfaces; their runtime state stays local-only.
-- `scripts/render-harness-nucleus.mjs` renders the OMP/Codex/Claude adapter
-  nucleus and applies only approved `track` / `adapt` HOME-scoped candidates.
+- `scripts/render-nucleus.mjs` renders the OMP/Codex/Claude adapter nucleus and
+  applies only approved `track` / `adapt` HOME-scoped candidates.
 - `scripts/render-plugin-bridge.mjs` renders the `loom-nucleus` Codex/Claude
   plugin bridge and reuses the same render -> gate -> marker apply engine.
 
@@ -31,14 +31,14 @@ for the concrete target HOME.
 
 ## Current live baseline
 
-The current live inventory is recorded in
+The historical pre-cutover live inventory is recorded in
 [`docs/harness/live-nucleus-inventory-2026-06-25.md`](../harness/live-nucleus-inventory-2026-06-25.md).
-The important operator distinction:
+It is superseded by ADR 0004 and the LOO-107..111 layout cutover; use it only as
+reference context. The current operator distinction:
 
 - Already effective:
-  - `~/.agents/skills` is a symlink to this repo's `.agents/skills`.
-  - OMP mirror files are already live as symlinks into `adapters/omp/source/`.
-  - `~/.claude/skills` is already a symlink to the shared `.agents/skills` root.
+  - `.agents/skills` is rendered from `nucleus/skills`.
+  - OMP mirror files are rendered from `adapters/omp/source/`.
 - Planned or gated:
   - generated Codex config/profile fragments;
   - generated Claude instruction/settings/agent/skill candidates;
@@ -107,9 +107,9 @@ Review the JSON:
 
 ```sh
 SCRATCH_HOME="$(mktemp -d)"
-node scripts/render-harness-nucleus.mjs --home "$SCRATCH_HOME" --write --json
-node scripts/render-harness-nucleus.mjs --home "$SCRATCH_HOME" --write --json
-node scripts/render-harness-nucleus.mjs --home "$SCRATCH_HOME" --json
+node scripts/render-nucleus.mjs --home "$SCRATCH_HOME" --write --json
+node scripts/render-nucleus.mjs --home "$SCRATCH_HOME" --write --json
+node scripts/render-nucleus.mjs --home "$SCRATCH_HOME" --json
 ```
 
 Expected proof:
@@ -128,7 +128,7 @@ Only after the reviewed scratch proof:
 npm run install-nucleus -- --json
 ```
 
-`install-nucleus` is `node scripts/render-harness-nucleus.mjs --write`. It
+`install-nucleus` is `node scripts/render-nucleus.mjs --write`. It
 refuses on safety findings, creates only missing unowned files, skips existing
 unmarked files with `reason: "exists"`, backs up marker-owned drift as
 `*.loom-bak-<timestamp>`, and records ownership in
@@ -142,7 +142,7 @@ repo-mirror symlink as marker-owned, or to replace a reviewed existing OMP user
 file with the repo mirror content after backup, pass:
 
 ```sh
-node scripts/render-harness-nucleus.mjs --write --approve-omp-repo-owned --json
+node scripts/render-nucleus.mjs --write --approve-omp-repo-owned --json
 ```
 
 This flag is only for the three OMP mirror destinations above. It does not make
