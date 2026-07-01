@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { claudeTemplatesDir, codexTemplatesDir } from "../scripts/lib/layout.mjs";
 
 const gate = new URL("../scripts/dry-run-harness-safety-gate.mjs", import.meta.url).pathname;
 const planPath = new URL("../docs/harness/dry-run-link-plan.json", import.meta.url).pathname;
@@ -183,7 +184,7 @@ test("safety gate rejects wildcard local-only runtime patterns", () => {
       sourceHarness: "claude",
       operation: "render-file",
       destination: "~/.claude/daemon-auth-main",
-      sourceTemplate: "docs/harness/claude-adapter-plan/templates/settings.template.json",
+      sourceTemplate: `${claudeTemplatesDir}/settings.template.json`,
       status: "dry-run-only",
       approval: "future-issue-required",
       notes: "Invalid: matches ~/.claude/daemon-auth-*.",
@@ -229,7 +230,7 @@ test("safety gate rejects dangerous database, blob, auth, cache, and history pat
       sourceHarness: "codex",
       operation: "render-file",
       destination: "~/.codex/plugins/cache/rendered.toml",
-      sourceTemplate: "docs/harness/codex-adapter-plan/templates/base.config.template.toml",
+      sourceTemplate: `${codexTemplatesDir}/base.config.template.toml`,
       status: "dry-run-only",
       approval: "future-issue-required",
       notes: "Invalid cache destination.",

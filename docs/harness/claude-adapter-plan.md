@@ -2,7 +2,7 @@
 
 Issue #42 defines the Claude-side adapter plan for the unified OMP/Codex/Claude harness nucleus. This slice is a plan and validation package only. It does not write to live `~/.claude`, does not symlink or copy the entire Claude home directory, does not copy private Claude runtime/session/history/cache/daemon/auth data, and does not delete duplicate skills.
 
-Canonical data lives in `docs/harness/claude-adapter-plan/adapter-plan.json`. Parseable dry-run templates live under `docs/harness/claude-adapter-plan/templates/`.
+Canonical data lives in `docs/harness/claude-adapter-plan/adapter-plan.json`. Parseable dry-run templates live under `adapters/claude/templates/`.
 
 The reusable repo workflow source for the harness nucleus is the OMP workflow-kit at `~/.omp/agent/workflow-kit`. This issue treats it as a reference-only source: translate the workflow into Claude-native instructions, settings, agents, and skills, but do not copy live OMP runtime state into `~/.claude`.
 
@@ -103,7 +103,7 @@ Skills overlap across multiple roots. This slice records risks only; deduplicati
 
 ### Instruction Bridge Template
 
-Template: `docs/harness/claude-adapter-plan/templates/instructions/CLAUDE.md.template.md`
+Template: `adapters/claude/templates/instructions/CLAUDE.md.template.md`
 
 Candidate destinations after explicit approval: `CLAUDE.md`, `.claude/CLAUDE.md`, or `~/.claude/CLAUDE.md`.
 
@@ -111,7 +111,7 @@ The bridge imports `@AGENTS.md` when shared repo workflow guidance exists. It mu
 
 ### Settings Template
 
-Template: `docs/harness/claude-adapter-plan/templates/settings.template.json`
+Template: `adapters/claude/templates/settings.template.json`
 
 Candidate destinations after explicit approval: `.claude/settings.json` or `~/.claude/settings.json`.
 
@@ -119,7 +119,7 @@ Allowed: `includeCoAuthoredBy`, `cleanupPeriodDays`, and `permissions.deny` rule
 
 ### Agent Templates
 
-Templates live under `docs/harness/claude-adapter-plan/templates/agents/`.
+Templates live under `adapters/claude/templates/agents/`.
 
 Candidate destinations after explicit approval: project-scoped `.claude/agents/*.md` or user-scoped `~/.claude/agents/*.md`.
 
@@ -127,7 +127,7 @@ Required frontmatter is `name` and `description`; the dry-run examples also incl
 
 ### Skill Templates And Symlink Manifest
 
-Dry-run skill template examples live under `docs/harness/claude-adapter-plan/templates/skills/`. The curated per-skill symlink candidate manifest is `docs/harness/claude-adapter-plan/templates/skill-symlinks.template.json`.
+Dry-run skill template examples live under `adapters/claude/templates/skills/`. The curated per-skill symlink candidate manifest is `adapters/claude/templates/skill-symlinks.template.json`.
 
 Every future link mode must be `symlink`, every target must be a per-skill path, and the manifest must never copy, vendor, delete, or whole-root link existing skills.
 

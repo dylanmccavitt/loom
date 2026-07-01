@@ -32,6 +32,7 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseToml } from "./vendor/smol-toml/index.js";
+import { codexTemplatesDir } from "./lib/layout.mjs";
 import {
   asArray,
   containsPrivateHomePath,
@@ -49,7 +50,7 @@ const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const DEFAULTS = {
   plan: "docs/harness/codex-adapter-plan/adapter-plan.json",
   manifest: "docs/harness/resource-manifest.json",
-  templateDir: "docs/harness/codex-adapter-plan/templates",
+  templateDir: codexTemplatesDir,
   ompSource: "adapters/omp/source",
 };
 

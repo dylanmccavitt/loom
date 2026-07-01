@@ -84,7 +84,7 @@
       "sourceHarness": "codex",
       "operation": "render-file",
       "destination": ".codex/config.toml",
-      "sourceTemplate": "docs/harness/codex-adapter-plan/templates/base.config.template.toml",
+      "sourceTemplate": "adapters/codex/templates/base.config.template.toml",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report overwrite risk only. Future renderers must use a temp render and explicit human approval."
@@ -94,7 +94,7 @@
       "sourceHarness": "codex",
       "operation": "render-file",
       "destination": "~/.codex/omp-harness.config.toml",
-      "sourceTemplate": "docs/harness/codex-adapter-plan/templates/profile.omp-harness.config.template.toml",
+      "sourceTemplate": "adapters/codex/templates/profile.omp-harness.config.template.toml",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report overwrite risk only. Do not change the default Codex provider, model, auth, trust, or telemetry settings."
@@ -114,7 +114,7 @@
       "sourceHarness": "codex",
       "operation": "merge-entries",
       "destination": "~/.codex/config.toml skills.config entries",
-      "sourceTemplate": "docs/harness/codex-adapter-plan/templates/skills.config.template.toml",
+      "sourceTemplate": "adapters/codex/templates/skills.config.template.toml",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report merge target overwrite risk only. Future renderers must not delete, copy, remove, or vendor duplicate skills."
@@ -124,7 +124,7 @@
       "sourceHarness": "claude",
       "operation": "render-file",
       "destination": ".claude/CLAUDE.md",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/instructions/CLAUDE.md.template.md",
+      "sourceTemplate": "adapters/claude/templates/instructions/CLAUDE.md.template.md",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report overwrite risk only. Future renderers must preserve the instruction bridge boundary."
@@ -134,7 +134,7 @@
       "sourceHarness": "claude",
       "operation": "render-file",
       "destination": "~/.claude/CLAUDE.md",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/instructions/CLAUDE.md.template.md",
+      "sourceTemplate": "adapters/claude/templates/instructions/CLAUDE.md.template.md",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report overwrite risk only. User-scope apply requires explicit approval."
@@ -144,7 +144,7 @@
       "sourceHarness": "claude",
       "operation": "render-file",
       "destination": ".claude/settings.json",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/settings.template.json",
+      "sourceTemplate": "adapters/claude/templates/settings.template.json",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report overwrite risk only. Shareable settings must not include auth, env, MCP, model, hook, or local override keys."
@@ -154,7 +154,7 @@
       "sourceHarness": "claude",
       "operation": "render-file",
       "destination": "~/.claude/settings.json",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/settings.template.json",
+      "sourceTemplate": "adapters/claude/templates/settings.template.json",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report overwrite risk only. Future live merge must preserve existing local settings."
@@ -164,7 +164,7 @@
       "sourceHarness": "claude",
       "operation": "render-glob",
       "destination": ".claude/agents/*.md",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/agents/*.md",
+      "sourceTemplate": "adapters/claude/templates/agents/*.md",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report destination pattern only; do not create project-scoped Claude agents in this issue."
@@ -174,7 +174,7 @@
       "sourceHarness": "claude",
       "operation": "render-glob",
       "destination": "~/.claude/agents/*.md",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/agents/*.md",
+      "sourceTemplate": "adapters/claude/templates/agents/*.md",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report destination pattern only; do not create user-scoped Claude agents in this issue."
@@ -184,7 +184,7 @@
       "sourceHarness": "claude",
       "operation": "render-glob",
       "destination": ".claude/skills/*/SKILL.md",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/skills/*/SKILL.md",
+      "sourceTemplate": "adapters/claude/templates/skills/*/SKILL.md",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report destination pattern only; future apply must use curated per-skill review."
@@ -194,7 +194,7 @@
       "sourceHarness": "claude",
       "operation": "render-glob",
       "destination": "~/.claude/skills/*/SKILL.md",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/skills/*/SKILL.md",
+      "sourceTemplate": "adapters/claude/templates/skills/*/SKILL.md",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report destination pattern only; future apply must use curated per-skill review."
@@ -204,7 +204,7 @@
       "sourceHarness": "claude",
       "operation": "render-manifest",
       "destination": "per-skill symlink manifest",
-      "sourceTemplate": "docs/harness/claude-adapter-plan/templates/skill-symlinks.template.json",
+      "sourceTemplate": "adapters/claude/templates/skill-symlinks.template.json",
       "status": "dry-run-only",
       "approval": "future-issue-required",
       "notes": "Report the candidate manifest only. Whole-root Claude skill symlinks remain forbidden."

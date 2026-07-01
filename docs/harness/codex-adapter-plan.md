@@ -2,7 +2,7 @@
 
 Issue #41 defines the Codex-side adapter plan for the unified OMP/Codex/Claude harness nucleus. This slice is a plan and validation package only. It does not write to live `~/.codex`, does not change the Codex default model/provider, and does not remove duplicate skills.
 
-Canonical data lives in `docs/harness/codex-adapter-plan/adapter-plan.json`. Parseable dry-run templates live under `docs/harness/codex-adapter-plan/templates/`.
+Canonical data lives in `docs/harness/codex-adapter-plan/adapter-plan.json`. Parseable dry-run templates live under `adapters/codex/templates/`.
 
 The reusable repo workflow source for the harness nucleus is the OMP workflow-kit at `~/.omp/agent/workflow-kit`. This issue treats it as a reference-only source: translate the workflow into Codex-native instructions, config, custom agents, and skills, but do not copy live OMP runtime state into `~/.codex`.
 
@@ -82,7 +82,7 @@ No Codex or Claude skill ports are created in this issue.
 
 ### Base Config Template
 
-Template: `docs/harness/codex-adapter-plan/templates/base.config.template.toml`
+Template: `adapters/codex/templates/base.config.template.toml`
 
 Allowed content:
 
@@ -99,7 +99,7 @@ Forbidden content:
 
 ### Optional Profile Template
 
-Template: `docs/harness/codex-adapter-plan/templates/profile.omp-harness.config.template.toml`
+Template: `adapters/codex/templates/profile.omp-harness.config.template.toml`
 
 Candidate destination after explicit approval: `~/.codex/omp-harness.config.toml`.
 
@@ -109,9 +109,9 @@ Profiles may tune review effort, sandbox, approval policy, or feature toggles. T
 
 Historical templates:
 
-- `docs/harness/codex-adapter-plan/templates/agents/omp-designer.toml`
-- `docs/harness/codex-adapter-plan/templates/agents/omp-planner.toml`
-- `docs/harness/codex-adapter-plan/templates/agents/omp-reviewer.toml`
+- `adapters/codex/templates/agents/omp-designer.toml`
+- `adapters/codex/templates/agents/omp-planner.toml`
+- `adapters/codex/templates/agents/omp-reviewer.toml`
 
 These files preserve the earlier adapter rationale as superseded context and validation
 fixtures. They are not active renderer inputs, have no candidate `.codex/agents/*.toml`
@@ -122,7 +122,7 @@ canonical names and no harness prefixes.
 
 ### Skill Enable/Disable Template
 
-Template: `docs/harness/codex-adapter-plan/templates/skills.config.template.toml`
+Template: `adapters/codex/templates/skills.config.template.toml`
 
 Candidate destination after explicit approval: merge entries into `~/.codex/config.toml`.
 
