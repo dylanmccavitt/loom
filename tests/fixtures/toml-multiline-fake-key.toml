@@ -1,0 +1,4 @@
+description = '''
+Example configuration snippet:
+model = "gpt-x"
+'''

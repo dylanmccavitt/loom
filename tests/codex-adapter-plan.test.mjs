@@ -4,6 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync }
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { parse as parseToml } from "../scripts/vendor/smol-toml/index.js";
 
 const planPath = new URL("../docs/harness/codex-adapter-plan/adapter-plan.json", import.meta.url).pathname;
 const planMdPath = new URL("../docs/harness/codex-adapter-plan.md", import.meta.url).pathname;
@@ -106,13 +107,9 @@ test("Codex adapter plan treats workflow-kit as the repo workflow nucleus", () =
 test("Codex adapter templates parse and avoid forbidden live/provider/auth settings", () => {
   const files = walkFiles(templatesDir, file => file.endsWith(".toml"));
   assert.ok(files.length >= 5);
-  const py = [
-    "import pathlib, sys, tomllib",
-    "for raw in sys.argv[1:]:",
-    "    tomllib.loads(pathlib.Path(raw).read_text())",
-  ].join("\n");
-  const result = spawnSync("python3", ["-c", py, ...files], { encoding: "utf8" });
-  assert.equal(result.status, 0, result.stderr);
+  for (const file of files) {
+    assert.doesNotThrow(() => parseToml(readFileSync(file, "utf8")), file);
+  }
 
   const base = readFileSync(path.join(templatesDir, "base.config.template.toml"), "utf8");
   assert.doesNotMatch(base, /^model\s*=/mu);

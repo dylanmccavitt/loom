@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { parse as parseToml } from "./vendor/smol-toml/index.js";
 
 const PLAN_PATH = process.env.CODEX_ADAPTER_PLAN_PATH ?? "docs/harness/codex-adapter-plan/adapter-plan.json";
 const SOURCE_PATH = "docs/harness/omp-builtins/source.json";
@@ -53,21 +53,27 @@ function stripTomlComments(text) {
     .join("\n");
 }
 
+function addParsedKeyPath(keys, segments) {
+  for (const segment of segments) keys.add(segment);
+  keys.add(segments.join("."));
+}
+
+function visitParsedToml(keys, node, prefix = []) {
+  if (Array.isArray(node)) {
+    for (const item of node) visitParsedToml(keys, item, prefix);
+    return;
+  }
+  if (!node || typeof node !== "object" || Object.getPrototypeOf(node) !== Object.prototype) return;
+  for (const [key, value] of Object.entries(node)) {
+    const segments = [...prefix, key];
+    addParsedKeyPath(keys, segments);
+    visitParsedToml(keys, value, segments);
+  }
+}
+
 function tomlKeys(text) {
   const keys = new Set();
-  let currentTable = "";
-  for (const line of stripTomlComments(text).split("\n")) {
-    const table = line.match(/^\s*\[\[?([^\]]+)\]\]?\s*$/u);
-    if (table) {
-      currentTable = table[1].trim().replaceAll('"', "");
-      keys.add(currentTable);
-      continue;
-    }
-    const match = line.match(/^\s*([A-Za-z0-9_-]+)\s*=/u);
-    if (!match) continue;
-    keys.add(match[1]);
-    if (currentTable) keys.add(`${currentTable}.${match[1]}`);
-  }
+  visitParsedToml(keys, parseToml(text));
   return keys;
 }
 
@@ -99,16 +105,13 @@ function validateNoSecretsOrPrivatePaths(files, errors) {
   }
 }
 
-function parseTomlWithPython(files, errors) {
-  const script = [
-    "import pathlib, sys, tomllib",
-    "for raw in sys.argv[1:]:",
-    "    path = pathlib.Path(raw)",
-    "    tomllib.loads(path.read_text())",
-  ].join("\n");
-  const result = spawnSync("python3", ["-c", script, ...files], { encoding: "utf8" });
-  if (result.status !== 0) {
-    errors.push(`TOML parse failed:\n${result.stderr || result.stdout}`);
+function parseTomlFiles(files, errors) {
+  for (const file of files) {
+    try {
+      parseToml(readFileSync(file, "utf8"));
+    } catch (error) {
+      errors.push(`${path.relative(process.cwd(), file)}: TOML parse failed: ${error.message}`);
+    }
   }
 }
 
@@ -125,7 +128,7 @@ function dryRunRenderTemplates(files, errors) {
     if (rendered.length !== files.length) {
       errors.push("dry-run render did not preserve all TOML templates");
     }
-    parseTomlWithPython(rendered, errors);
+    parseTomlFiles(rendered, errors);
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }
