@@ -398,7 +398,7 @@
   ],
   "dryRunValidationStrategy": [
     "Render active templates into a temporary directory, never directly into ~/.codex; superseded OMP-prefixed custom-agent templates are not active renderer inputs.",
-    "Parse every rendered TOML template with Python tomllib or an equivalent TOML parser.",
+    "Parse every rendered TOML template with the vendored in-process TOML parser.",
     "Compare OMP agent mapping rows against docs/harness/omp-builtins/source.json and fail when a bundled agent is unmapped.",
     "Validate that the Codex adapter preserves the workflow-kit repo lifecycle as portable policy rather than copying live OMP runtime files.",
     "Reject rendered files containing absolute private home paths, API key/token-looking text, auth cache names as destinations, provider routing keys, or model default changes in the base template.",

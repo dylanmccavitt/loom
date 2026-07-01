@@ -30,8 +30,8 @@ import {
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { parse as parseToml } from "./vendor/smol-toml/index.js";
 import {
   asArray,
   containsPrivateHomePath,
@@ -218,23 +218,32 @@ function addKeyPath(keys, rawKeyPath, tablePrefix) {
 }
 
 const KEY_TOKEN = String.raw`(?:"[^"]*"|'[^']*'|[A-Za-z0-9_-]+)`;
-const TOML_KEY_LINE = new RegExp(String.raw`^\s*(${KEY_TOKEN}(?:\s*\.\s*${KEY_TOKEN})*)\s*=`, "u");
+// YAML scan is intentionally line-regex based: flat top-level key matching only,
+// with no nesting or flow-style awareness. That is enough for the scanned OMP
+// config/frontmatter surfaces, while TOML/JSON get parsed structurally below.
 const YAML_KEY_LINE = new RegExp(String.raw`^\s*(?:-\s*)?(${KEY_TOKEN}(?:\s*\.\s*${KEY_TOKEN})*)\s*:`, "u");
+
+function addParsedKeyPath(keys, segments) {
+  for (const segment of segments) keys.add(segment);
+  keys.add(segments.join("."));
+}
+
+function visitParsedToml(keys, node, prefix = []) {
+  if (Array.isArray(node)) {
+    for (const item of node) visitParsedToml(keys, item, prefix);
+    return;
+  }
+  if (!node || typeof node !== "object" || Object.getPrototypeOf(node) !== Object.prototype) return;
+  for (const [key, value] of Object.entries(node)) {
+    const segments = [...prefix, key];
+    addParsedKeyPath(keys, segments);
+    visitParsedToml(keys, value, segments);
+  }
+}
 
 function tomlKeys(text) {
   const keys = new Set();
-  let currentTable = "";
-  for (const line of stripTomlComments(text).split("\n")) {
-    const table = line.match(/^\s*\[\[?([^\]]+)\]\]?\s*$/u);
-    if (table) {
-      currentTable = keyPathSegments(table[1]).join(".");
-      for (const segment of currentTable.split(".")) if (segment) keys.add(segment);
-      if (currentTable) keys.add(currentTable);
-      continue;
-    }
-    const match = line.match(TOML_KEY_LINE);
-    if (match) addKeyPath(keys, match[1], currentTable);
-  }
+  visitParsedToml(keys, parseToml(text));
   return keys;
 }
 
@@ -481,20 +490,13 @@ export function renderToTemp(candidates) {
   return tempRoot;
 }
 
-function parseRenderedTomlWithPython(tomlFiles, findings) {
-  if (tomlFiles.length === 0) return;
-  const script = [
-    "import pathlib, sys, tomllib",
-    "for raw in sys.argv[1:]:",
-    "    tomllib.loads(pathlib.Path(raw).read_text())",
-  ].join("\n");
-  const result = spawnSync("python3", ["-c", script, ...tomlFiles], { encoding: "utf8" });
-  if (result.error) {
-    findings.push(`rendered TOML parse could not run python3: ${result.error.message}`);
-    return;
-  }
-  if (result.status !== 0) {
-    findings.push(`rendered TOML parse failed: ${(result.stderr || result.stdout || "").trim()}`);
+function parseRenderedToml(tomlFiles, findings) {
+  for (const file of tomlFiles) {
+    try {
+      parseToml(readFileSync(file, "utf8"));
+    } catch (error) {
+      findings.push(`rendered TOML parse failed: ${error.message}`);
+    }
   }
 }
 
@@ -544,7 +546,7 @@ export function gateRenderedOutput(candidates, localOnly, tempRoot) {
       }
     }
   }
-  parseRenderedTomlWithPython(tomlFiles, findings);
+  parseRenderedToml(tomlFiles, findings);
   return [...new Set(findings)].sort();
 }
 
