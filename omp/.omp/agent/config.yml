@@ -38,12 +38,16 @@ inspect_image:
 checkpoint: 
   enabled: true
 modelRoles: 
-  plan: openai-codex/gpt-5.5:inherit
-  slow: openai-codex/gpt-5.5
-  smol: anthropic/claude-sonnet-5
-  advisor: anthropic/claude-opus-4-7
   default: openai-codex/gpt-5.5:high
-  designer: google-antigravity/claude-opus-4-6
+  smol: openai-codex/gpt-5.5:low
+  task: openai-codex/gpt-5.5:medium
+  tiny: openai-codex/gpt-5.5:low
+  commit: openai-codex/gpt-5.5:low
+  plan: anthropic/claude-fable-5:xhigh
+  slow: anthropic/claude-fable-5:xhigh
+  designer: anthropic/claude-fable-5:xhigh
+  vision: anthropic/claude-fable-5:high
+  advisor: anthropic/claude-fable-5:medium
 dev: 
   autoqa: 
     consent: denied
@@ -64,3 +68,11 @@ codexResets:
   autoRedeem: "yes"
 recap: 
   idleSeconds: 60
+enabledModels: 
+  - openai-codex/gpt-5.5
+  - anthropic/claude-fable-5
+cycleOrder: 
+  - smol
+  - default
+  - slow
+defaultThinkingLevel: high
