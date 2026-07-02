@@ -4,6 +4,8 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
+import { discoverPackageRoot } from "../scripts/lib/omp-package-contract.mjs";
+
 const snapshotDir = new URL("../distributions/snapshots/omp-builtins/", import.meta.url).pathname;
 const sourcePath = new URL("../distributions/snapshots/omp-builtins/source.json", import.meta.url).pathname;
 const commandsPath = new URL("../distributions/snapshots/omp-builtins/commands.json", import.meta.url).pathname;
@@ -19,21 +21,25 @@ const resourceIndex = JSON.parse(readFileSync(resourceIndexPath, "utf8"));
 const hasOmp = spawnSync("which", ["omp"]).status === 0;
 const hasRefreshableOmpPackage = Boolean(findRefreshableOmpPackageRoot());
 
+// Mirror the refresh script's discovery exactly (shared module), then additionally require the
+// discovered package version to match the checked-in snapshot: the "no drift" assertion is only
+// meaningful when the refreshable source is the same version the snapshot was captured from.
 function findRefreshableOmpPackageRoot() {
   const which = spawnSync("which", ["omp"], { encoding: "utf8" });
   if (which.status !== 0) return null;
+  const version = spawnSync("omp", ["--version"], { encoding: "utf8" });
+  if (version.status !== 0) return null;
   const realpath = spawnSync("realpath", [which.stdout.trim()], { encoding: "utf8" });
   const ompPath = (realpath.status === 0 ? realpath.stdout : which.stdout).trim();
-  let current = path.dirname(ompPath);
-  while (current !== path.dirname(current)) {
-    const packageJson = path.join(current, "package.json");
-    if (existsSync(packageJson)) {
-      const pkg = JSON.parse(readFileSync(packageJson, "utf8"));
-      if (pkg.name === "@oh-my-pi/pi-coding-agent") return current;
-    }
-    current = path.dirname(current);
+  let root;
+  try {
+    root = discoverPackageRoot({ ompBinaryPath: ompPath, cliVersionText: version.stdout.trim() });
+  } catch {
+    return null;
   }
-
+  const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+  if (pkg.version !== source.source.packageVersion) return null;
+  return root;
 }
 
 function runNode(script, args = []) {

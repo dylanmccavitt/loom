@@ -16,7 +16,7 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { parseFrontmatter } from "./lib/frontmatter.mjs";
 import { ompBuiltinsSnapshotRoot } from "./lib/layout.mjs";
-import { COMMAND_REGISTRY_MARKER, PACKAGE_LAYOUT, PACKAGE_NAME, assertPackageLayout, assertRegistryMarker } from "./lib/omp-package-contract.mjs";
+import { COMMAND_REGISTRY_MARKER, PACKAGE_LAYOUT, assertPackageLayout, assertRegistryMarker, discoverPackageRoot } from "./lib/omp-package-contract.mjs";
 
 const USAGE = "Usage: node scripts/refresh-omp-builtins-snapshot.mjs [--write] [--snapshot-dir <path>]";
 const DEFAULT_SNAPSHOT_DIR = ompBuiltinsSnapshotRoot;
@@ -88,24 +88,14 @@ function assertSafeSnapshotDir(snapshotDir) {
   }
 }
 
-function findPackageRoot() {
-  const ompPath = realpathSync(run("which", ["omp"]));
-  let current = path.dirname(ompPath);
-  while (current !== path.dirname(current)) {
-    const packageJson = path.join(current, "package.json");
-    if (existsSync(packageJson)) {
-      const pkg = JSON.parse(readText(packageJson));
-      if (pkg.name === PACKAGE_NAME) return current;
-    }
-    current = path.dirname(current);
-  }
-  throw new Error(`Could not find ${PACKAGE_NAME} package root from ${ompPath}`);
+function findPackageRoot(cliVersionText) {
+  const ompBinaryPath = realpathSync(run("which", ["omp"]));
+  return discoverPackageRoot({ ompBinaryPath, cliVersionText });
 }
 
-function readPackageSource(packageRoot) {
+function readPackageSource(packageRoot, cliVersionText) {
   const packageJsonPath = path.join(packageRoot, "package.json");
   const pkg = JSON.parse(readText(packageJsonPath));
-  const cliVersionText = run("omp", ["--version"]);
   return {
     packageName: pkg.name,
     packageVersion: pkg.version,
@@ -502,8 +492,9 @@ function main() {
   const options = readArgs(process.argv.slice(2));
   const snapshotDir = path.resolve(options.snapshotDir);
   assertSafeSnapshotDir(snapshotDir);
-  const packageRoot = findPackageRoot();
-  const source = readPackageSource(packageRoot);
+  const cliVersionText = run("omp", ["--version"]);
+  const packageRoot = findPackageRoot(cliVersionText);
+  const source = readPackageSource(packageRoot, cliVersionText);
   const { targetDir, result } = exportBundledAgents();
   try {
     const agents = agentSnapshotFromDir(targetDir);

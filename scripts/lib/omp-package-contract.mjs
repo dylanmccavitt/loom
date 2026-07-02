@@ -7,7 +7,8 @@
 //
 // Observed upstream version: omp/16.0.5 (@oh-my-pi/pi-coding-agent 16.0.5).
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import path from "node:path";
 
 export const OMP_PACKAGE_CONTRACT_VERSION = "omp/16.0.5";
@@ -61,4 +62,99 @@ export function assertRegistryMarker(registrySource) {
   if (!registrySource.includes(COMMAND_REGISTRY_MARKER)) {
     throw contractStaleError([`marker "${COMMAND_REGISTRY_MARKER}" in ${PACKAGE_LAYOUT.commandRegistry}`]);
   }
+}
+
+// --- package-root discovery ---------------------------------------------------------------------
+//
+// The CLI binary is no longer guaranteed to live inside the package (the current install is a
+// standalone compiled binary in /opt/homebrew/bin with no node_modules nearby). Discovery therefore
+// tries an ordered list of strategies and, because any on-disk package is now a separate artifact
+// from the running binary, every candidate must match BOTH the package name and the CLI version —
+// otherwise the refresh would scrape stale source while labeling it with the live CLI version.
+
+// Parse the numeric package version out of `omp --version` output (e.g. "omp/16.3.0" or "omp v16.3.0").
+export function parseCliPackageVersion(cliVersionText) {
+  const match = /(\d+\.\d+\.\d+\S*)/.exec(cliVersionText ?? "");
+  return match ? match[1] : null;
+}
+
+function expandTilde(dir, home) {
+  if (dir === "~") return home;
+  if (dir.startsWith("~/")) return path.join(home, dir.slice(2));
+  return dir;
+}
+
+// Validate one candidate directory. Returns { ok: true } or { ok: false, reason }.
+function inspectCandidate(dir, cliPackageVersion) {
+  if (!existsSync(dir)) return { ok: false, reason: "directory does not exist" };
+  const packageJsonPath = path.join(dir, "package.json");
+  if (!existsSync(packageJsonPath)) return { ok: false, reason: "no package.json" };
+  let pkg;
+  try {
+    pkg = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+  } catch {
+    return { ok: false, reason: "unreadable package.json" };
+  }
+  if (pkg.name !== PACKAGE_NAME) {
+    return { ok: false, reason: `package.json name is ${pkg.name ?? "(unset)"}, not ${PACKAGE_NAME}` };
+  }
+  if (!cliPackageVersion) return { ok: false, reason: "could not parse CLI version" };
+  if (pkg.version !== cliPackageVersion) {
+    return { ok: false, reason: `package version ${pkg.version} does not match CLI version ${cliPackageVersion}` };
+  }
+  return { ok: true };
+}
+
+export function packageRootDiscoveryError({ ompBinaryPath, cliVersionText, attempts }) {
+  return new Error(
+    [
+      `Could not find the ${PACKAGE_NAME} package root for ${cliVersionText} (omp binary: ${ompBinaryPath}).`,
+      "Strategies tried:",
+      ...attempts.map(attempt => `  - ${attempt.strategy}: ${attempt.path} (${attempt.reason})`),
+      `Set PI_PACKAGE_DIR to a ${PACKAGE_NAME} package root matching the CLI version`,
+      "(e.g. packages/coding-agent inside an oh-my-pi checkout), or re-verify",
+      "scripts/lib/omp-package-contract.mjs (discovery strategies and PACKAGE_LAYOUT).",
+    ].join("\n"),
+  );
+}
+
+// Locate the installed package root. Strategies, in order:
+//   1. PI_PACKAGE_DIR — omp's own package-directory override env var.
+//   2. Walk up from the resolved omp binary (bun-global installs keep the package above the shim).
+//   3. The bun global install directory (the layout the original snapshot was captured from).
+// Reads package source directories only — never sessions, auth, or caches.
+export function discoverPackageRoot({ ompBinaryPath, cliVersionText, env = process.env, home = homedir() }) {
+  const cliPackageVersion = parseCliPackageVersion(cliVersionText);
+  const attempts = [];
+
+  const override = env.PI_PACKAGE_DIR;
+  if (override) {
+    const dir = path.resolve(expandTilde(override, home));
+    const result = inspectCandidate(dir, cliPackageVersion);
+    if (result.ok) return dir;
+    attempts.push({ strategy: "PI_PACKAGE_DIR", path: dir, reason: result.reason });
+  } else {
+    attempts.push({ strategy: "PI_PACKAGE_DIR", path: "(unset)", reason: "environment variable not set" });
+  }
+
+  let current = path.dirname(ompBinaryPath);
+  let walkReason = `no ${PACKAGE_NAME} package.json in any parent directory`;
+  while (current !== path.dirname(current)) {
+    const result = inspectCandidate(current, cliPackageVersion);
+    if (result.ok) return current;
+    if (result.reason.startsWith("package version")) {
+      walkReason = `${current}: ${result.reason}`;
+      break;
+    }
+    current = path.dirname(current);
+  }
+  attempts.push({ strategy: "walk-up from omp binary", path: ompBinaryPath, reason: walkReason });
+
+  const bunInstall = env.BUN_INSTALL || path.join(home, ".bun");
+  const bunDir = path.join(bunInstall, "install", "global", "node_modules", ...PACKAGE_NAME.split("/"));
+  const bunResult = inspectCandidate(bunDir, cliPackageVersion);
+  if (bunResult.ok) return bunDir;
+  attempts.push({ strategy: "bun global install", path: bunDir, reason: bunResult.reason });
+
+  throw packageRootDiscoveryError({ ompBinaryPath, cliVersionText, attempts });
 }
