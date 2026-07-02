@@ -6,6 +6,9 @@ import {
   mkdirSync,
   readFileSync,
   readlinkSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -75,6 +78,27 @@ export function repoMirrorSymlink(candidate, livePath) {
   return siblingRepoRelative === candidate.source;
 }
 
+// A symlink stranded by a repo layout move: it dangles (target missing) and its resolved
+// target lies inside this repo but is no longer the candidate's current source. Containment
+// under REPO_ROOT subsumes the sibling-repo-relative form repoMirrorSymlink accepts — any
+// link resolving to that form resolves under REPO_ROOT. Anything resolving outside the repo
+// is user property and never matches.
+export function staleRepoMirrorSymlink(candidate, livePath) {
+  if (candidate.harness !== "omp" || !candidate.source) return false;
+  let stat;
+  try {
+    stat = lstatSync(livePath);
+  } catch {
+    return false;
+  }
+  if (!stat.isSymbolicLink()) return false;
+  const linkTarget = readlinkSync(livePath);
+  const resolvedTarget = path.resolve(path.dirname(livePath), linkTarget);
+  if (resolvedTarget === repoPath(candidate.source)) return false;
+  if (pathExists(resolvedTarget)) return false;
+  return resolvedTarget.startsWith(REPO_ROOT + path.sep);
+}
+
 export function liveInspect(candidate, homeRoot, marker) {
   let livePath;
   try {
@@ -99,9 +123,27 @@ export function liveInspect(candidate, homeRoot, marker) {
         ownership: "repo-mirror",
       };
     }
+    if (staleRepoMirrorSymlink(candidate, livePath)) {
+      return {
+        livePath,
+        status: "stale-repo-mirror-symlink",
+        overwriteRisk: "would retarget to current source only with explicit OMP apply gate",
+        ownership: "repo-mirror",
+      };
+    }
     return { livePath, status: "user-file", overwriteRisk: "would not overwrite (existing non-marker file skipped)", ownership: "user-file" };
   }
   if (lstatSync(livePath).isSymbolicLink()) {
+    // Stale detection wins over marker state: a dangling link into the repo is the same
+    // layout-move wreckage whether or not a marker entry survives, and keeps one lane.
+    if (staleRepoMirrorSymlink(candidate, livePath)) {
+      return {
+        livePath,
+        status: "stale-repo-mirror-symlink",
+        overwriteRisk: "would retarget to current source only with explicit OMP apply gate",
+        ownership: "repo-mirror",
+      };
+    }
     if (!repoMirrorSymlink(candidate, livePath)) {
       return {
         livePath,
@@ -133,6 +175,18 @@ function recordMarker(marker, candidate, wantHash) {
     renderedFrom: candidate.source,
     appliedAt: new Date().toISOString(),
   };
+}
+
+// Rewrite a stale repo-mirror link to the current source, relative form matching the links
+// render-nucleus creates (e.g. ../../loom/adapters/omp/source/config.yml), and claim the marker.
+// The relative hop is computed from the canonical live directory: the kernel resolves the link
+// from the real path, so a non-canonical HOME (e.g. macOS /var/folders → /private/var) would
+// otherwise yield a dangling target.
+function retargetStaleSymlink(candidate, livePath, marker, wantHash) {
+  const relativeTarget = path.relative(realpathSync(path.dirname(livePath)), repoPath(candidate.source));
+  rmSync(livePath);
+  symlinkSync(relativeTarget, livePath);
+  recordMarker(marker, candidate, wantHash);
 }
 
 export function requiresOmpRepoOwnedApproval(candidate) {
@@ -227,6 +281,11 @@ export function applyCandidates(candidates, homeRoot, marker, options = {}) {
           actions.push({ destination: candidate.destination, action: "claimed-repo-mirror-symlink", livePath });
           continue;
         }
+        if (staleRepoMirrorSymlink(candidate, livePath)) {
+          retargetStaleSymlink(candidate, livePath, marker, wantHash);
+          actions.push({ destination: candidate.destination, action: "retargeted-stale-repo-mirror-symlink", livePath });
+          continue;
+        }
         if (lstatSync(livePath).isSymbolicLink()) {
           actions.push({ destination: candidate.destination, action: "skipped", reason: "not-repo-mirror-symlink", livePath });
           continue;
@@ -243,6 +302,16 @@ export function applyCandidates(candidates, homeRoot, marker, options = {}) {
       continue;
     }
     if (lstatSync(livePath).isSymbolicLink()) {
+      if (staleRepoMirrorSymlink(candidate, livePath)) {
+        // Same wreckage as the unmarked lane; the retarget stays behind the OMP apply gate.
+        if (!requiresOmpRepoOwnedApproval(candidate) || !options.approveOmpRepoOwned) {
+          actions.push({ destination: candidate.destination, action: "skipped", reason: "omp-approval-required", livePath });
+          continue;
+        }
+        retargetStaleSymlink(candidate, livePath, marker, wantHash);
+        actions.push({ destination: candidate.destination, action: "retargeted-stale-repo-mirror-symlink", livePath });
+        continue;
+      }
       if (!repoMirrorSymlink(candidate, livePath)) {
         actions.push({ destination: candidate.destination, action: "skipped", reason: "not-repo-mirror-symlink", livePath });
         continue;

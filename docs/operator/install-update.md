@@ -149,6 +149,15 @@ This flag is only for the three OMP mirror destinations above. It does not make
 local-only OMP overlays, sessions, caches, logs, databases, or runtime state
 readable or writable.
 
+Repo layout moves are also managed through this gate. If a live OMP link dangles
+because its target moved inside the repo (dry-run shows
+`stale-repo-mirror-symlink`), a plain `--write` still skips it with
+`reason: "omp-approval-required"`; `--write --approve-omp-repo-owned` retargets
+the link to the current source (action
+`retargeted-stale-repo-mirror-symlink`), records the marker, and a repeat run
+reports `already-applied`. Links resolving outside the repo are user property:
+they stay `user-file` and are never retargeted.
+
 ### Verify
 
 ```sh

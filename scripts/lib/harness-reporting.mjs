@@ -7,6 +7,7 @@ export const HARNESS_APPROVAL_POLICY =
 
 function ownershipBucket(entry) {
   if (entry.ownership === "marker-owned") return "marker-owned";
+  if (entry.liveStatus === "stale-repo-mirror-symlink") return "stale-repo-mirror-symlink";
   if (entry.ownership === "repo-mirror") return "repo-mirror-symlink";
   if (entry.ownership === "user-file") return "existing-user-file";
   if (entry.liveStatus === "absent") return "missing";
