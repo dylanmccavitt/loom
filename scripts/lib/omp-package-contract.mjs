@@ -98,7 +98,8 @@ function inspectCandidate(dir, cliPackageVersion) {
   if (pkg.name !== PACKAGE_NAME) {
     return { ok: false, reason: `package.json name is ${pkg.name ?? "(unset)"}, not ${PACKAGE_NAME}` };
   }
-  if (cliPackageVersion && pkg.version !== cliPackageVersion) {
+  if (!cliPackageVersion) return { ok: false, reason: "could not parse CLI version" };
+  if (pkg.version !== cliPackageVersion) {
     return { ok: false, reason: `package version ${pkg.version} does not match CLI version ${cliPackageVersion}` };
   }
   return { ok: true };

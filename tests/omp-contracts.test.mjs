@@ -140,6 +140,30 @@ test("parseCliPackageVersion extracts the semver token from omp --version output
   }
 });
 
+test("discoverPackageRoot rejects package roots when the CLI version cannot be parsed", () => {
+  const { fixture, home } = discoveryFixture();
+  try {
+    const packageDir = path.join(fixture, "checkout", "packages", "coding-agent");
+    writePackageJson(packageDir, { name: PACKAGE_NAME, version: CLI_VERSION });
+    assert.throws(
+      () =>
+        discoverPackageRoot({
+          ompBinaryPath: path.join(fixture, "opt", "bin", "omp"),
+          cliVersionText: "garbage",
+          env: { PI_PACKAGE_DIR: packageDir },
+          home,
+        }),
+      (error) => {
+        assert.match(error.message, /could not parse CLI version/u);
+        assert.ok(error.message.includes(`PI_PACKAGE_DIR: ${packageDir}`));
+        return true;
+      },
+    );
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test("discoverPackageRoot honors PI_PACKAGE_DIR when name and version match the CLI", () => {
   const { fixture, home } = discoveryFixture();
   try {
