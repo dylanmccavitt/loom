@@ -16,10 +16,10 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { parseFrontmatter } from "./lib/frontmatter.mjs";
 import { ompBuiltinsSnapshotRoot } from "./lib/layout.mjs";
+import { COMMAND_REGISTRY_MARKER, PACKAGE_LAYOUT, PACKAGE_NAME, assertPackageLayout, assertRegistryMarker } from "./lib/omp-package-contract.mjs";
 
 const USAGE = "Usage: node scripts/refresh-omp-builtins-snapshot.mjs [--write] [--snapshot-dir <path>]";
 const DEFAULT_SNAPSHOT_DIR = ompBuiltinsSnapshotRoot;
-const PACKAGE_NAME = "@oh-my-pi/pi-coding-agent";
 const EXPECTED_AGENTS = ["designer", "explore", "librarian", "oracle", "plan", "quick_task", "reviewer", "task"];
 const PORTABILITY_CLASSES = {
   textAndTui: "omp-acp-text-and-tui-runtime",
@@ -308,12 +308,13 @@ function commandPortability(hasHandle, hasHandleTui) {
   return PORTABILITY_CLASSES.tuiOnly;
 }
 
-function buildCommandIndex(packageRoot, source) {
-  const registryPath = path.join(packageRoot, "src/slash-commands/builtin-registry.ts");
-  const availablePath = path.join(packageRoot, "src/slash-commands/available-commands.ts");
-  const acpPath = path.join(packageRoot, "src/slash-commands/acp-builtins.ts");
+function buildCommandIndex(layout, source) {
+  const registryPath = layout.commandRegistry;
+  const availablePath = layout.availableCommands;
+  const acpPath = layout.acpBuiltins;
   const registrySource = readText(registryPath);
-  const arrayText = extractArrayAfter(registrySource, "const BUILTIN_SLASH_COMMAND_REGISTRY");
+  assertRegistryMarker(registrySource);
+  const arrayText = extractArrayAfter(registrySource, COMMAND_REGISTRY_MARKER);
   const commands = splitTopLevelObjects(arrayText)
     .map(objectText => {
       const name = stringProperty(objectText, "name");
@@ -377,9 +378,9 @@ function walkFiles(root, predicate = () => true) {
   return result.sort();
 }
 
-function buildResourceIndex(packageRoot, source, agents) {
-  const promptsRoot = path.join(packageRoot, "src/prompts");
-  const rulesRoot = path.join(packageRoot, "src/discovery/builtin-rules");
+function buildResourceIndex(layout, source, agents) {
+  const promptsRoot = layout.promptsRoot;
+  const rulesRoot = layout.builtinRulesRoot;
   const promptFiles = walkFiles(promptsRoot, file => file.endsWith(".md"));
   const promptCategories = new Map();
   for (const file of promptFiles) {
@@ -392,7 +393,7 @@ function buildResourceIndex(packageRoot, source, agents) {
     }
     const item = promptCategories.get(category);
     item.files.push({
-      path: `src/prompts/${rel}`,
+      path: `${PACKAGE_LAYOUT.promptsRoot}/${rel}`,
       bytes: Buffer.byteLength(content),
       sha256: sha256(content),
     });
@@ -411,7 +412,7 @@ function buildResourceIndex(packageRoot, source, agents) {
       const content = readText(file);
       return {
         name: path.basename(file, ".md"),
-        path: `src/discovery/builtin-rules/${path.basename(file)}`,
+        path: `${PACKAGE_LAYOUT.builtinRulesRoot}/${path.basename(file)}`,
         sourceType: "builtin-default-rule",
         portabilityClass: "portable-rule-reference",
         bytes: Buffer.byteLength(content),
@@ -511,8 +512,9 @@ function main() {
     if (missingAgents.length > 0) {
       throw new Error(`OMP bundled agent export missing expected agents: ${missingAgents.join(", ")}`);
     }
-    const commands = buildCommandIndex(packageRoot, source);
-    const resources = buildResourceIndex(packageRoot, source, agents);
+    const layout = assertPackageLayout(packageRoot);
+    const commands = buildCommandIndex(layout, source);
+    const resources = buildResourceIndex(layout, source, agents);
     const sourceJson = stableJson({
       schemaVersion: 1,
       generatedForIssue: 39,
