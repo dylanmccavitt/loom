@@ -1,8 +1,8 @@
 ---
 name: rocket-launch
 description: Launch gatekeeper. Records launch-gate readiness after review/proof/CI gates and tracker bridge evidence are satisfied. Modes: launch.
-model: gpt-5.4-mini
-reasoningEffort: high
+model: claude-sonnet-4-6
+reasoningEffort: medium
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 mcpServers: ["linear"]
 ---

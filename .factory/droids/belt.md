@@ -1,8 +1,8 @@
 ---
 name: belt
 description: Handoff carrier. Moves durable context between agents/threads with concise state, proof, risks, and next actions. Modes: shape, review.
-model: gpt-5.4-mini
-reasoningEffort: high
+model: claude-sonnet-4-6
+reasoningEffort: medium
 tools: ["Read", "LS", "Grep", "Glob"]
 ---
 

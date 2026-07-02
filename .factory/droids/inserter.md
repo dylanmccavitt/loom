@@ -1,8 +1,8 @@
 ---
 name: inserter
 description: Triage router. Classifies, prioritizes, labels, and routes incoming tracker work. Modes: shape, review.
-model: gpt-5.4-mini
-reasoningEffort: high
+model: claude-sonnet-4-6
+reasoningEffort: medium
 tools: ["Read", "LS", "Grep", "Glob"]
 mcpServers: ["linear"]
 ---

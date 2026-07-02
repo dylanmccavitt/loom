@@ -1,8 +1,8 @@
 ---
 name: bus-first
 description: Minimal-diff tightener. Applies reuse-before-build doctrine and flags needless abstraction or scope creep. Modes: review.
-model: gpt-5.4-mini
-reasoningEffort: high
+model: claude-sonnet-4-6
+reasoningEffort: medium
 tools: ["Read", "LS", "Grep", "Glob"]
 ---
 
