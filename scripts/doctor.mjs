@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync, readlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -46,6 +46,31 @@ function envPresence() {
   return names.map((name) => `${name}=${process.env[name] ? "set" : "unset"}`).join(", ");
 }
 
+const OMP_LINKS = ["config.yml", "AGENTS.md", "RULES.md", "extensions"];
+
+function ompLinkHealth() {
+  const agentDir = path.join(os.homedir(), ".omp", "agent");
+  const problems = [];
+  for (const name of OMP_LINKS) {
+    const live = path.join(agentDir, name);
+    let stat;
+    try {
+      stat = lstatSync(live);
+    } catch {
+      problems.push(`${name}: missing`);
+      continue;
+    }
+    if (!stat.isSymbolicLink()) continue; // plain file/dir is a valid non-symlink setup
+    const target = path.resolve(agentDir, readlinkSync(live));
+    if (!existsSync(target)) {
+      problems.push(`${name}: dangling -> ${target}`);
+    } else if (!target.includes(path.join("loom", "adapters", "omp", "source"))) {
+      problems.push(`${name}: stale target -> ${target}`);
+    }
+  }
+  return { ok: problems.length === 0, text: problems.length === 0 ? "all links resolve" : problems.join("; ") };
+}
+
 export function main() {
   const root = process.cwd();
   process.stdout.write("Loom doctor\n");
@@ -55,6 +80,8 @@ export function main() {
   process.stdout.write(`${line("tracker", trackerHint())}\n`);
   process.stdout.write(`${line("install-marker", existsSync(path.join(os.homedir(), ".loom-harness", "applied-manifest.json")) ? "present" : "missing")}\n`);
   process.stdout.write(`${line("live-smoke-env", envPresence())}\n`);
+  const ompLinks = ompLinkHealth();
+  process.stdout.write(`${line("omp-links", ompLinks.text)}\n`);
   process.stdout.write("\nChecks:\n");
 
   let failed = 0;
@@ -69,6 +96,7 @@ export function main() {
     }
   }
 
+  if (!ompLinks.ok) failed += 1;
   if (failed > 0 || !gitStatus.ok) process.exitCode = failed > 0 ? 1 : 0;
 }
 
