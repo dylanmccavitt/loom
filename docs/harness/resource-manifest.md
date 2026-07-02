@@ -44,13 +44,18 @@ The manifest marks runtime sessions, database files, blobs, terminal state, auth
 
 ## OMP Agent Config Split
 
-Issue #52 records `adapters/omp/source/` as parameterized appliable source: the portable base remains tracked, while operator-specific overlay values are local-only.
+Issue #52 recorded `adapters/omp/source/` as parameterized appliable source
+with a portable base plus local overlay. The ADR 0001 2026-07-02 addendum
+retires the overlay: the overlay never existed on disk, no merge step was ever
+implemented, and the live config is a symlink to the tracked base.
 
-- `adapters/omp/source/config.yml`: tracked portable base config.
-- `adapters/omp/source/config.example.yml`: tracked overlay shape with no personal values.
-- `adapters/omp/source/config.local.yml`: gitignored local-only overlay for `modelRoles`, `skills.ignoredSkills`, and `dev.autoqa.consent`.
+- `adapters/omp/source/config.yml`: the operator's full tracked declarative
+  config (no secrets, credentials, account IDs, or private environment values).
+- `*.local.yml`: gitignored and `local-only` as a defensive guard; not an
+  active overlay contract.
 
-The reference-only snapshot alternative is rejected in `docs/decisions/0001-omp-agent-parameterized-source.md` because future render/apply tooling needs an explicit source/overlay boundary.
+The reference-only snapshot alternative remains rejected in
+`docs/decisions/0001-omp-agent-parameterized-source.md`.
 
 ## Codex Adapter Plan
 

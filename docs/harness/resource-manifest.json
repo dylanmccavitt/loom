@@ -31,26 +31,25 @@
         "~/.omp/agent/workflow-kit/",
         "repo:adapters/omp/source/AGENTS.md",
         "repo:adapters/omp/source/RULES.md",
-        "repo:adapters/omp/source/config.yml",
-        "repo:adapters/omp/source/config.example.yml"
+        "repo:adapters/omp/source/config.yml"
       ],
       "discoverySource": "Repo-tracked OMP config under adapters/omp/source plus live OMP workflow-kit category under ~/.omp/agent/workflow-kit/.",
       "intendedRepoTarget": "adapters/omp/source/ and docs/harness/omp/",
       "disposition": "track",
-      "migrationNotes": "Track declarative config and workflow-kit guidance only. adapters/omp/source/config.yml is portable base source; config.example.yml documents the local overlay shape. Personal model role selections, ignored-skill preferences, and autoqa consent live only in gitignored config.local.yml. Do not read, copy, or normalize private runtime artifacts when comparing live and repo resources."
+      "migrationNotes": "Track declarative config and workflow-kit guidance only. adapters/omp/source/config.yml is the operator's full declarative config (ADR 0001 2026-07-02 addendum: the config.local.yml overlay is retired). Secrets, credentials, account IDs, and private environment values stay out of tracked files. Do not read, copy, or normalize private runtime artifacts when comparing live and repo resources."
     },
     {
       "id": "omp-personal-local-overrides",
       "sourceHarness": "omp",
-      "resourceCategory": "personal local config overlay",
+      "resourceCategory": "personal local config overlay (retired; defensive guard)",
       "currentLivePath": [
         "~/.omp/agent/config.local.yml",
         "~/.omp/agent/*.local.yml"
       ],
-      "discoverySource": "Gitignored local OMP config overlays matched by *.local.yml; presence may be reported by path pattern, but contents are personal and not tracked.",
+      "discoverySource": "Gitignored local OMP config overlays matched by *.local.yml; the overlay contract is retired (ADR 0001 2026-07-02 addendum) but the pattern stays local-only as a defensive guard.",
       "intendedRepoTarget": "none",
       "disposition": "local-only",
-      "migrationNotes": "Keep operator-specific modelRoles, skills.ignoredSkills, and dev.autoqa.consent out of tracked source. Future renderers may consume an operator-provided local overlay at apply time, but the overlay is local-only and never committed."
+      "migrationNotes": "Retired overlay lane kept as a guard: any *.local.yml is local-only, never tracked, never read or copied by renderers."
     },
     {
       "id": "omp-runtime-state",
