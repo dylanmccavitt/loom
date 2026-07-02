@@ -9,23 +9,14 @@
 // everything from FILENAMES + stat — it never reads session file contents (local-only boundary;
 // the file body is excludedRuntimeState).
 //
-// Layout (omp/16.0.5): ~/.omp/agent/sessions/<sanitized-cwd>/<ISO-timestamp>_<UUIDv7>.jsonl
+// The session-file layout literal and regex live in scripts/lib/omp-session-contract.mjs.
 
 import { lstatSync, readdirSync, realpathSync, statSync } from "node:fs";
-import { homedir } from "node:os";
 import path from "node:path";
 
-const SESSION_FILENAME = /^(.+)_([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\.jsonl$/u;
+import { defaultSessionsDir, parseSessionFilename, sessionContractStaleError } from "../lib/omp-session-contract.mjs";
 
-export function defaultSessionsDir() {
-  return path.join(process.env.HOME ?? homedir(), ".omp", "agent", "sessions");
-}
-
-export function parseSessionFilename(name) {
-  const match = SESSION_FILENAME.exec(name);
-  if (!match) return null;
-  return { timestamp: match[1], sessionId: match[2].toLowerCase() };
-}
+export { defaultSessionsDir, parseSessionFilename };
 
 // Resolve `target` to a real, contained, regular file under `root`. Rejects symlinks and any
 // path that escapes the sessions root lexically OR after realpath resolution (defends against a
@@ -105,7 +96,7 @@ export function resolveSelector(selector = {}, options = {}) {
     }
     const parsed = parseSessionFilename(path.basename(resolved));
     if (!parsed) {
-      return { ok: false, error: "selector_invalid", message: "session_file is not a recognized <timestamp>_<uuid>.jsonl name." };
+      return { ok: false, error: "selector_invalid", message: sessionContractStaleError(path.basename(resolved)).message };
     }
     return { ok: true, sessionId: parsed.sessionId, sessionFile: resolved };
   }
