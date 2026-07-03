@@ -7,13 +7,13 @@ description: Sets a repository up for the Factorio workflow kit or refreshes its
 
 The assembling machine that builds the machines: it lays out the per-repo factory the rest of the kit runs on. `assembler` reads a repo and stamps the repo-local **envelope**, wires the harness to it, and scaffolds the repo-specific tooling the kit needs there. It replaces the retired bootstrap trio — `repo-workflow-bootstrap`, `workflow-kit`, and `setup-matt-pocock-skills` — folding their machinery into one Factorio-framed, Linear-aware skill.
 
-This skill writes only envelope, wiring, and scaffold files. It never creates Linear objects, branches, or PRs (`prospect` and `ghosts` create planning objects; `roboports` writes code), and it asks the user only for facts no tool can supply.
+This skill writes only envelope, wiring, and scaffold files. It never creates Linear objects, branches, or PRs (`prospect` and `blueprint` (issue-decomposition lens) create planning objects; `roboports` writes code), and it asks the user only for facts no tool can supply.
 
 ## The envelope
 
 Canonical source: `.agents/envelope/` in the target repo. It contains four human-authored Markdown bindings:
 
-- `linear-map.md` — which Linear team, project(s), labels, and workflow states map to this repo (including the `inserter` triage roles → state/label map), plus the GitHub bridge convention: the branch carries the Linear issue id; the PR auto-links and auto-closes the issue on merge.
+- `linear-map.md` — which Linear team, project(s), labels, and workflow states map to this repo (including the triage roles → state/label map read by `blueprint`'s triage lens), plus the GitHub bridge convention: the branch carries the Linear issue id; the PR auto-links and auto-closes the issue on merge.
 - `domain.md` — the repo's domain glossary: nouns, bounded contexts, and the words specs and issues must use.
 - `commands.md` — the real build / test / lint / run commands and the default branch.
 - `templates/` — repo-local PR / issue / doc templates, stamped from `blueprint`'s canonical `templates/`.
@@ -26,7 +26,7 @@ Once the envelope exists, wire the harness to it: add or update an `## Agent ski
 
 ## Repo-specific skills and agents
 
-Synthesize the tooling the envelope implies but the generic kit cannot carry — a `<repo>-<capability>` skill for a recurring domain workflow, or a reviewer agent scoped to the repo's real risk areas. Generate them under the repo's own `.agents/skills/` and `.agents/agents/`, one level deep, each with a concrete `Use when` trigger and no harness prefix. See [SCAFFOLD.md](SCAFFOLD.md). Generate only what a real workflow needs (cite `bus-first`); never scaffold a speculative skill.
+Synthesize the tooling the envelope implies but the generic kit cannot carry — a `<repo>-<capability>` skill for a recurring domain workflow, or a reviewer agent scoped to the repo's real risk areas. Generate them under the repo's own `.agents/skills/` and `.agents/agents/`, one level deep, each with a concrete `Use when` trigger and no harness prefix. See [SCAFFOLD.md](SCAFFOLD.md). Generate only what a real workflow needs (cite `biters`' minimal-diff lens); never scaffold a speculative skill.
 
 ## Workflow
 
@@ -40,11 +40,11 @@ Synthesize the tooling the envelope implies but the generic kit cannot carry —
 - **Never writes secrets.** No tokens, keys, or credentialed URLs ever land in the envelope — record where a secret lives (the env var name), never its value.
 - **Create-missing-only.** Generation never overwrites an existing envelope file; a refresh is an explicit, confirmed diff.
 - **Single binding point.** `.agents/envelope/` is the author-owned source for repo facts; the YAML file under `~/.loom/factory-nucleus/<id>/envelope/` is only its generated/validated mirror.
-- **Minimal diff.** Stamp the least that makes the kit work and cite `bus-first` — never scaffold a file, skill, or agent no workflow reads.
+- **Minimal diff.** Stamp the least that makes the kit work and cite `biters`' minimal-diff lens — never scaffold a file, skill, or agent no workflow reads.
 
 ## Routing
 
 - Setting up / refreshing repo facts, harness wiring, or repo-specific tooling lands here.
-- "Create an issue" / "make tickets" → `ghosts`. Assembler maps the tracker; it never opens issues.
+- "Create an issue" / "make tickets" → `blueprint` (issue-decomposition lens). Assembler maps the tracker; it never opens issues.
 - Spec or template *content* → `blueprint` (it owns the canonical templates assembler stamps).
 - A brand-new idea → `prospect`.

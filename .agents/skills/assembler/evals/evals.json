@@ -22,7 +22,7 @@
     {
       "id": 4,
       "prompt": "Create an issue for the login bug.",
-      "expected_output": "Does NOT activate as setup; routes to ghosts, since assembler maps the tracker but never opens Linear issues.",
+      "expected_output": "Does NOT activate as setup; routes to blueprint's issue-decomposition lens, since assembler maps the tracker but never opens Linear issues.",
       "files": []
     },
     {
@@ -39,7 +39,7 @@
     {
       "id": 7,
       "prompt": "Is this repo kit-ready? Check the envelope.",
-      "expected_output": "Runs the verify checklist: confirms all four bindings exist and agree, every inserter role maps to a real state/label, commands are real, the AGENTS.md/CLAUDE.md agent-skills block points at .agents/envelope/, and reports kit-ready or the exact gaps. Does not overwrite anything."
+      "expected_output": "Runs the verify checklist: confirms all four bindings exist and agree, every triage role (blueprint triage lens) maps to a real state/label, commands are real, the AGENTS.md/CLAUDE.md agent-skills block points at .agents/envelope/, and reports kit-ready or the exact gaps. Does not overwrite anything."
     }
   ]
 }

@@ -8,7 +8,7 @@ and skills per your repo" capability.
 ## When to scaffold (not before)
 
 Create a repo-specific skill or agent only when a workflow recurs and the envelope
-already names the domain it serves. Cite `bus-first`: if the generic kit skills
+already names the domain it serves. Cite `biters`' minimal-diff lens: if the generic kit skills
 plus the envelope already cover it, build nothing. A repo with no recurring
 special workflow gets zero repo-specific skills — that is the correct outcome.
 

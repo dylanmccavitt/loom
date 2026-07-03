@@ -35,10 +35,11 @@ test("assembler is the single binding point other skills read", () => {
 });
 
 test("assembler routes issue creation and spec content elsewhere", () => {
-  assert.match(skill, /→ `ghosts`/u);
-  for (const route of ["ghosts", "blueprint", "prospect", "bus-first"]) {
+  assert.match(skill, /→ `blueprint` \(issue-decomposition lens\)/u);
+  for (const route of ["blueprint", "prospect", "biters"]) {
     assert.ok(skill.includes(`\`${route}\``), `${route} route missing`);
   }
+  assert.match(skill, /minimal-diff lens/u);
 });
 
 test("assembler replaces the bootstrap trio", () => {

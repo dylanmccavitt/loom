@@ -10,7 +10,7 @@ consistent. Run this after generating, and any time you refresh.
 - **Bindings agree.** The project in `linear-map.md` is the one the templates and
   the `## Agent skills` block reference; the default branch in `commands.md`
   matches the bridge branch shape in `linear-map.md`.
-- **States cover the roles.** Every `inserter` triage role maps to a real state or
+- **States cover the roles.** Every triage role (`blueprint` triage lens) maps to a real state or
   label string that exists in the Linear team (cross-check `list_issue_statuses`
   / `list_issue_labels`).
 - **Commands are real.** Each command in `commands.md` exists in the repo (a

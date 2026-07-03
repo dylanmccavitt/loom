@@ -45,19 +45,20 @@ landing the idea.
 
 ## Hand off
 
-- **Unknowns remain** (feasibility, scope, or prior art unclear) -> `research` to
-  survey before speccing.
+- **Unknowns remain** (feasibility, scope, or prior art unclear) -> `blueprint`
+  (research-spike lens) to survey before speccing.
 - **Ready to spec** (intent and shape are clear) -> `blueprint` to draft the
   PRD/spec on this project.
-- **Asked to split into issues / make tickets** -> that is `ghosts`, not
-  `prospect`; land or locate the home first, then route to `ghosts`.
+- **Asked to split into issues / make tickets** -> that is `blueprint`
+  (issue-decomposition lens), not `prospect`; land or locate the home first,
+  then route to `blueprint` with that lens.
 
 ## Invariants
 
 - **Never starts implementation.** No branches, worktrees, code, or PRs — this is
   pure planning intake.
-- **Never creates issues or sub-issues.** Stamping planned work is `ghosts`' job;
-  `prospect` only opens the home.
+- **Never creates issues or sub-issues.** Stamping planned work is `blueprint`'s
+  job (issue-decomposition lens); `prospect` only opens the home.
 - **Reads the `assembler` envelope** for the target team and the
   initiative-vs-project choice; never hardcodes a team, project, or label.
 - **One home per idea.** Reuse before create; do not duplicate an existing

@@ -32,10 +32,10 @@ Use this page when you are operating the workflow, not changing its internals.
 
 ## Run the work lane
 
-- New idea: `prospect` -> `blueprint` -> `ghosts`.
+- New idea: `prospect` -> `blueprint` (spec, then issue-decomposition lens).
 - Existing issue/ghost: `roboports` implements one tracked issue on one branch/PR.
-- Drift or uncertainty: `radar` reports the next route without writing.
-- Proof only: `proof-pass` collects evidence without expanding scope.
+- Drift or uncertainty: `biters` (drift lens) reports the next route without writing.
+- Proof only: `lab` (smoke-proof lens) collects evidence without expanding scope.
 - Ready to merge: `rocket-launch` enforces launch gates.
 
 ## Tracker picker rule
