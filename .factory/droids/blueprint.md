@@ -1,8 +1,7 @@
 ---
 name: blueprint
 description: Spec synthesizer. Turns current context into a PRD/spec with acceptance criteria, non-goals, proof plan, and open decisions. Modes: shape.
-model: gpt-5.5
-reasoningEffort: high
+model: inherit
 tools: ["Read", "LS", "Grep", "Glob", "WebSearch", "FetchUrl"]
 ---
 

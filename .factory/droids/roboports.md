@@ -1,8 +1,7 @@
 ---
 name: roboports
 description: Issue delivery coordinator. Runs one tracked issue through branch/worktree, implementation, proof, review, and PR readiness. Modes: implement.
-model: gpt-5.5
-reasoningEffort: high
+model: inherit
 mcpServers: ["linear"]
 ---
 

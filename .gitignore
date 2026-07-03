@@ -23,6 +23,7 @@ blobs/
 # Secret/local overrides
 *.local.yml
 *.local.yaml
+.factory/settings.local.json
 *.secret.yml
 *.secret.yaml
 
