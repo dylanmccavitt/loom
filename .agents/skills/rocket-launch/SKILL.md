@@ -24,11 +24,11 @@ Before shipping, read:
 
 ALL gates must be green before merge. A single red gate blocks the launch.
 
-1. **Tests** — targeted tests for the changed behavior pass. Use `proof-pass` to gather the proof (tests, local smoke, browser, artifacts) for the claim being shipped.
-2. **Review** — at least one review-subagent lens is clean, or its findings are fixed. Run `pr-review` for the lens and re-run it after fixes land.
+1. **Tests** — targeted tests for the changed behavior pass. Use `lab` with the `command-proof`, `smoke-proof`, or `ui-proof` lens as appropriate to gather proof (tests, local smoke, browser/desktop UI evidence, artifacts) for the claim being shipped.
+2. **Review** — at least one `biters` `correctness` lens review is clean, or its findings are fixed. Run `biters` with the `correctness` lens and re-run it after fixes land.
 3. **Acceptance** — every Linear acceptance criterion is checked against observed behavior, not assumed.
 4. **CI** — GitHub CI is green on the PR head.
-5. **Minimal diff** — a `bus-first` pass over the diff: minimal, no stray abstraction, nothing the issue did not ask for.
+5. **Minimal diff** — a `biters` `minimal-diff` lens pass over the diff: minimal, no stray abstraction, nothing the issue did not ask for.
 
 If any gate is red: stop, report which gate failed and why, and route the fix back to `roboports`. Do not merge.
 

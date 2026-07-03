@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Ship the offline-mode PR.",
-      "expected_output": "Activates rocket-launch: runs every launch gate (targeted tests pass via proof-pass, a pr-review lens clean or findings fixed, all Linear acceptance criteria checked, GitHub CI green, a bus-first minimal-diff pass) and only then merges the PR, lets the branch/PR bridge auto-close the Linear issue, and posts a Linear status update with a human-reviewable record.",
+      "expected_output": "Activates rocket-launch: runs every launch gate (targeted tests pass via lab lens command-proof/smoke-proof/ui-proof as appropriate, a biters correctness lens is clean or findings are fixed, all Linear acceptance criteria checked, GitHub CI green, a biters minimal-diff lens pass) and only then merges the PR, lets the branch/PR bridge auto-close the Linear issue, and posts a Linear status update with a human-reviewable record.",
       "files": []
     },
     {

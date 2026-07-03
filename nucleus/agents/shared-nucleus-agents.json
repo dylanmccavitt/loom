@@ -902,13 +902,20 @@
     "ghosts": "blueprint lens issue-decomposition",
     "main-bus": "blueprint lens architecture",
     "science-pack": "blueprint lens research-spike",
+    "research": "blueprint lens research-spike",
     "inserter": "blueprint lens triage",
     "recycler": "roboports lens refactor",
+    "quality": "roboports lens refactor",
     "modules": "roboports lens performance",
+    "pr-review": "biters lens correctness",
     "spitters": "biters lens security",
     "bus-first": "biters lens minimal-diff",
     "radar": "biters lens drift",
-    "spidertron": "lab lens ui-proof"
+    "spidertron": "lab lens ui-proof",
+    "proof-pass": "lab lens smoke-proof",
+    "handoff": "belt lens handoff",
+    "thread-control": "belt lens thread-control",
+    "resume-thread": "belt lens resume"
   },
   "supersededCandidates": [
     {

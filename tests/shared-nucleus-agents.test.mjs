@@ -17,6 +17,25 @@ const EXPECTED_ROSTER = [
 
 const REQUEST_MODES = ["shape", "implement", "review", "prove", "repair", "launch"];
 const AGENT_NAMES = new Set(EXPECTED_ROSTER);
+const EXPECTED_ABSORBED_AGENTS = {
+  ghosts: "blueprint lens issue-decomposition",
+  "main-bus": "blueprint lens architecture",
+  "science-pack": "blueprint lens research-spike",
+  research: "blueprint lens research-spike",
+  inserter: "blueprint lens triage",
+  recycler: "roboports lens refactor",
+  quality: "roboports lens refactor",
+  modules: "roboports lens performance",
+  "pr-review": "biters lens correctness",
+  spitters: "biters lens security",
+  "bus-first": "biters lens minimal-diff",
+  radar: "biters lens drift",
+  spidertron: "lab lens ui-proof",
+  "proof-pass": "lab lens smoke-proof",
+  handoff: "belt lens handoff",
+  "thread-control": "belt lens thread-control",
+  "resume-thread": "belt lens resume",
+};
 const REQUIRED_RULE_FIELDS = [
   "status",
   "scope",
@@ -325,6 +344,7 @@ test("lens policy selects packet-named lens references without widening scope", 
 });
 
 test("absorbed agents map to consolidated roster lenses", () => {
+  assert.deepEqual(contract.absorbedAgents, EXPECTED_ABSORBED_AGENTS);
   for (const [retired, destination] of Object.entries(contract.absorbedAgents)) {
     assert.ok(!AGENT_NAMES.has(retired), `${retired} must not remain on the roster`);
     const [agent, keyword, lens] = destination.split(" ");
