@@ -16,15 +16,19 @@ test("rocket-launch has the required trigger", () => {
 test("rocket-launch enforces the full launch gate list", () => {
   assert.match(skill, /ALL gates must be green before merge/u);
   assert.match(skill, /\*\*Tests\*\* — targeted tests for the changed behavior pass/u);
-  assert.match(skill, /\*\*Review\*\* — at least one review-subagent lens is clean, or its findings are fixed/u);
+  assert.match(skill, /Use `lab` with the `command-proof`, `smoke-proof`, or `ui-proof` lens as appropriate/u);
+  assert.match(skill, /\*\*Review\*\* — at least one `biters` `correctness` lens review is clean, or its findings are fixed/u);
   assert.match(skill, /\*\*Acceptance\*\* — every Linear acceptance criterion is checked/u);
   assert.match(skill, /\*\*CI\*\* — GitHub CI is green/u);
-  assert.match(skill, /\*\*Minimal diff\*\* — a `bus-first` pass over the diff/u);
+  assert.match(skill, /\*\*Minimal diff\*\* — a `biters` `minimal-diff` lens pass over the diff/u);
 });
 
-test("rocket-launch reuses the proof and review engines", () => {
-  for (const route of ["proof-pass", "pr-review", "bus-first"]) {
+test("rocket-launch routes proof and review gates through consolidated lenses", () => {
+  for (const route of ["lab", "command-proof", "smoke-proof", "ui-proof", "biters", "correctness", "minimal-diff"]) {
     assert.ok(skill.includes(`\`${route}\``), `${route} citation missing`);
+  }
+  for (const retired of ["proof-pass", "pr-review", "bus-first"]) {
+    assert.equal(skill.includes(`\`${retired}\``), false, `${retired} must not be cited as active rocket-launch routing`);
   }
 });
 

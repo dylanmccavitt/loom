@@ -1,8 +1,7 @@
 ---
 name: biters
 description: General adversarial reviewer. Attacks correctness, regression, maintainability, scope, and missing-test risks before merge. Modes: review.
-model: gpt-5.5
-reasoningEffort: high
+model: inherit
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---
 

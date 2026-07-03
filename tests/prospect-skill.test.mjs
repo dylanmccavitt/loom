@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-const skill = readFileSync(new URL("../nucleus/skills/prospect/SKILL.md", import.meta.url), "utf8");
+const skill = readFileSync(new URL("../nucleus/utilities/prospect/SKILL.md", import.meta.url), "utf8");
 
 test("prospect has the required trigger", () => {
   assert.match(
@@ -27,12 +27,12 @@ test("prospect reads the assembler envelope and never hardcodes the team", () =>
   assert.match(skill, /never hardcodes a team/u);
 });
 
-test("prospect cites the downstream kit skills", () => {
-  for (const route of ["research", "blueprint", "ghosts"]) {
-    assert.ok(skill.includes(`\`${route}\``), `${route} route missing`);
-  }
+test("prospect cites the downstream kit routes", () => {
+  assert.ok(skill.includes("`blueprint`"), "blueprint route missing");
+  assert.match(skill, /research-spike lens/u);
+  assert.match(skill, /issue-decomposition lens/u);
 });
 
-test("prospect routes split-into-issues to ghosts", () => {
-  assert.match(skill, /split into issues \/ make tickets\*\* -> that is `ghosts`/u);
+test("prospect routes split-into-issues to blueprint's issue-decomposition lens", () => {
+  assert.match(skill, /split into issues \/ make tickets\*\* -> that is `blueprint`\n\s+\(issue-decomposition lens\)/u);
 });

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-const skill = readFileSync(new URL("../nucleus/skills/assembler/SKILL.md", import.meta.url), "utf8");
+const skill = readFileSync(new URL("../nucleus/utilities/assembler/SKILL.md", import.meta.url), "utf8");
 
 test("assembler has the required trigger", () => {
   assert.match(skill, /description: Sets a repository up for the Factorio workflow kit or refreshes its envelope/u);
@@ -35,10 +35,11 @@ test("assembler is the single binding point other skills read", () => {
 });
 
 test("assembler routes issue creation and spec content elsewhere", () => {
-  assert.match(skill, /→ `ghosts`/u);
-  for (const route of ["ghosts", "blueprint", "prospect", "bus-first"]) {
+  assert.match(skill, /→ `blueprint` \(issue-decomposition lens\)/u);
+  for (const route of ["blueprint", "prospect", "biters"]) {
     assert.ok(skill.includes(`\`${route}\``), `${route} route missing`);
   }
+  assert.match(skill, /minimal-diff lens/u);
 });
 
 test("assembler replaces the bootstrap trio", () => {

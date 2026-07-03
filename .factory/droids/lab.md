@@ -1,8 +1,8 @@
 ---
 name: lab
 description: Proof specialist. Runs proof-only validation and records behavior evidence without expanding scope. Modes: prove.
-model: gpt-5.5
-reasoningEffort: medium
+model: claude-sonnet-4-6
+reasoningEffort: low
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---
 

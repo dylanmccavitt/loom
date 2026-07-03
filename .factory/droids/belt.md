@@ -2,7 +2,7 @@
 name: belt
 description: Handoff carrier. Moves durable context between agents/threads with concise state, proof, risks, and next actions. Modes: shape, review.
 model: claude-sonnet-4-6
-reasoningEffort: medium
+reasoningEffort: low
 tools: ["Read", "LS", "Grep", "Glob"]
 ---
 
