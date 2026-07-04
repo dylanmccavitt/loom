@@ -62,6 +62,18 @@ export function resolveLivePath(displayDestination, homeRoot) {
 
 // --- live inspection (read-only) -------------------------------------------------------------
 
+function resolvedSymlinkTargets(livePath, linkTarget) {
+  const rawTarget = path.resolve(path.dirname(livePath), linkTarget);
+  const canonicalTarget = path.resolve(realpathSync(path.dirname(livePath)), linkTarget);
+  return [...new Set([rawTarget, canonicalTarget])];
+}
+
+function resolvesToRepoSource(resolvedTarget, source) {
+  if (resolvedTarget === repoPath(source)) return true;
+  const siblingRepoRelative = path.relative(path.dirname(REPO_ROOT), resolvedTarget).split(path.sep).slice(1).join("/");
+  return siblingRepoRelative === source;
+}
+
 export function repoMirrorSymlink(candidate, livePath) {
   if (candidate.harness !== "omp" || !candidate.source) return false;
   let stat;
@@ -72,10 +84,7 @@ export function repoMirrorSymlink(candidate, livePath) {
   }
   if (!stat.isSymbolicLink()) return false;
   const linkTarget = readlinkSync(livePath);
-  const resolvedTarget = path.resolve(path.dirname(livePath), linkTarget);
-  if (resolvedTarget === repoPath(candidate.source)) return true;
-  const siblingRepoRelative = path.relative(path.dirname(REPO_ROOT), resolvedTarget).split(path.sep).slice(1).join("/");
-  return siblingRepoRelative === candidate.source;
+  return resolvedSymlinkTargets(livePath, linkTarget).some((target) => resolvesToRepoSource(target, candidate.source));
 }
 
 // A symlink stranded by a repo layout move: it dangles (target missing) and its resolved
@@ -93,10 +102,9 @@ export function staleRepoMirrorSymlink(candidate, livePath) {
   }
   if (!stat.isSymbolicLink()) return false;
   const linkTarget = readlinkSync(livePath);
-  const resolvedTarget = path.resolve(path.dirname(livePath), linkTarget);
-  if (resolvedTarget === repoPath(candidate.source)) return false;
-  if (pathExists(resolvedTarget)) return false;
-  return resolvedTarget.startsWith(REPO_ROOT + path.sep);
+  const targets = resolvedSymlinkTargets(livePath, linkTarget);
+  if (targets.some((target) => resolvesToRepoSource(target, candidate.source) || pathExists(target))) return false;
+  return targets.some((target) => target.startsWith(REPO_ROOT + path.sep));
 }
 
 export function liveInspect(candidate, homeRoot, marker) {
