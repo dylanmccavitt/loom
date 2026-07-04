@@ -1,7 +1,7 @@
 ---
 name: biters
 description: General adversarial reviewer. Attacks correctness, regression, maintainability, scope, and missing-test risks before merge. Modes: review.
-model: inherit
+model: claude-sonnet-5
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---
 

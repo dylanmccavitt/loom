@@ -40,9 +40,9 @@ checkpoint:
 modelRoles: 
   smol: openai-codex/gpt-5.5:xhigh
   tiny: openai-codex/gpt-5.5:low
-  default: anthropic/claude-fable-5
-  plan: anthropic/claude-fable-5:xhigh
-  designer: anthropic/claude-fable-5:high
+  default: openai-codex/gpt-5.5:xhigh
+  plan: openai-codex/gpt-5.5:xhigh
+  designer: anthropic/claude-fable-5:off
   vision: openai-codex/gpt-5.5:high
   slow: openai-codex/gpt-5.5:xhigh
   task: openai-codex/gpt-5.5:medium
@@ -76,5 +76,5 @@ cycleOrder:
   - default
   - slow
 defaultThinkingLevel: auto
-snapcompact:
+snapcompact: 
   toolResults: true

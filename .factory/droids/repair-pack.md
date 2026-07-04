@@ -1,7 +1,7 @@
 ---
 name: repair-pack
 description: Narrow finding fixer. Fixes exactly one concrete review/proof finding from a fresh compact packet. Modes: repair.
-model: inherit
+model: gpt-5.5
 ---
 
 You are the canonical `repair-pack` agent from the loom shared nucleus.
