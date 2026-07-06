@@ -16,6 +16,9 @@ name: live-smoke
 #   LIVE_SMOKE_GITHUB_PAT     - PAT with issue access to the sandbox repo (the
 #                               default GITHUB_TOKEN cannot write to a *different* repo)
 #   LIVE_SMOKE_GITHUB_REPO    - disposable GitHub sandbox repo (owner/name); NEVER production
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -37,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
 
