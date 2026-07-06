@@ -52,7 +52,6 @@ const FORBIDDEN_PREFIXES = ["omp-", "codex-", "claude-"];
 
 test("shared nucleus agent contract records the canonical Factorio roster", () => {
   assert.equal(contract.schemaVersion, 7);
-  assert.equal(contract.generatedForIssue, "LOO-154");
   assert.equal(contract.status, "canonical-repo-source-ready");
   assert.deepEqual(contract.agents.map((agent) => agent.name), EXPECTED_ROSTER);
   assert.equal(new Set(contract.agents.map((agent) => agent.name)).size, EXPECTED_ROSTER.length);
@@ -362,6 +361,15 @@ test("direct OMP-prefixed Codex role candidates are marked superseded", () => {
   }
 });
 
+
+test("packet contract records execution context in markdown and JSON", () => {
+  assert.match(markdown, /^## Execution context$/m);
+  assert.equal(contract.packetContract.context.default, "live");
+  assert.deepEqual(contract.packetContract.context.enum, ["validation", "live"]);
+  assert.match(contract.packetContract.context.validation, /fixtures or dry-run surfaces/u);
+  assert.match(contract.packetContract.context.absentBehavior, /Assume live/u);
+});
+
 test("contract slice records scratch activation gates without authorizing live HOME apply", () => {
   assert.match(contract.activation.scratchHomeApply, /scripts\/render-plugin-bridge\.mjs --write --home <scratch>/u);
   assert.match(contract.activation.markerManifest, /~\/\.loom-harness\/applied-manifest\.json/u);
@@ -369,14 +377,11 @@ test("contract slice records scratch activation gates without authorizing live H
   assert.match(contract.activation.verifier, /verify-loom-install\.mjs/u);
   assert.deepEqual(Object.keys(contract.activation.proofSurfaces), ["omp", "codex", "claude"]);
   assert.match(contract.activation.liveHomePromotionGate, /dry-run -> review -> explicit apply/u);
-  assert.match(contract.activation.evidenceDecisionOwner, /LOO-103/u);
+  assert.match(contract.activation.evidenceDecisionOwner, /collector -> judge -> human review/u);
   assert.ok(contract.activation.deterministicChecksBeforeApply.includes("scripts/validate-shared-agent-packages.mjs"));
   assert.ok(contract.activation.deterministicChecksBeforeApply.includes("scripts/validate-shared-agent-evals.mjs"));
   assert.match(contract.activation.evalHarness, /scripts\/validate-shared-agent-evals\.mjs/u);
   assert.match(contract.activation.lintRules, /scripts\/validate-shared-agent-packages\.mjs/u);
   assert.match(contract.activation.liveHomeApply, /explicit HITL approval/u);
   assert.match(markdown, /dry-run -> review -> explicit apply/u);
-  for (const issue of ["LOO-97", "LOO-98", "LOO-99", "LOO-100", "LOO-101", "LOO-102", "LOO-103", "LOO-104"]) {
-    assert.match(markdown, new RegExp(issue, "u"));
-  }
 });
