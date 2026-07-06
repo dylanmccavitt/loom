@@ -1,6 +1,6 @@
 # Shared nucleus agent contract
 
-Issues: LOO-96 base contract; LOO-97 delegation DAG; LOO-98 repair-pack loop; LOO-99 offline evals; LOO-100 OMP-prefix retirement; LOO-101 package rendering; LOO-102 scratch-HOME activation; LOO-103 evidence intake; LOO-104 deterministic checks; LOO-105 repo-local canonical source; LOO-154 roster consolidation (17 -> 7) with lens references. This document defines the canonical shared agent model and does not authorize native OMP/Codex/Claude role-agent files or real-HOME apply without HITL review.
+This document defines the canonical shared agent model and does not authorize native OMP/Codex/Claude role-agent files or real-HOME apply without HITL review.
 
 Source pattern: [Teaching agents product design at Vercel](https://vercel.com/blog/teaching-agents-product-design-at-vercel). Loom adapts that shape as one Vercel-shaped skill package per canonical nucleus agent under `nucleus/skills/{agent-name}/` (AGENTS.md, SKILL.md, references/, exemplars/). Four kit utilities remain repo-owned under `nucleus/utilities/`; cited engines live operator-local under `~/.agents/skills/` per `docs/skills/operator-local-manifest.md`.
 
@@ -54,8 +54,11 @@ One agent per mode; behavioral variants are lens references inside the agent pac
 The delegation matrix is replaced by one pipeline; per-agent child lists live in `agentDelegation` in `nucleus/agents/shared-nucleus-agents.json`.
 
 ```text
-blueprint -> roboports -> { biters (lens fanout), lab (lens fanout) }
-biters -> repair-pack -> biters (re-review) -> lab -> rocket-launch
+blueprint -> belt
+roboports -> { biters (lens fanout), lab (lens fanout), repair-pack, belt }
+biters -> { repair-pack, belt }
+repair-pack -> lab
+rocket-launch -> { lab, belt }
 belt may carry a handoff at any transition
 ```
 
@@ -96,6 +99,15 @@ Resolve conflicts in this order:
 7. General heuristics.
 
 Coverage gaps stop or route work. Missing standards go to `references/coverage-gaps.md`; shape questions route to `blueprint`; deterministic checks are proposed only when code can identify the failure, false positives are unlikely, and the violation has a concrete fix.
+
+## Execution context
+
+Every packet carries `context: validation | live`.
+
+- `validation` — exercised against fixtures, dry-run surfaces, or other non-live paths; report intended tracker, PR, and live-HOME side effects instead of performing them.
+- `live` — normal operation within the mode boundary.
+
+When `context` is absent, assume `live` and state the assumption in the output packet.
 
 ## Packet contract
 
