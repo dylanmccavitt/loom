@@ -152,6 +152,7 @@ npm run check
 | Rocket launch skill | `node --test tests/rocket-launch-skill.test.mjs` |
 | Runtime adapter | `node --test tests/runtime-adapter.test.mjs` |
 | Runtime adapter extension | `node --test tests/runtime-adapter-extension.test.mjs` |
+| Shared-agent contract validator | `node --test tests/shared-agent-contract-validator.test.mjs` |
 | Shared-agent evals | `node --test tests/shared-agent-evals.test.mjs` |
 | Shared-agent package validation | `node --test tests/shared-agent-package-validation.test.mjs` |
 | Shared nucleus agents | `node --test tests/shared-nucleus-agents.test.mjs` |
