@@ -2,8 +2,9 @@
 // Drift guard for LOO-112 docs/manifests cleanup.
 //
 // Keeps operator-facing command docs tied to package.json, rejects active-doc
-// claims for pre-ADR-0004 source/output paths, and verifies the Factorio kit
-// manifest roster names shipped nucleus skills.
+// claims for pre-ADR-0004 source/output paths, verifies the Factorio kit
+// manifest roster names shipped nucleus skills, and keeps OMP ownership docs
+// aligned to the harness resource manifest.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -25,6 +26,8 @@ const COMMAND_DOC_PATHS = Object.freeze([
   "docs/operator/daily-workflow.md",
   "docs/operator/install-update.md",
 ]);
+
+const OMP_OWNERSHIP_DOC_PATH = "docs/harness/omp-ownership.md";
 
 const STALE_ACTIVE_PATHS = Object.freeze([
   {
@@ -162,13 +165,62 @@ export function validateFactorioKitRoster({ root = repoRoot, manifestPath = "doc
   return failures;
 }
 
+function parseOwnershipRows(docText) {
+  const rows = new Map();
+  for (const line of docText.split("\n")) {
+    const match = line.match(/^\| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \|$/u);
+    if (!match) continue;
+    rows.set(match[1], {
+      state: match[2],
+      target: match[3],
+      localOnly: match[4],
+    });
+  }
+  return rows;
+}
+
+export function validateOmpOwnershipMatrix({
+  root = repoRoot,
+  resourceManifestPath = "docs/harness/resource-manifest.json",
+  ownershipPath = OMP_OWNERSHIP_DOC_PATH,
+} = {}) {
+  const failures = [];
+  const manifest = JSON.parse(readText(resourceManifestPath, root));
+  const rows = parseOwnershipRows(readText(ownershipPath, root));
+  const ompResources = (manifest.resources ?? []).filter((resource) => resource.sourceHarness === "omp");
+
+  for (const resource of ompResources) {
+    const row = rows.get(resource.id);
+    if (!row) {
+      failures.push(`${ownershipPath}: missing ownership state matrix row for OMP manifest resource ${resource.id}`);
+      continue;
+    }
+    if (row.state !== resource.disposition) {
+      failures.push(`${ownershipPath}: ${resource.id} ownership state matrix row uses ${row.state}, but manifest disposition is ${resource.disposition}`);
+    }
+    if (row.target !== resource.intendedRepoTarget) {
+      failures.push(`${ownershipPath}: ${resource.id} ownership state matrix row targets ${row.target}, but manifest target is ${resource.intendedRepoTarget}`);
+    }
+    const expectedLocalOnly = resource.disposition === "local-only" ? "yes" : "no";
+    if (row.localOnly !== expectedLocalOnly) {
+      failures.push(`${ownershipPath}: ${resource.id} ownership state matrix row local-only marker is ${row.localOnly}, but manifest disposition requires ${expectedLocalOnly}`);
+    }
+    if (resource.disposition === "local-only" && (row.state !== "local-only" || row.target !== "none" || row.localOnly !== "yes")) {
+      failures.push(`${ownershipPath}: ${resource.id} is local-only in the manifest and must not be documented as repo-owned or trackable`);
+    }
+  }
+
+  return failures;
+}
+
 export function evaluateNucleusDocsDrift(options = {}) {
   const failures = [
     ...validateNoActiveStalePaths(options),
     ...validateDocumentedCommands(options),
     ...validateFactorioKitRoster(options),
+    ...validateOmpOwnershipMatrix(options),
   ];
-  return { checks: 3, failures };
+  return { checks: 4, failures };
 }
 
 const invokedDirectly = process.argv[1]

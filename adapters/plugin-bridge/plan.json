@@ -524,13 +524,13 @@
     }
   ],
   "expectedBundledAgents": [
+    "Tester",
     "designer",
     "explore",
     "librarian",
-    "oracle",
     "plan",
-    "quick_task",
     "reviewer",
+    "sonic",
     "task"
   ],
   "supersededOmpAgentPorts": [
