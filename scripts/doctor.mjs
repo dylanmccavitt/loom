@@ -4,6 +4,8 @@ import { existsSync, lstatSync, readlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import { formatTrackerBinding, resolveLocalTracker } from "./factory-nucleus/scan.mjs";
+
 const CHECKS = [
   ["skills", ["node", "scripts/validate-skills.mjs"]],
   ["manifest", ["node", "scripts/validate-harness-manifest.mjs"]],
@@ -34,6 +36,8 @@ function statusSummary() {
 }
 
 function trackerHint() {
+  const binding = formatTrackerBinding(resolveLocalTracker());
+  if (binding) return binding;
   const result = run("node", ["scripts/factory-nucleus/factory.mjs", "choose-tracker", "--json"]);
   if (result.status !== 0) return "picker unavailable";
   const picker = JSON.parse(result.stdout);

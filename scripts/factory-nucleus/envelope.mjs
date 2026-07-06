@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { scanFactory, redactSecrets } from "./scan.mjs";
+import { factoryIdFromName, scanFactory, redactSecrets } from "./scan.mjs";
 import { parseYaml, resolveFactoryStatePaths, validateEnvelopeYaml, withArtifactMetadata } from "./schema.mjs";
 
 const USAGE = "Usage: node scripts/factory-nucleus/envelope.mjs [--root <path>] [--json]";
@@ -46,12 +46,6 @@ function readArgs(argv) {
     index += 1;
   }
   return options;
-}
-
-function factoryIdFromName(name) {
-  const redacted = redactSecrets(name).replace(/\[REDACTED\]/gu, "redacted");
-  const id = redacted.toLowerCase().replace(/[^a-z0-9-]+/gu, "-").replace(/^-+|-+$/gu, "");
-  return id || "factory";
 }
 
 function explicitDefaultBranch(root) {
