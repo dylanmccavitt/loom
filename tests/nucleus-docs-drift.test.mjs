@@ -72,8 +72,10 @@ function makeFixture() {
   mkdirSync(path.join(root, "docs/harness"), { recursive: true });
   mkdirSync(path.join(root, "docs/skills"), { recursive: true });
   mkdirSync(path.join(root, "nucleus/skills/bus-first"), { recursive: true });
-  writeFileSync(path.join(root, "package.json"), JSON.stringify({ scripts: { "render-nucleus": "node scripts/render-nucleus.mjs", "install-nucleus": "node scripts/render-nucleus.mjs --write", check: "npm run validate", doctor: "node scripts/doctor.mjs" } }, null, 2));
-  writeFileSync(path.join(root, "README.md"), "```sh\nnpm run render-nucleus\nnpm run check\n```\n");
+  mkdirSync(path.join(root, "scripts"), { recursive: true });
+  writeFileSync(path.join(root, "scripts/render-nucleus.mjs"), "// fixture\n");
+  writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "oh-my-pi-config", scripts: { "render-nucleus": "node scripts/render-nucleus.mjs", "install-nucleus": "node scripts/render-nucleus.mjs --write", check: "npm run validate", doctor: "node scripts/doctor.mjs" } }, null, 2));
+  writeFileSync(path.join(root, "README.md"), "# oh-my-pi-config\n\n```sh\nnpm run render-nucleus\nnpm run check\n```\n");
   writeFileSync(path.join(root, "docs/operator/daily-workflow.md"), "```sh\nnpm run doctor\n```\n");
   writeFileSync(path.join(root, "docs/operator/install-update.md"), "`install-nucleus` is `node scripts/render-nucleus.mjs --write`.\n");
   writeFileSync(path.join(root, "docs/harness/live-nucleus-inventory-2026-06-25.md"), "> Superseded historical snapshot: ADR 0004.\n> Old paths below are preserved only as 2026-06-25 evidence.\n`omp/.omp/agent/AGENTS.md`\n");
