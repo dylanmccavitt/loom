@@ -1,114 +1,92 @@
-# oh-my-pi-config
+# Loom
 
-This repo is a single declarative, dry-run-safe nucleus harness for unifying OMP, Codex, and Claude agent configuration. Runtime state stays in `~/.omp`, `~/.codex`, and `~/.claude`; the repo tracks only portable declarative surfaces, plans, validators, fixtures, and documentation.
+Loom is a cross-harness agent pack: seven roster agents plus kit utilities shipped as portable Agent-Skills-shaped packages, with validators, a dry-run-gated installer, and drift radar. It is for operators running OMP, Codex, or Claude Code-class coding agents who want one repo-owned workflow nucleus without copying private runtime state.
 
-## Operator quick start
+## Install per harness
 
-- Daily project workflow: [`docs/operator/daily-workflow.md`](docs/operator/daily-workflow.md)
-- Harness install/update: [`docs/operator/install-update.md`](docs/operator/install-update.md)
-- Factory Nucleus architecture: [`docs/architecture/factory-nucleus.md`](docs/architecture/factory-nucleus.md)
-- Harness bridge architecture: [`docs/architecture/harness-bridge.md`](docs/architecture/harness-bridge.md)
-
-Useful commands:
+**Universal skill path (all harnesses).** Repo skills live under [`.agents/skills/`](.agents/skills/), rendered from [`nucleus/skills/`](nucleus/skills/) and [`nucleus/utilities/`](nucleus/utilities/) via `npm run render`. Symlink or copy one directory per skill into your harness skill root:
 
 ```sh
-npm run doctor
-npm run factory -- scan --root <repo>
-npm run factory -- init-envelope --root <repo>
-npm run choose-tracker -- --root <repo>
+ln -s "$(pwd)/.agents/skills/blueprint" ~/.agents/skills/blueprint
+```
+
+Harness-specific roots also work: `~/.codex/skills/<name>/`, `~/.claude/skills/<name>/`, or project-local `.agents/skills/<name>/`.
+
+**OMP surfaces (gated).** Dry-run render and safety gate first; apply only after review:
+
+```sh
 npm run render-nucleus
-npm run check
+npm run install-nucleus
 ```
 
-## Tri-Harness Layers
+`install-nucleus` is `node scripts/render-nucleus.mjs --write`: create-missing-only, marker-tracked, backed up. See [`docs/operator/install-update.md`](docs/operator/install-update.md).
 
-The intended shape is symmetric: OMP, Codex, and Claude are three layers of the same nucleus, each separated into canonical source, harness adapters, generated/checkable distributions, reference material, and local-only runtime state.
+**Codex / Claude plugin route (gated).** The `loom-nucleus` bridge renders dual Codex/Claude plugin manifests plus OMP skill candidates and shared-agent packages. Dry-run, then apply:
 
-- OMP tracked source lives under [`adapters/omp/source/`](adapters/omp/source/). It carries repo-facing OMP agent instructions, rules, config, and extensions while runtime state remains outside the repo.
-- Codex has live plugin surfaces through the `loom-nucleus` bridge and dry-run config/profile adapter candidates. [`docs/harness/codex-adapter-plan.md`](docs/harness/codex-adapter-plan.md) defines how the shared nucleus maps into Codex config templates, shared skills, and dry-run-only candidates.
-- Claude has the same live plugin package surface plus dry-run instruction/settings/agent/skill adapter candidates. [`docs/harness/claude-adapter-plan.md`](docs/harness/claude-adapter-plan.md) and [`docs/harness/claude-adapter-plan/`](docs/harness/claude-adapter-plan/) define Claude candidates without writing live Claude state.
+```sh
+node scripts/render-plugin-bridge.mjs
+node scripts/render-plugin-bridge.mjs --write
+```
 
-## Dispositions
+This writes only `~/.agents/plugins/marketplace.json` and `~/.agents/plugins/loom-nucleus/**` (not provider auth, caches, or profiles). After apply, enable in Codex with `codex plugin add loom-nucleus@loom-nucleus-plugins`. Claude plugin enablement is a separate harness step. Repo reference catalog: [`distributions/loom-nucleus/.claude-plugin/marketplace.json`](distributions/loom-nucleus/.claude-plugin/marketplace.json) (`source` is repo-relative; live install uses the rendered HOME paths above).
 
-The canonical source is [`docs/harness/resource-manifest.md`](docs/harness/resource-manifest.md). It uses four dispositions:
+## Try one skill in 5 minutes
 
-- `track`: declarative resources the repo may own directly.
-- `adapt`: reusable resources that need an adapter plan or redaction before tracking.
-- `reference-only`: surfaces that should be inspected or snapshotted later without treating the live source as repo-owned.
-- `local-only`: runtime state, private history, auth/cache data, plugin cache, blobs, terminal state, logs, and databases that must stay out of the repo.
+```sh
+git clone https://github.com/DylanMcCavitt/loom.git && cd loom
+npm run check
+ln -s "$(pwd)/.agents/skills/blueprint" ~/.agents/skills/blueprint
+```
 
-At category level, OMP user/project resources and workflow-kit categories are `track`; OMP built-ins and installed package resources are `reference-only` with snapshots under [`distributions/snapshots/omp-builtins/`](distributions/snapshots/omp-builtins/). Codex and Claude adapter candidates are `adapt` or `reference-only` as marked in the manifest; plugin caches and runtime state stay `local-only`. Cross-harness duplicate skill roots are recorded for later audit rather than normalized here.
+Invoke the `blueprint` skill in your harness (shape/spec work). Roster agents: `belt`, `biters`, `blueprint`, `lab`, `repair-pack`, `roboports`, `rocket-launch`. Kit utilities: `assembler`, `prospect`, `space-age`, `map-seed`.
 
-## Dry-Run To Apply Model
+## Harness matrix
 
-Every harness change is planned and validated as a dry run before any future live write. The read-only pre-write gate is [`scripts/dry-run-harness-safety-gate.mjs`](scripts/dry-run-harness-safety-gate.mjs), driven by [`docs/harness/dry-run-link-plan.json`](docs/harness/dry-run-link-plan.json) from issue #45.
+| Harness | Skill root | Install route | Status |
+| --- | --- | --- | --- |
+| OMP | `~/.agents/skills/` (shared); repo [`.agents/skills/`](.agents/skills/) | Per-skill symlink; `npm run render-nucleus` → `npm run install-nucleus` for adapter mirrors | OMP mirrors + rendered skills effective; gated apply for live `~/.omp` |
+| Codex | `~/.codex/skills/`, `~/.agents/skills/` | Per-skill symlink; `node scripts/render-plugin-bridge.mjs --write` then `codex plugin add loom-nucleus@loom-nucleus-plugins` | Plugin bridge + marketplace apply gated; config/profile fragments planned |
+| Claude Code | `~/.claude/skills/`, `~/.agents/skills/` | Per-skill symlink; `node scripts/render-plugin-bridge.mjs --write` then harness plugin enable | Plugin bridge apply gated; instruction/settings candidates planned |
 
-The gate reports planned OMP, Codex, and Claude candidate paths, generated config destinations, local-only skips, duplicate paths, overwrite risk, and tracked-source hygiene. It rejects dangerous destinations, local-only write targets, secret-looking values, private home paths in plan data or tracked source, auth/cache files, runtime databases, sessions, logs, histories, and whole-root Claude skill symlinks.
+## Glossary
 
-The apply/render executor is [`scripts/render-nucleus.mjs`](scripts/render-nucleus.mjs). It is dry-run by default and only writes under an explicit, strict-manual `--write` approval. See [Installing the harness nucleus](#installing-the-harness-nucleus) for the gated flow.
+| Term | Meaning |
+| --- | --- |
+| Loom | This repo and the cross-harness agent pack it ships |
+| nucleus | Canonical source under [`nucleus/`](nucleus/) (agents, skills, utilities, schemas) |
+| adapters | Harness translators under [`adapters/`](adapters/) (OMP, Codex, Claude, plugin-bridge) |
+| distributions | Generated, checkable output under [`distributions/`](distributions/) |
+| loom-nucleus | Plugin distribution bridging Codex/Claude marketplace surfaces |
+| Factory Nucleus | Envelope and tracker subsystem (`npm run factory`, `~/.loom/`) |
 
-## Installing the harness nucleus
-
-The harness nucleus is installed with a single gated flow built around [`scripts/render-nucleus.mjs`](scripts/render-nucleus.mjs). The dry run is the default; the apply step is opt-in.
-
-1. **Dry-run (default).** Render every candidate into an ephemeral temp dir, run the read-only safety gate over the rendered output, and print the candidate manifest. Nothing is written to live `~/.omp`, `~/.codex`, `~/.claude`, or repo config.
-
-   ```sh
-   npm run render-nucleus
-   ```
-
-2. **Review.** Read the printed candidate manifest. The `[appliable candidates]` block lists the create-missing-only files `--write` would add; `[reported candidates]` and `[skipped local-only surfaces]` are rendered and validated but never written. Confirm the destinations, dispositions, and that `Result: passed`.
-
-3. **Approve and apply.** Only after reviewing the dry-run output, run the gated apply:
-
-   ```sh
-   npm run install-nucleus
-   ```
-
-   `install-nucleus` is `render-nucleus.mjs --write`: a strict-manual apply that refuses unless the dry-run render and safety gate pass clean. It is **create-missing-only** (never overwrites an existing non-marker live file), **backed-up** (any kit-owned marker is backed up before it is updated), and **idempotent** (a second run against the applied marker manifest is a clean no-op).
-
-Scope a different live HOME with `--home <dir>` (default `$HOME`); see `node scripts/render-nucleus.mjs --help` for the full option list.
-
-## Target Directory Layout
-
-- [`nucleus/`](nucleus/) - model-agnostic canonical source for agents, skills, rules, workflows, and schemas; `track`.
-- [`adapters/`](adapters/) - harness-specific source, templates, and renderer entrypoints; `track` / `adapt` by manifest row.
-- [`distributions/`](distributions/) - generated/checkable output, including `loom-nucleus` plugin output and OMP reference snapshots.
-- [`docs/operator/`](docs/operator/) - operator-facing daily workflow and install/update flows.
-- [`docs/architecture/`](docs/architecture/) - compact architecture maps for Factory Nucleus and the harness bridge.
-- [`docs/harness/`](docs/harness/) - manifests, adapter plans, and bridge/reference context only; no active source templates or generated payloads.
-- [`.agents/skills/`](.agents/skills/) - rendered compatibility surface generated from `nucleus/skills/` and `nucleus/utilities/`; edit nucleus source first.
-- [`.gitignore`](.gitignore) - excludes runtime state, local overlays, common credential files, logs, databases, sessions, blobs, and caches; `track`.
-
-## Validators And Tests
-
-Use the package runner from the repo root for the normal offline validation path:
+## Validators and tests
 
 ```sh
 npm run check
 ```
 
-### Scripts
+### Validators
 
 | Area | Command | Purpose |
 | --- | --- | --- |
-| Doctor | `npm run doctor` | Read-only operator status: git state, tracker picker hint, install marker, live-smoke env presence, and key validators. |
-| Tracker picker | `npm run choose-tracker -- --root <repo>` | Prints Linear/GitHub Issues binding options without selecting a tracker. |
-| Manifest | `node scripts/validate-harness-manifest.mjs` | Validates [`docs/harness/resource-manifest.json`](docs/harness/resource-manifest.json), required categories, local-only coverage, and secret/path hygiene in manifest data. |
-| Manifest inventory | `node scripts/dry-run-harness-inventory.mjs` | Prints manifest classifications without mutation. |
-| Manifest inventory live metadata | `node scripts/dry-run-harness-inventory.mjs --check-live` | Adds path-only live existence metadata without reading private contents. |
-| Safety gate | `node scripts/dry-run-harness-safety-gate.mjs` | Runs the offline read-only gate over harness plan data. |
-| Safety gate live metadata | `node scripts/dry-run-harness-safety-gate.mjs --check-live` | Adds path metadata and symlink-target checks without modifying live state. |
-| OMP snapshot validation | `node scripts/validate-omp-builtins-snapshot.mjs` | Validates snapshotted OMP built-ins, command registry, resources, and portability rows. |
-| OMP snapshot live compare | `node scripts/validate-omp-builtins-snapshot.mjs --check-live` | Compares the snapshot against installed OMP metadata. |
-| OMP snapshot refresh | `node scripts/refresh-omp-builtins-snapshot.mjs` | Dry-runs an OMP built-ins refresh. |
-| OMP snapshot write refresh | `node scripts/refresh-omp-builtins-snapshot.mjs --write` | Regenerates the checked-in OMP snapshot after review. |
-| OMP snapshot drift radar | `node scripts/radar-snapshot-drift.mjs` | Advisory check: compares the pinned OMP package version in the snapshot against npm `latest` (always exits 0). |
-| Codex plan | `node scripts/validate-codex-adapter-plan.mjs` | Validates Codex adapter plan data, templates, mappings, and forbidden keys. |
-| Claude plan | `node scripts/validate-claude-adapter-plan.mjs` | Validates Claude adapter plan data, templates, mappings, and unsafe surfaces. |
-| Skills | `node scripts/validate-skills.mjs` | Validates repo skill shape, frontmatter, naming, and secret-like content. |
-| Skills compat render | `npm run render` | Regenerates `.agents/skills/` from `nucleus/skills/` and `nucleus/utilities/` after nucleus edits. |
-| Docs drift | `node scripts/validate-nucleus-docs-drift.mjs` | Guards README/operator commands, stale active-path claims, and the Factorio kit roster. |
+| Check (all) | `npm run check` | Runs `npm run validate` then the full test suite |
+| Doctor | `npm run doctor` | Read-only operator status: git, tracker hint, install marker, key validators |
+| Manifest | `node scripts/validate-harness-manifest.mjs` | Resource manifest categories, dispositions, and hygiene |
+| Manifest inventory | `node scripts/dry-run-harness-inventory.mjs` | Manifest classifications without mutation |
+| Safety gate | `node scripts/dry-run-harness-safety-gate.mjs` | Offline read-only gate over harness plan data |
+| OMP snapshot | `node scripts/validate-omp-builtins-snapshot.mjs` | Snapshotted OMP built-ins and portability rows |
+| OMP snapshot drift | `node scripts/radar-snapshot-drift.mjs` | Advisory OMP package version vs npm `latest` (always exits 0) |
+| Codex plan | `node scripts/validate-codex-adapter-plan.mjs` | Codex adapter plan templates and mappings |
+| Claude plan | `node scripts/validate-claude-adapter-plan.mjs` | Claude adapter plan templates and unsafe surfaces |
+| Skills | `node scripts/validate-skills.mjs` | Skill shape, frontmatter, naming, secret-like content |
+| Skills compat render | `npm run render` | Regenerates `.agents/skills/` from nucleus after edits |
+| Shared agents | `node scripts/validate-shared-agent-contract.mjs` | Shared nucleus agent contract |
+| Shared agent packages | `node scripts/validate-shared-agent-packages.mjs` | Vercel-shaped per-agent packages |
+| Factory Nucleus | `node scripts/validate-factory-nucleus-schemas.mjs` (+ docs, dry-run, evals validators) | Envelope schemas, docs, and eval guards |
+| Docs drift | `node scripts/validate-nucleus-docs-drift.mjs` | README identity, command docs, roster, and table sync |
+| Render nucleus | `npm run render-nucleus` | Dry-run OMP/Codex/Claude adapter render + safety gate |
+| Install nucleus | `npm run install-nucleus` | Gated apply for reviewed nucleus candidates |
+| Plugin bridge | `node scripts/render-plugin-bridge.mjs` | Dry-run `loom-nucleus` plugin/marketplace render + gate |
 
 ### Test Suites
 
@@ -144,28 +122,27 @@ npm run check
 | Install command | `node --test tests/install-command.test.mjs` |
 | Map seed skill | `node --test tests/map-seed-skill.test.mjs` |
 | Nucleus docs drift | `node --test tests/nucleus-docs-drift.test.mjs` |
-| OMP built-ins snapshot | `node --test tests/omp-builtins-snapshot.test.mjs` |
 | OMP built-ins snapshot portability | `node --test tests/omp-builtins-snapshot-portability.test.mjs` |
+| OMP built-ins snapshot | `node --test tests/omp-builtins-snapshot.test.mjs` |
 | OMP contracts | `node --test tests/omp-contracts.test.mjs` |
 | Plugin bridge | `node --test tests/plugin-bridge.test.mjs` |
 | Prospect skill | `node --test tests/prospect-skill.test.mjs` |
 | Render harness nucleus | `node --test tests/render-harness-nucleus.test.mjs` |
 | Roboports skill | `node --test tests/roboports-skill.test.mjs` |
 | Rocket launch skill | `node --test tests/rocket-launch-skill.test.mjs` |
-| Runtime adapter | `node --test tests/runtime-adapter.test.mjs` |
 | Runtime adapter extension | `node --test tests/runtime-adapter-extension.test.mjs` |
-| Shared-agent contract validator | `node --test tests/shared-agent-contract-validator.test.mjs` |
-| Shared-agent evals | `node --test tests/shared-agent-evals.test.mjs` |
-| Shared-agent package validation | `node --test tests/shared-agent-package-validation.test.mjs` |
+| Runtime adapter | `node --test tests/runtime-adapter.test.mjs` |
+| Shared agent contract validator | `node --test tests/shared-agent-contract-validator.test.mjs` |
+| Shared agent evals | `node --test tests/shared-agent-evals.test.mjs` |
+| Shared agent package validation | `node --test tests/shared-agent-package-validation.test.mjs` |
 | Shared nucleus agents | `node --test tests/shared-nucleus-agents.test.mjs` |
 | Skill validation | `node --test tests/skill-validation.test.mjs` |
 | Space age skill | `node --test tests/space-age-skill.test.mjs` |
 
+## Links
 
-## Canonical References
+**Operator runbooks:** [`docs/operator/daily-workflow.md`](docs/operator/daily-workflow.md) · [`docs/operator/install-update.md`](docs/operator/install-update.md) · [`docs/operator/envelope-bootstrap.md`](docs/operator/envelope-bootstrap.md)
 
-- [`docs/harness/resource-manifest.md`](docs/harness/resource-manifest.md) - resource categories, dispositions, dry-run gate, and checks.
-- [`docs/harness/codex-adapter-plan.md`](docs/harness/codex-adapter-plan.md) - Codex adapter maturity, template boundaries, and dry-run strategy.
-- [`docs/harness/claude-adapter-plan.md`](docs/harness/claude-adapter-plan.md) - Claude adapter maturity, template boundaries, and dry-run strategy.
-- [`distributions/snapshots/omp-builtins/README.md`](distributions/snapshots/omp-builtins/README.md) - OMP built-in snapshot overview.
-- [`distributions/snapshots/omp-builtins/portability-matrix.md`](distributions/snapshots/omp-builtins/portability-matrix.md) - OMP command portability classes and runtime boundary.
+**Architecture:** [`docs/architecture/factory-nucleus.md`](docs/architecture/factory-nucleus.md) · [`docs/architecture/harness-bridge.md`](docs/architecture/harness-bridge.md)
+
+**Governance (sibling PR):** [`LICENSE`](LICENSE) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`template/`](template/)
