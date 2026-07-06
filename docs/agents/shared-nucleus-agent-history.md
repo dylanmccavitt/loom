@@ -36,3 +36,5 @@ Live-HOME promotion gate: dry-run -> review -> explicit apply. Required determin
 ## Evidence-intake collector -> judge -> human review loop
 
 Documentation and offline-contract workflow only; it does not collect from live Slack, Figma, GitHub, HOME, session history, or private runtime state. The collector gathers evidence without scoring or proposing rules; the judge validates sources, separates facts/inferences/open questions, groups candidates, and keeps every candidate pending; human review chooses exactly one of rule, reference, exemplar, lint rule, eval, coverage gap, or no change. Decision-log entries record scope, rationale, evidence, exceptions, approver, target file, and checks. Accepted changes land in the narrowest relevant destination per `shared-nucleus-agents.json#evidenceIntake.destinationPolicy`.
+
+Provenance: the shared contract was shaped across the LOO-96…LOO-154 series; canonical files no longer carry tracker ids.

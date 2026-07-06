@@ -1,6 +1,5 @@
 {
   "schemaVersion": 7,
-  "generatedForIssue": "LOO-154",
   "name": "shared-nucleus-agent-contract",
   "status": "canonical-repo-source-ready",
   "sourcePattern": {
@@ -940,7 +939,6 @@
     }
   ],
   "activation": {
-    "issue": "LOO-105",
     "nativeAgentRendering": "deferred; shared packages activate as plugin skills, not direct OMP/Codex/Claude role-agent files",
     "scratchHomeApply": "implemented by scripts/render-plugin-bridge.mjs --write --home <scratch>; renders canonical nucleus/skills/{agent-name}/ packages into approved ~/.agents/plugins/marketplace.json and ~/.agents/plugins/loom-nucleus/** candidates",
     "markerManifest": "~/.loom-harness/applied-manifest.json",
@@ -952,21 +950,41 @@
       "claude": "Claude plugin skills surface via adapters/plugin-bridge/loom-nucleus/.claude-plugin/plugin.json#skills"
     },
     "liveHomePromotionGate": "dry-run -> review -> explicit apply",
-    "evidenceDecisionOwner": "LOO-103 collector -> judge -> human review decision log",
+    "evidenceDecisionOwner": "collector -> judge -> human review decision log",
     "deterministicChecksBeforeApply": [
       "scripts/validate-shared-agent-packages.mjs",
       "scripts/validate-shared-agent-evals.mjs",
       "scripts/render-plugin-bridge.mjs --json",
       "targeted plugin-bridge scratch apply and verifier proof"
     ],
-    "evalHarness": "implemented by LOO-99 offline fixture harness at scripts/validate-shared-agent-evals.mjs and tests/fixtures/shared-agent-evals.json",
-    "lintRules": "implemented by LOO-104 deterministic package checks at scripts/validate-shared-agent-packages.mjs",
-    "evidenceIntakeAutomation": "future issue; LOO-103 owns manual evidence intake and decision-log workflow",
+    "evalHarness": "offline fixture harness at scripts/validate-shared-agent-evals.mjs and tests/fixtures/shared-agent-evals.json",
+    "lintRules": "deterministic package checks at scripts/validate-shared-agent-packages.mjs",
+    "evidenceIntakeAutomation": "future automation; manual evidence intake and decision-log workflow until then",
     "localOnlyRuntimeData": [
       "OMP auth, sessions, histories, caches, DBs, terminal state, logs, and local settings",
       "Codex auth, sessions, histories, caches, DBs, browser state, blobs, plugin caches, and local settings",
       "Claude auth, sessions, histories, caches, DBs, daemon state, plugin caches/data, and local settings"
     ],
     "liveHomeApply": "requires explicit HITL approval after dry-run review; forbidden by default"
+  },
+  "packetContract": {
+    "commonInvariants": [
+      "report mode, lens, target surface, loaded references, rule IDs, proof run, and unresolved coverage gaps",
+      "no live HOME apply",
+      "no scope widening beyond the packet",
+      "no issue closeout or PR merge in this contract slice; launch records gates for the tracker bridge",
+      "no native harness agent rendering in this contract slice"
+    ],
+    "context": {
+      "field": "context",
+      "enum": [
+        "validation",
+        "live"
+      ],
+      "default": "live",
+      "validation": "Exercised against fixtures or dry-run surfaces; report intended tracker, PR, and live-HOME side effects instead of performing them.",
+      "live": "Normal operation within the mode boundary.",
+      "absentBehavior": "Assume live and state the assumption in the output packet."
+    }
   }
 }
