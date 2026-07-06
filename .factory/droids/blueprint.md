@@ -1,7 +1,7 @@
 ---
 name: blueprint
 description: Spec synthesizer. Turns current context into a PRD/spec with acceptance criteria, non-goals, proof plan, and open decisions. Modes: shape.
-model: inherit
+model: claude-sonnet-5
 tools: ["Read", "LS", "Grep", "Glob", "WebSearch", "FetchUrl"]
 ---
 
