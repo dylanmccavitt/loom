@@ -1,4 +1,5 @@
 # ADR 0003: Factorio-Themed Workflow Kit Replaces The Planning Lane
+> Amended by [ADR 0009](0009-skill-pack-pivot.md) (2026-07-07): harness-bridge/activation clauses are void; the rest stands.
 
 ## Status
 

@@ -34,7 +34,7 @@ jobs:
           mkdir -p "$STAGING/skills" "$STAGING/docs"
           cp -R skills/. "$STAGING/skills/"
           cp docs/agent-contract.md "$STAGING/docs/"
-          cp LICENSE README.md "$STAGING/"
+          cp LICENSE README.md RELEASE-NOTES.md "$STAGING/"
           tar -czf "loom-pack-${GITHUB_REF_NAME}.tar.gz" -C "$STAGING" .
 
       - name: Extract release notes

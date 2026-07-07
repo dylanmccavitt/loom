@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.2.0
+
+Pending tag.
+
+- Purged obsolete harness machinery from the public pack identity so the repo presents as portable skills first.
+- Flattened the canonical skill source into `skills/` with seven roster agents and four utilities.
+- Moved the shared agent contract to `docs/agent-contract.md` as the contract shipped with the pack.
+- Added roster guard coverage to keep documented skill names aligned with committed skill packages.
+- Added spec-constraint validation for skill frontmatter and pack documentation drift.
+- Limited the release asset to pack contents only: skills, contract, license, README, and release notes.
+
 ## 0.1.0
 
 First public packaging release of the Loom nucleus harness.
