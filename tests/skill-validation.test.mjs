@@ -72,7 +72,7 @@ test("rejects missing frontmatter", () => {
 test("rejects skill names outside agentskills.io format", () => {
   const result = runValidation("bad-name-charset");
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /frontmatter name must match \/\^\[a-z0-9-\]\{1,64\}\$\//u);
+  assert.match(result.stderr, /frontmatter name must be 1-64 chars of lowercase\/digit runs separated by single hyphens/u);
   assert.match(result.stderr, /frontmatter name 'Bad_Name' must match directory 'bad-name-charset'/u);
 });
 
@@ -112,6 +112,15 @@ test("rejects fine-grained GitHub PAT looking text", () => {
   const result = runValidation("bad-fine-grained-pat");
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /API-key\/token-looking text/u);
+});
+
+test("rejects leading, trailing, and consecutive hyphens in names", () => {
+  const result = runValidation("bad-name-hyphens");
+  assert.notEqual(result.status, 0);
+  for (const bad of ["-leading", "trailing-", "double--dash"]) {
+    assert.ok(result.stderr.includes(`${bad}/SKILL.md`), `${bad} not rejected`);
+  }
+  assert.match(result.stderr, /single hyphens/u);
 });
 
 test("rejects nested SKILL.md files", () => {

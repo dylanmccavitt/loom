@@ -1,6 +1,6 @@
 # Repair Pack package governance
 
-This package is the canonical shared-agent source for `repair-pack` as model-agnostic guidance across adapters.
+This package is the canonical shared-agent source for `repair-pack`: one portable package every harness loads as-is.
 
 ## Load order
 

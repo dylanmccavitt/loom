@@ -3,7 +3,7 @@
 ## rule/canonical-name
 Status: accepted
 Scope: blueprint
-Rule: Use the canonical shared name `blueprint` in packages and adapter manifests; do not use `omp-`, `codex-`, or `claude-` prefixes.
+Rule: Use the canonical shared name `blueprint` everywhere the package is referenced; do not use `omp-`, `codex-`, or `claude-` prefixes.
 Why: Shared nucleus behavior must stay portable across harnesses.
 Exceptions: Historical context may mention superseded candidates only when marked as historical context.
 Source: docs/agent-contract.md#namingRules

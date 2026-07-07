@@ -1,6 +1,6 @@
 # Blueprint package governance
 
-This package is the canonical shared-agent source for `blueprint` as model-agnostic guidance across adapters.
+This package is the canonical shared-agent source for `blueprint`: one portable package every harness loads as-is.
 
 ## Load order
 

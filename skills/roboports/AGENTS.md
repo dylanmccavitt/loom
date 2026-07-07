@@ -1,6 +1,6 @@
 # Roboports package governance
 
-This package is the canonical shared-agent source for `roboports` as model-agnostic guidance across adapters.
+This package is the canonical shared-agent source for `roboports`: one portable package every harness loads as-is.
 
 ## Load order
 

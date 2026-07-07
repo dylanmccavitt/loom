@@ -1,6 +1,6 @@
 # Lab package governance
 
-This package is the canonical shared-agent source for `lab` as model-agnostic guidance across adapters.
+This package is the canonical shared-agent source for `lab`: one portable package every harness loads as-is.
 
 ## Load order
 

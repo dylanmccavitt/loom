@@ -68,7 +68,7 @@ function readFrontmatterData(filePath, content, errors) {
 function containsConcreteUseWhen(description) {
   return /\bUse (?:when|for)\b\s+\S+/u.test(description);
 }
-const SKILL_NAME_PATTERN = /^[a-z0-9-]{1,64}$/u;
+const SKILL_NAME_PATTERN = /^(?=.{1,64}$)[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const MAX_DESCRIPTION_LENGTH = 1024;
 
 
@@ -270,7 +270,7 @@ function validateSkillsRoot(skillsDir, { errors, seenNames, globalNames }) {
     if (!name) {
       errors.push(`${relSkillPath}: missing frontmatter name`);
     } else if (!SKILL_NAME_PATTERN.test(name)) {
-      errors.push(`${relSkillPath}: frontmatter name must match /^[a-z0-9-]{1,64}$/`);
+      errors.push(`${relSkillPath}: frontmatter name must be 1-64 chars of lowercase/digit runs separated by single hyphens (no leading/trailing/consecutive hyphens)`);
     }
     if (!description) {
       errors.push(`${relSkillPath}: missing frontmatter description`);

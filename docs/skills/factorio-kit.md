@@ -118,8 +118,8 @@ not live routing targets:
 - **Does:** clarify the idea's intent and shape (briefly, no relitigating), then
   create the Linear home for it — an initiative or project (per the repo
   envelope) plus an idea/brief document attached to it. Returns the created
-  object ids/links. Hands off to `research` (if unknowns) or `blueprint` (if
-  ready to spec).
+  object ids/links. Hands off to `blueprint` (`research-spike` lens if unknowns,
+  `spec-synthesis` if ready to spec).
 - **Linear:** `save_project` / `save_initiative` + `save_document`.
 - **Invariants:** never starts implementation; never creates implementation
   issues (that is `blueprint`'s `issue-decomposition` lens); reads the

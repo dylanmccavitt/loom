@@ -43,13 +43,13 @@ test("golden path: dependency-ordered ghosts, branch carries id, merge closes vi
 
   // rocket-launch: a red gate refuses the merge; the issue stays open.
   assert.throws(
-    () => api.merge(pr1, { tests: true, review: true, acceptance: true, ci: false, busFirst: true }),
+    () => api.merge(pr1, { tests: true, review: true, acceptance: true, ci: false, minimalDiff: true }),
     /red gate\(s\) ci/u,
   );
   assert.equal(api.issue("ABC-1").state, "in_review");
 
   // all gates green -> merge -> bridge closes ABC-1.
-  api.merge(pr1, { tests: true, review: true, acceptance: true, ci: true, busFirst: true });
+  api.merge(pr1, { tests: true, review: true, acceptance: true, ci: true, minimalDiff: true });
   assert.equal(api.issue("ABC-1").state, "done");
 });
 
@@ -61,7 +61,7 @@ test("golden path: a blocked ghost cannot launch before its blocker is done", ()
 
   const pr2 = api.openPr("ABC-2", "feat/ABC-2-sync");
   assert.throws(
-    () => api.merge(pr2, { tests: true, review: true, acceptance: true, ci: true, busFirst: true }),
+    () => api.merge(pr2, { tests: true, review: true, acceptance: true, ci: true, minimalDiff: true }),
     /open blockers ABC-1/u,
   );
 });
@@ -79,7 +79,7 @@ test("bridge invariant: a merge without the PR closing keyword does not close th
   api.createIssue({ key: "ABC-7", project });
   // Branch carries the id, but the PR body has NO closing keyword.
   const pr = api.openPr("ABC-7", "feat/ABC-7-cache", "wip: cache layer");
-  const merged = api.merge(pr, { tests: true, review: true, acceptance: true, ci: true, busFirst: true });
+  const merged = api.merge(pr, { tests: true, review: true, acceptance: true, ci: true, minimalDiff: true });
   assert.equal(merged.merged, true); // the merge still lands the code
   assert.notEqual(api.issue("ABC-7").state, "done"); // but the bridge does not auto-close
 });

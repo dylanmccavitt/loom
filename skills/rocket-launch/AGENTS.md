@@ -1,6 +1,6 @@
 # Rocket Launch package governance
 
-This package is the canonical shared-agent source for `rocket-launch` as model-agnostic guidance across adapters.
+This package is the canonical shared-agent source for `rocket-launch`: one portable package every harness loads as-is.
 
 ## Load order
 
