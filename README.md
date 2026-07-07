@@ -26,7 +26,7 @@ Loom is a curated, harness-agnostic agent skill pack for turning planning, imple
 | Codex CLI and generic Agent Skills convention | `ln -s ~/loom/skills ~/.agents/skills` | Symlinked folders documented-supported. |
 | Cursor | Reads `~/.agents/skills` or `~/.cursor/skills` | Symlink support undocumented — verify in Skills UI; copy if not listed. |
 | OMP | `skills.customDirectories: [~/loom/skills]` | No symlink needed. |
-| Factory Droid | Copy, or try symlink, into `~/.factory/skills` | Symlink behavior undocumented. |
+| Factory Droid | Copy into `~/.factory/skills` | Symlink behavior undocumented. |
 
 ## Maintainers
 
