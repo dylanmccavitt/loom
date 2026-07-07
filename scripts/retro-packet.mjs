@@ -307,6 +307,25 @@ export function writeRetroPacketFiles(packet, options = {}) {
   return { homeDir, written };
 }
 
+export function commitRetroPacketFiles({ root, written, prNumber }) {
+  if (!Number.isInteger(Number(prNumber)) || Number(prNumber) <= 0) throw new Error("prNumber must be a positive integer");
+  if (!Array.isArray(written) || written.length === 0) throw new Error("written files are required");
+  const message = `retro: packet for PR #${prNumber}`;
+  run("git", ["add", "--", ...written], { cwd: root });
+  const staged = maybeRun("git", ["diff", "--cached", "--quiet"], { cwd: root });
+  if (staged.status === 0) return { committed: false, message, sha: null };
+  if (staged.status !== 1) {
+    const detail = [staged.stdout, staged.stderr].filter(Boolean).join("\n").trim();
+    throw new Error(`git diff --cached --quiet failed${detail ? `: ${detail}` : ""}`);
+  }
+  run("git", ["commit", "-m", message], { cwd: root });
+  return { committed: true, message, sha: run("git", ["rev-parse", "--short", "HEAD"], { cwd: root }) };
+}
+
+export function formatPrCreateCommand({ base, branch, title, bodyPath }) {
+  return `gh pr create --base ${shellQuote(base)} --head ${shellQuote(branch)} --title ${shellQuote(title)} --body-file ${shellQuote(bodyPath)}`;
+}
+
 export function buildRetroPrBody(packet) {
   const source = packet.entries[0].sourcePr;
   return [
@@ -372,22 +391,25 @@ export async function main(argv = process.argv.slice(2)) {
   const worktreeRoot = args.worktreeRoot ?? path.join(os.tmpdir(), `loom-retro-pr-${pr.number}`);
   const worktree = ensureRetroWorktree({ repoRoot: args.repoRoot, worktreeRoot, branch: packet.branch });
   const { written } = writeRetroPacketFiles(packet, { root: worktree.root });
+  const commit = commitRetroPacketFiles({ root: worktree.root, written, prNumber: pr.number });
   const tempRoot = path.resolve(os.tmpdir());
   const displayWorktree = path.resolve(worktree.root).startsWith(`${tempRoot}${path.sep}`)
     ? path.join("<tmp>", path.basename(worktree.root)).split(path.sep).join("/")
     : worktree.root;
-  const bodyPath = `${packet.home}/pr-body.md`;
+  const bodyPath = path.join(worktree.root, packet.home, "pr-body.md");
   const prTitle = `Retro evidence packet for PR #${pr.number}: ${pr.title}`;
-  const prCreateCommand = `gh pr create --base ${shellQuote(pr.baseRefName ?? "main")} --head ${shellQuote(packet.branch)} --title ${shellQuote(prTitle)} --body-file ${shellQuote(bodyPath)}`;
+  const prCreateCommand = formatPrCreateCommand({ base: pr.baseRefName ?? "main", branch: packet.branch, title: prTitle, bodyPath });
 
   console.log(`Retro branch: ${packet.branch}`);
   console.log(`Retro worktree: ${displayWorktree}${worktree.created ? " (created)" : " (reused)"}`);
   console.log(`Retro packet home: ${packet.home}`);
   console.log(`Schema validation: ok (${packet.entries.length} entries)`);
   for (const file of written) console.log(`Wrote: ${file}`);
+  console.log(`Retro commit: ${commit.committed ? commit.sha : "unchanged"} (${commit.message})`);
   console.log(`PR create command: ${prCreateCommand}`);
 
   if (args.prCreate) {
+    run("git", ["push", "-u", "origin", packet.branch], { cwd: worktree.root });
     console.log(run("gh", ["pr", "create", "--base", pr.baseRefName ?? "main", "--head", packet.branch, "--title", prTitle, "--body-file", bodyPath], { cwd: worktree.root }));
   }
   return 0;
