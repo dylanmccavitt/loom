@@ -120,6 +120,7 @@ npm run check
 | Harness manifest | `node --test tests/harness-manifest.test.mjs` |
 | Harness safety gate | `node --test tests/harness-safety-gate.test.mjs` |
 | Install command | `node --test tests/install-command.test.mjs` |
+| Loop entrypoint | `node --test tests/loop-entrypoint.test.mjs` |
 | Map seed skill | `node --test tests/map-seed-skill.test.mjs` |
 | Nucleus docs drift | `node --test tests/nucleus-docs-drift.test.mjs` |
 | OMP built-ins snapshot portability | `node --test tests/omp-builtins-snapshot-portability.test.mjs` |
@@ -141,7 +142,7 @@ npm run check
 
 ## Links
 
-**Operator runbooks:** [`docs/operator/daily-workflow.md`](docs/operator/daily-workflow.md) · [`docs/operator/install-update.md`](docs/operator/install-update.md) · [`docs/operator/envelope-bootstrap.md`](docs/operator/envelope-bootstrap.md)
+**Operator runbooks:** [`docs/operator/daily-workflow.md`](docs/operator/daily-workflow.md) · [`docs/operator/loop.md`](docs/operator/loop.md) · [`docs/operator/install-update.md`](docs/operator/install-update.md) · [`docs/operator/envelope-bootstrap.md`](docs/operator/envelope-bootstrap.md)
 
 **Architecture:** [`docs/architecture/factory-nucleus.md`](docs/architecture/factory-nucleus.md) · [`docs/architecture/harness-bridge.md`](docs/architecture/harness-bridge.md)
 
