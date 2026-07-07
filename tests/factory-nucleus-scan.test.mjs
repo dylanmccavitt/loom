@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
+import { bindTracker, initEnvelope } from "../scripts/factory-nucleus/envelope.mjs";
 import { scanFactory } from "../scripts/factory-nucleus/scan.mjs";
 import { resolveFactoryStatePaths } from "../scripts/factory-nucleus/schema.mjs";
 
@@ -766,3 +767,52 @@ test("recipe planning never consumes the scan recommendation (envelope cap stays
     "recipe planning must not consume the scan recommendation; the envelope agents.maxSubagents cap is authoritative",
   );
 });
+
+test("factory scan reads bound tracker evidence from local envelope state", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+  }, (root) => {
+    const home = mkdtempSync(path.join(tmpdir(), "factory-scan-tracker-bound-"));
+    try {
+      initEnvelope({ root, homeDir: home, generatedAt });
+      bindTracker({ root, homeDir: home, provider: "linear", team: "Loom", project: "Factory Nucleus", generatedAt });
+      const scan = scanFactory({ root, homeDir: home, generatedAt });
+      assert.equal(scan.science.missingUnlocks.includes("tracker bind"), false);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+});
+
+test("factory scan leaves tracker bind missing when local envelope tracker is unset", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+  }, (root) => {
+    const home = mkdtempSync(path.join(tmpdir(), "factory-scan-tracker-unbound-"));
+    try {
+      initEnvelope({ root, homeDir: home, generatedAt });
+      const scan = scanFactory({ root, homeDir: home, generatedAt });
+      assert.ok(scan.science.missingUnlocks.includes("tracker bind"));
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+});
+
+test("factory scan treats github tracker bind as satisfied when repo is recorded", () => {
+  withTempRepo({
+    "package.json": `${JSON.stringify({ scripts: { test: "node --test" } }, null, 2)}\n`,
+  }, (root) => {
+    run("git", ["remote", "add", "origin", "git@github.com:acme/widgets.git"], { cwd: root });
+    const home = mkdtempSync(path.join(tmpdir(), "factory-scan-tracker-github-"));
+    try {
+      initEnvelope({ root, homeDir: home, generatedAt });
+      bindTracker({ root, homeDir: home, provider: "github", generatedAt });
+      const scan = scanFactory({ root, homeDir: home, generatedAt });
+      assert.equal(scan.science.missingUnlocks.includes("tracker bind"), false);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+});
+

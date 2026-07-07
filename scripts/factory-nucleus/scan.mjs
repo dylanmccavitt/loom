@@ -4,7 +4,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSy
 import os from "node:os";
 import path from "node:path";
 
-import { resolveFactoryStatePaths, validateEnvelopeYaml, withArtifactMetadata } from "./schema.mjs";
+import { parseYaml, resolveFactoryStatePaths, validateEnvelopeYaml, withArtifactMetadata } from "./schema.mjs";
 import { computeScienceLevel } from "./science.mjs";
 
 const USAGE = "Usage: node scripts/factory-nucleus/scan.mjs [--root <path>] [--save] [--content-scan] [--integrated-envelope] [--json]";
@@ -381,7 +381,44 @@ function directoryHasFiles(root, relativePath) {
   return readdirSync(fullPath).length > 0;
 }
 
-function computeScience({ stack, commands, dirty, root, pointer }) {
+export function factoryIdFromName(name) {
+  const redacted = redactSecrets(name).replace(/\[REDACTED\]/gu, "redacted");
+  const id = redacted.toLowerCase().replace(/[^a-z0-9-]+/gu, "-").replace(/^-+|-+$/gu, "");
+  return id || "factory";
+}
+
+export function isTrackerBound(tracker) {
+  if (!tracker?.provider || tracker.provider === "none") return false;
+  if (tracker.provider === "linear") return Boolean(tracker.team && tracker.project);
+  if (tracker.provider === "github") return Boolean(tracker.repo);
+  return false;
+}
+
+export function formatTrackerBinding(tracker) {
+  if (!isTrackerBound(tracker)) return null;
+  if (tracker.provider === "linear") return `bound: linear (${tracker.team}/${tracker.project})`;
+  return `bound: github (${tracker.repo})`;
+}
+
+function loadLocalEnvelopeTracker({ homeDir, repoRoot, factoryName }) {
+  const factoryId = factoryIdFromName(factoryName);
+  const state = resolveFactoryStatePaths({ homeDir, targetRepoPath: repoRoot, factoryId });
+  if (!existsSync(state.envelope)) return null;
+  try {
+    const envelope = parseYaml(readFileSync(state.envelope, "utf8"));
+    return envelope.tracker ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function resolveLocalTracker({ root = process.cwd(), homeDir = process.env.HOME || os.homedir() } = {}) {
+  const requestedRoot = path.resolve(root);
+  const repoRoot = path.resolve(gitOutput(requestedRoot, ["rev-parse", "--show-toplevel"]) || requestedRoot);
+  return loadLocalEnvelopeTracker({ homeDir, repoRoot, factoryName: path.basename(repoRoot) });
+}
+
+function computeScience({ stack, commands, dirty, root, pointer, tracker }) {
   const hasEnvelope = directoryHasFiles(root, ".agents/envelope");
   return computeScienceLevel({
     stackDetected: stack.some((entry) => entry.name !== "unknown"),
@@ -391,6 +428,7 @@ function computeScience({ stack, commands, dirty, root, pointer }) {
     ciWorkflow: directoryHasFiles(root, ".github/workflows"),
     cleanWorktree: !dirty.isDirty,
     envelope: hasEnvelope || pointer?.status === "valid",
+    trackerBound: isTrackerBound(tracker),
   });
 }
 
@@ -483,7 +521,7 @@ function recommendMaxSubagents() {
 }
 
 
-export function scanFactory({ root = process.cwd(), generatedAt, content = false, integratedEnvelope = false } = {}) {
+export function scanFactory({ root = process.cwd(), homeDir = process.env.HOME || os.homedir(), generatedAt, content = false, integratedEnvelope = false } = {}) {
   const requestedRoot = path.resolve(root);
   const repoRoot = path.resolve(gitOutput(requestedRoot, ["rev-parse", "--show-toplevel"]) || requestedRoot);
   const packageJson = safeJsonFile(path.join(repoRoot, "package.json"));
@@ -493,7 +531,8 @@ export function scanFactory({ root = process.cwd(), generatedAt, content = false
   const dirty = dirtyState(repoRoot);
   const protectedSurfaces = detectProtectedSurfaces(repoRoot);
   const pointer = discoverPointer(repoRoot);
-  const science = computeScience({ stack, commands, dirty, root: repoRoot, pointer });
+  const tracker = loadLocalEnvelopeTracker({ homeDir, repoRoot, factoryName: path.basename(repoRoot) });
+  const science = computeScience({ stack, commands, dirty, root: repoRoot, pointer, tracker });
 
   return withArtifactMetadata("factory-scan", {
     mode: "zero-footprint",
