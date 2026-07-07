@@ -29,10 +29,9 @@ const COMMAND_DOC_PATHS = Object.freeze([
 
 const OMP_OWNERSHIP_DOC_PATH = "docs/harness/omp-ownership.md";
 
-// Phase-4 rename: edit this set once to flip package name and README H1 together.
+// Phase-4 rename complete: package.json name and README H1 must both resolve to "loom".
 const PINNED_IDENTITY_ALIASES = Object.freeze(new Set([
   "loom",
-  "oh-my-pi-config",
 ]));
 
 // Internal lib/helper suites omitted from README's Test Suites table.
@@ -310,7 +309,7 @@ export function validateNameAliasPinning({ root = repoRoot } = {}) {
   if (!PINNED_IDENTITY_ALIASES.has(packageJson.name)) {
     failures.push(`package.json: name "${packageJson.name}" is not in pinned identity alias set; update PINNED_IDENTITY_ALIASES only during Phase-4 rename`);
   }
-  if (!h1 || !PINNED_IDENTITY_ALIASES.has(h1)) {
+  if (!h1 || !PINNED_IDENTITY_ALIASES.has(h1.toLowerCase())) {
     failures.push(`README.md: H1 "${h1 ?? "missing"}" is not in pinned identity alias set; update PINNED_IDENTITY_ALIASES only during Phase-4 rename`);
   }
   return failures;
