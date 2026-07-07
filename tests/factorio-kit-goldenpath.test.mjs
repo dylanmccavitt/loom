@@ -114,22 +114,25 @@ test("every eval-bearing kit skill ships evals with positive + negative coverage
   }
 });
 
-test("manifest gives canonical contracts for kept pipeline proof skills", () => {
-  for (const name of ["radar", "proof-pass"]) {
-    const section = manifest.match(new RegExp(`### \`${name}\`[\\s\\S]*?(?=\\n### \`|\\n## )`, "u"))?.[0] ?? "";
-    assert.ok(section, `${name}: missing manifest contract section`);
-    for (const label of ["**Trigger:**", "**Does", "**Invariants:**", "**Eval cases:**"]) {
-      assert.ok(section.includes(label), `${name}: missing ${label}`);
-    }
+test("manifest maps absorbed skills to lenses instead of live contracts", () => {
+  const historical = manifest.match(/## Historical: absorbed skills[\s\S]*?(?=\n## |\n*$)/u)?.[0] ?? "";
+  assert.ok(historical, "missing Historical: absorbed skills section");
+  assert.match(historical, /not live routing targets/u);
+  for (const [retired, absorber] of [["radar", "biters"], ["proof-pass", "lab"], ["bus-first", "biters"], ["ghosts", "blueprint"]]) {
+    const line = historical.split("\n").find((l) => l.includes(`\`${retired}\``));
+    assert.ok(line, `${retired}: missing from historical mapping`);
+    assert.ok(line.includes(`\`${absorber}\``) || historical.includes(`\`${absorber}\``), `${retired}: mapping does not name ${absorber}`);
+  }
+  for (const retired of ["radar", "proof-pass", "bus-first", "ghosts"]) {
+    assert.equal(manifest.includes(`### \`${retired}\``), false, `${retired}: still has a live contract section`);
   }
 });
 
-test("envelope docs keep Markdown source and YAML mirror in one binding model", () => {
-  assert.match(assemblerSkill, /\.agents\/envelope\/` in the target repo/u);
-  assert.match(assemblerSkill, /generated\/validated mirror/u);
-  assert.match(assemblerSkill, /not a second source to edit/u);
+test("envelope docs bind through repo-local Markdown with no runtime mirror", () => {
+  assert.match(assemblerSkill, /single binding point/u);
+  assert.match(assemblerSkill, /no runtime mirror or second source/u);
   assert.match(manifest, /\.agents\/envelope\/` Markdown/u);
-  assert.match(manifest, /~\/\.loom\/factory-nucleus\/<id>\/envelope\/envelope\.yaml/u);
+  assert.equal(/~\/\.loom\/factory-nucleus/u.test(manifest), false, "manifest still cites the deleted factory-nucleus mirror");
   assert.match(adr0003, /\.agents\/envelope\/`/u);
   assert.match(adr0003, /not a\s+second binding point/u);
 });

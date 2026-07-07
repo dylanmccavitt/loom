@@ -69,6 +69,19 @@ test("rejects missing frontmatter", () => {
   assert.match(result.stderr, /missing frontmatter block/u);
 });
 
+test("rejects skill names outside agentskills.io format", () => {
+  const result = runValidation("bad-name-charset");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /frontmatter name must match \/\^\[a-z0-9-\]\{1,64\}\$\//u);
+  assert.match(result.stderr, /frontmatter name 'Bad_Name' must match directory 'bad-name-charset'/u);
+});
+
+test("rejects overlong skill descriptions", () => {
+  const result = runValidation("bad-long-description");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /frontmatter description must be at most 1024 characters/u);
+});
+
 test("rejects duplicate skill names", () => {
   const result = runValidation("bad-duplicate-name");
   assert.notEqual(result.status, 0);
