@@ -207,6 +207,7 @@ function collectRelativeFiles(root, current = root, files = []) {
 
 
 const BUS_FIRST_HISTORY_FILE = "biters/references/lens-minimal-diff.md";
+const OLD_SHARED_NUCLEUS_PATH = ["docs", "harness", "shared-nucleus-agents"].join("/");
 
 function scanSkillContentPolicy(skillsRoots, errors) {
   for (const skillsRoot of skillsRoots) {
@@ -215,7 +216,7 @@ function scanSkillContentPolicy(skillsRoots, errors) {
     for (const relativeFile of collectRelativeFiles(resolved)) {
       const content = readFileSync(path.join(resolved, relativeFile), "utf8");
       const displayPath = path.join(path.relative(process.cwd(), resolved), relativeFile);
-      if (content.includes("docs/harness/shared-nucleus-agents")) errors.push(`${displayPath}: must not reference docs/harness/shared-nucleus-agents; use nucleus/agents/shared-nucleus-agents`);
+      if (content.includes(OLD_SHARED_NUCLEUS_PATH)) errors.push(`${displayPath}: must not reference ${OLD_SHARED_NUCLEUS_PATH}; use nucleus/agents/shared-nucleus-agents`);
       if (content.includes("bus-first") && relativeFile !== BUS_FIRST_HISTORY_FILE) errors.push(`${displayPath}: must not reference bus-first outside ${BUS_FIRST_HISTORY_FILE}`);
       if (/LOO-\d+/u.test(content)) errors.push(`${displayPath}: must not reference Linear issue ids (LOO-*); keep tracker ids out of canonical skill source`);
     }
