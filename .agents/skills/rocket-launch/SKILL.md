@@ -2,8 +2,8 @@
 name: rocket-launch
 description: Ship a ready change off-planet by enforcing the launch gates, merging the PR, and letting the bridge close its Linear issue. Use when a change is ready to ship — merge the PR, run the review gate, and close out the Linear issue; not for opening a draft or work that is not ready (that stays with `roboports`).
 metadata:
-  version: "0.1.0"
-  changelog: "0.1.0 - initial public release"
+  version: "0.2.0"
+  changelog: "0.2.0 - retro write-back packet gates the post-merge evidence loop"
 
 ---
 
