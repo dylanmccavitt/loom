@@ -145,4 +145,4 @@ npm run check
 
 **Architecture:** [`docs/architecture/factory-nucleus.md`](docs/architecture/factory-nucleus.md) · [`docs/architecture/harness-bridge.md`](docs/architecture/harness-bridge.md)
 
-**Governance (sibling PR):** [`LICENSE`](LICENSE) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`template/`](template/)
+**Governance (sibling PR):** [`LICENSE`](LICENSE) · [`SECURITY.md`](SECURITY.md) · [`template/`](template/)
