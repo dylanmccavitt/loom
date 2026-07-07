@@ -93,6 +93,7 @@ npm run check
 | Area | Command |
 | --- | --- |
 | Assembler skill | `node --test tests/assembler-skill.test.mjs` |
+| Benchmarks | `node --test tests/benchmarks-bench.test.mjs` |
 | Biters skill | `node --test tests/biters-skill.test.mjs` |
 | Blueprint skill | `node --test tests/blueprint-skill.test.mjs` |
 | Claude adapter plan | `node --test tests/claude-adapter-plan.test.mjs` |
