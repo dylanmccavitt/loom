@@ -1,6 +1,8 @@
 name: drift-radar
 
-# Advisory weekly OMP snapshot pin vs npm latest. Never blocks merges.
+# Advisory weekly radar: compose every drift surface into one markdown report,
+# upload it as an artifact, and upsert one marker-identified drift-radar issue.
+# Never files issue-per-finding reports and never compares live HOME in CI.
 on:
   schedule:
     - cron: "0 9 * * 1"
@@ -17,42 +19,49 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Run OMP snapshot drift radar
-        run: |
-          set -euo pipefail
-          node scripts/radar-snapshot-drift.mjs | tee drift-report.txt
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
 
-      - name: Sync drift-radar issue
+      - name: Compose weekly drift report
+        id: radar
+        run: |
+          set +e
+          node scripts/radar-report.mjs --out drift-report.md
+          RADAR_EXIT="$?"
+          set -e
+
+          echo "exit_code=${RADAR_EXIT}" >> "$GITHUB_OUTPUT"
+          cat drift-report.md
+
+      - name: Upload weekly drift report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-drift-radar-report
+          path: drift-report.md
+
+      - name: Upsert drift-radar issue
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          gh label create drift-radar --color "c5def5" --description "Weekly OMP snapshot npm drift radar" 2>/dev/null || true
+          MARKER="<!-- loom-drift-radar:weekly-consolidated -->"
+          TITLE="Weekly drift radar consolidated report"
+          TODAY="$(date -u +%Y-%m-%d)"
 
-          REPORT="$(cat drift-report.txt)"
-          VERDICT_LINE="$(printf '%s\n' "$REPORT" | tail -n 1)"
+          gh label create drift-radar --color "c5def5" --description "Weekly consolidated drift radar" 2>/dev/null || true
 
-          parse_kv() {
-            printf '%s\n' "$VERDICT_LINE" | sed -n "s/.*$1=\\([^ ]*\\).*/\\1/p"
-          }
+          ISSUE_NUMBER="$(
+            gh issue list --label drift-radar --state open --json number,body \
+              --jq '.[] | select(.body | contains("<!-- loom-drift-radar:weekly-consolidated -->")) | .number' \
+              | head -n 1
+          )"
 
-          VERDICT="$(parse_kv verdict)"
-          PINNED="$(parse_kv pinned)"
-          LATEST="$(parse_kv latest)"
-
-          OPEN_ISSUE="$(gh issue list --label drift-radar --state open --json number --jq '.[0].number // empty')"
-
-          if [ "$VERDICT" = "DRIFT" ]; then
-            TITLE="OMP snapshot drift: ${PINNED} vs ${LATEST}"
-            if [ -z "$OPEN_ISSUE" ]; then
-              gh issue create --label drift-radar --title "$TITLE" --body "$REPORT"
-            else
-              gh issue edit "$OPEN_ISSUE" --title "$TITLE" --body "$REPORT"
-            fi
-          elif [ "$VERDICT" = "CURRENT" ]; then
-            if [ -n "$OPEN_ISSUE" ]; then
-              gh issue comment "$OPEN_ISSUE" --body "Drift resolved: pinned ${PINNED} matches npm latest ${LATEST}."
-              gh issue close "$OPEN_ISSUE"
-            fi
+          if [ -z "$ISSUE_NUMBER" ]; then
+            gh issue create --label drift-radar --title "$TITLE" --body-file drift-report.md
+          else
+            gh issue edit "$ISSUE_NUMBER" --title "$TITLE" --body-file drift-report.md
+            gh issue comment "$ISSUE_NUMBER" --body "Weekly drift radar refreshed on ${TODAY} UTC (composer exit ${{ steps.radar.outputs.exit_code }})."
           fi

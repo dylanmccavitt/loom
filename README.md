@@ -127,6 +127,7 @@ npm run check
 | OMP contracts | `node --test tests/omp-contracts.test.mjs` |
 | Plugin bridge | `node --test tests/plugin-bridge.test.mjs` |
 | Prospect skill | `node --test tests/prospect-skill.test.mjs` |
+| Radar report | `node --test tests/radar-report.test.mjs` |
 | Render harness nucleus | `node --test tests/render-harness-nucleus.test.mjs` |
 | Roboports skill | `node --test tests/roboports-skill.test.mjs` |
 | Rocket launch skill | `node --test tests/rocket-launch-skill.test.mjs` |
