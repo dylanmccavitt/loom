@@ -3,8 +3,8 @@
 //
 // Keeps operator-facing command docs tied to package.json, rejects active-doc
 // claims for pre-ADR-0004 source/output paths, verifies the Factorio kit
-// manifest roster names shipped nucleus skills, and keeps OMP ownership docs
-// aligned to the harness resource manifest.
+// manifest roster names shipped nucleus skills, and keeps README tables aligned
+// with surviving scripts and tests.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -16,7 +16,6 @@ const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const DEFAULT_DOC_PATHS = Object.freeze([
   "README.md",
   "docs/architecture",
-  "docs/harness",
   "docs/operator",
   "docs/skills/factorio-kit.md",
 ]);
@@ -24,11 +23,7 @@ const DEFAULT_DOC_PATHS = Object.freeze([
 const COMMAND_DOC_PATHS = Object.freeze([
   "README.md",
   "docs/operator/daily-workflow.md",
-  "docs/operator/install-update.md",
 ]);
-
-const OMP_OWNERSHIP_DOC_PATH = "docs/harness/omp-ownership.md";
-
 // Phase-4 rename complete: package.json name and README H1 must both resolve to "loom".
 const PINNED_IDENTITY_ALIASES = Object.freeze(new Set([
   "loom",
@@ -45,17 +40,7 @@ const STALE_ACTIVE_PATHS = Object.freeze([
   {
     label: "old OMP tracked source root",
     pattern: /omp\/\.omp\/agent\//gu,
-    replacement: "adapters/omp/source/",
-  },
-  {
-    label: "old docs-hosted OMP built-ins snapshot root",
-    pattern: /docs\/harness\/omp-builtins\//gu,
-    replacement: "distributions/snapshots/omp-builtins/",
-  },
-  {
-    label: "old docs-hosted plugin bridge output root",
-    pattern: /docs\/harness\/plugin-bridge\/loom-nucleus\//gu,
-    replacement: "adapters/plugin-bridge/ or distributions/loom-nucleus/",
+    replacement: "nucleus/",
   },
 ]);
 
@@ -88,12 +73,8 @@ function walkMarkdown(relativePath, root = repoRoot, files = []) {
   return files;
 }
 
-function isHistoricalAllowed(relativePath, content) {
-  if (relativePath.startsWith("docs/decisions/")) return true;
-  if (relativePath.startsWith("docs/archive/")) return true;
-  return relativePath === "docs/archive/live-nucleus-inventory-2026-06-25.md"
-    && /Superseded historical snapshot/u.test(content)
-    && /Old paths below are preserved only as 2026-06-25 evidence/u.test(content);
+function isHistoricalAllowed(relativePath) {
+  return relativePath.startsWith("docs/decisions/");
 }
 
 function lineNumberForIndex(text, index) {
@@ -124,9 +105,6 @@ export function validateDocumentedCommands({ pkg, root = repoRoot, docPaths = CO
   const scripts = packageScriptNames(packageJson);
   const failures = [];
 
-  for (const required of ["render-nucleus", "install-nucleus", "check"]) {
-    if (!scripts.has(required)) failures.push(`package.json: missing required script ${required}`);
-  }
 
   for (const relativePath of docPaths) {
     const content = readText(relativePath, root);
@@ -135,12 +113,6 @@ export function validateDocumentedCommands({ pkg, root = repoRoot, docPaths = CO
       if (!scripts.has(script)) {
         failures.push(`${relativePath}:${lineNumberForIndex(content, match.index ?? 0)}: documents npm script ${script}, but package.json does not define it`);
       }
-    }
-    if (/install-nucleus`?\s+is\s+`?node scripts\/render-harness-nucleus\.mjs --write/u.test(content)) {
-      failures.push(`${relativePath}: install-nucleus description disagrees with package.json (${packageJson.scripts?.["install-nucleus"] ?? "missing"})`);
-    }
-    if (/render-harness-nucleus\.mjs --write/u.test(content) && /npm run install-nucleus/u.test(content)) {
-      failures.push(`${relativePath}: install flow still points at render-harness-nucleus.mjs instead of package.json install-nucleus`);
     }
   }
 
@@ -188,53 +160,6 @@ export function validateFactorioKitRoster({ root = repoRoot, manifestPath = "doc
   return failures;
 }
 
-function parseOwnershipRows(docText) {
-  const rows = new Map();
-  for (const line of docText.split("\n")) {
-    const match = line.match(/^\| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \|$/u);
-    if (!match) continue;
-    rows.set(match[1], {
-      state: match[2],
-      target: match[3],
-      localOnly: match[4],
-    });
-  }
-  return rows;
-}
-
-export function validateOmpOwnershipMatrix({
-  root = repoRoot,
-  resourceManifestPath = "docs/harness/resource-manifest.json",
-  ownershipPath = OMP_OWNERSHIP_DOC_PATH,
-} = {}) {
-  const failures = [];
-  const manifest = JSON.parse(readText(resourceManifestPath, root));
-  const rows = parseOwnershipRows(readText(ownershipPath, root));
-  const ompResources = (manifest.resources ?? []).filter((resource) => resource.sourceHarness === "omp");
-
-  for (const resource of ompResources) {
-    const row = rows.get(resource.id);
-    if (!row) {
-      failures.push(`${ownershipPath}: missing ownership state matrix row for OMP manifest resource ${resource.id}`);
-      continue;
-    }
-    if (row.state !== resource.disposition) {
-      failures.push(`${ownershipPath}: ${resource.id} ownership state matrix row uses ${row.state}, but manifest disposition is ${resource.disposition}`);
-    }
-    if (row.target !== resource.intendedRepoTarget) {
-      failures.push(`${ownershipPath}: ${resource.id} ownership state matrix row targets ${row.target}, but manifest target is ${resource.intendedRepoTarget}`);
-    }
-    const expectedLocalOnly = resource.disposition === "local-only" ? "yes" : "no";
-    if (row.localOnly !== expectedLocalOnly) {
-      failures.push(`${ownershipPath}: ${resource.id} ownership state matrix row local-only marker is ${row.localOnly}, but manifest disposition requires ${expectedLocalOnly}`);
-    }
-    if (resource.disposition === "local-only" && (row.state !== "local-only" || row.target !== "none" || row.localOnly !== "yes")) {
-      failures.push(`${ownershipPath}: ${resource.id} is local-only in the manifest and must not be documented as repo-owned or trackable`);
-    }
-  }
-
-  return failures;
-}
 
 function readmeTestSuiteSection(readmeText) {
   const match = readmeText.match(/### Test Suites\n\n(?<table>[\s\S]*?)(?:\n\n## |\n*$)/u);
@@ -321,12 +246,11 @@ export function evaluateNucleusDocsDrift(options = {}) {
     ...validateNoActiveStalePaths(options),
     ...validateDocumentedCommands(options),
     ...validateFactorioKitRoster(options),
-    ...validateOmpOwnershipMatrix(options),
     ...validateTestTableSync(options),
     ...validateScriptsTableExistence(options),
     ...validateNameAliasPinning(options),
   ];
-  return { checks: 7, failures };
+  return { checks: 6, failures };
 }
 
 const invokedDirectly = process.argv[1]

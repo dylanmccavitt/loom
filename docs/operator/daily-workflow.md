@@ -4,36 +4,21 @@ Use this page when you are operating the workflow, not changing its internals.
 
 ## Start a project in a repo
 
-On a **fresh VM**, bootstrap the per-machine Factory Nucleus envelope first —
-see [envelope-bootstrap.md](./envelope-bootstrap.md) (`init-envelope` →
-`bind-tracker` → `doctor` / `scan` verify; envelope stays under `~/.loom/`,
-never committed).
-
-1. Inspect the repo without writing to it:
+1. Confirm you are in the intended checkout:
 
    ```sh
-   npm run factory -- scan --root <repo>
+   npm run guard:worktree
    ```
 
-2. Create the local Factory Nucleus envelope:
+2. Confirm the repo gate is green before assigning work:
 
    ```sh
-   npm run factory -- init-envelope --root <repo>
+   npm run check
    ```
 
-3. Pick the tracker for this repo. Loom does not choose for you — see [choose-a-tracker.md](./choose-a-tracker.md):
-
-   ```sh
-   npm run choose-tracker -- --root <repo>
-   ```
-
-4. Bind the selected tracker:
-
-   ```sh
-   npm run factory -- bind-tracker --root <repo> --provider linear --team <team> --project <project>
-   # or
-   npm run factory -- bind-tracker --root <repo> --provider github --repo <owner/name>
-   ```
+3. Bind planning work to the tracker selected by the project. Linear and GitHub
+   Issues are peers in the contract; the user's selection is the source of truth
+   for that repo.
 
 ## Run the work lane
 
@@ -52,10 +37,3 @@ to bind for the project before planning or creating tracked work. Linear and
 GitHub Issues are peers in the contract; the user's selection is the source of
 truth for that repo.
 
-## Health check
-
-Run the read-only operator status:
-
-```sh
-npm run doctor
-```

@@ -5,8 +5,7 @@ its tracker explicitly: Linear or GitHub Issues own ghosts/planning state for
 that project; GitHub owns code delivery through branches, PRs, review, CI, and
 merge. Decisions are recorded in [ADR 0003](../decisions/0003-factorio-workflow-kit.md).
 
-Factory Nucleus ships a tracker-neutral planning contract with a required picker
-before binding. See [tracker modes](../factory-nucleus/tracker-modes.md).
+The tracker choice is explicit before binding planning work for a repo.
 
 This manifest is the build envelope, not an active adapter template. Its roster
 is validated against committed `nucleus/skills/` by `npm run check`. Each skill is
