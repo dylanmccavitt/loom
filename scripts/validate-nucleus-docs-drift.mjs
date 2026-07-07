@@ -40,7 +40,7 @@ const STALE_ACTIVE_PATHS = Object.freeze([
   {
     label: "old OMP tracked source root",
     pattern: /omp\/\.omp\/agent\//gu,
-    replacement: "nucleus/",
+    replacement: "skills/",
   },
 ]);
 

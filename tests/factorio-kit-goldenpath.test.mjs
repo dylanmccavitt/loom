@@ -142,8 +142,8 @@ test("workflow docs use post-cutover content-envelope terminology", () => {
 
 test("renamed and absorbed skills have no duplicate canonical old paths", () => {
   for (const retired of ["dispatch", "robots", "inserter", "ghosts", "radar", "proof-pass", "bus-first", "main-bus", "science-pack", "research", "spitters", "spidertron", "recycler", "quality", "modules"]) {
-    assert.equal(existsSync(new URL(`${retired}/SKILL.md`, skillsRoot)), false, `${retired} must not remain in nucleus/skills`);
-    assert.equal(existsSync(new URL(`${retired}/SKILL.md`, utilitiesRoot)), false, `${retired} must not remain in skills tree`);
+    assert.equal(existsSync(new URL(`${retired}/SKILL.md`, skillsRoot)), false, `${retired} must not remain in skills/`);
+    assert.equal(existsSync(new URL(`${retired}/SKILL.md`, utilitiesRoot)), false, `${retired} must not remain in the skills tree`);
   }
   assert.ok(existsSync(new URL("roboports/SKILL.md", skillsRoot)), "roboports skill missing");
 });

@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Report security issues through [GitHub private security advisories](https://github.com/dylanmccavitt2015/loom-nucleus/security/advisories/new) for this repository. Do not open public issues for exploitable findings.
+Report security issues through [GitHub private security advisories](https://github.com/DylanMcCavitt/loom/security/advisories/new) for this repository. Do not open public issues for exploitable findings.
 
 Include:
 
