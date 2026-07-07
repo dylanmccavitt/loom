@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Report security issues through [GitHub private security advisories](https://github.com/dylanmccavitt2015/loom-nucleus/security/advisories/new) for this repository. Do not open public issues for exploitable findings.
+Report security issues through [GitHub private security advisories](https://github.com/DylanMcCavitt/loom/security/advisories/new) for this repository. Do not open public issues for exploitable findings.
 
 Include:
 
@@ -18,7 +18,7 @@ This repository ships a **prompt pack** (skills and agent guidance) and **valida
 
 In scope:
 
-- tracked skill source under `nucleus/`
+- tracked skill source under `skills/`
 - CI validators and release workflows under `scripts/` and `.github/workflows/`
 - accidental secret leakage in tracked source or validation tooling
 
