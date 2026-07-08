@@ -1,71 +1,58 @@
 # Loom
 
-Loom is a cross-harness agent pack: seven roster agents plus kit utilities shipped as portable Agent-Skills-shaped packages, with validators and offline tests. It is for operators running OMP, Codex, or Claude Code-class coding agents who want one repo-owned workflow nucleus without copying private runtime state.
+Loom is a curated, harness-agnostic agent skill pack for turning planning, implementation, review, proof, repair, launch, handoff, and initiative workflows into portable skills that teams can install wherever their coding agents read skill directories.
+
+## Skill roster
+
+| Skill | Purpose |
+| --- | --- |
+| `belt` | Carries durable handoff, thread-control, and resume context with concise state, proof, risks, and next actions. |
+| `biters` | Reviews changes adversarially for correctness, regressions, maintainability, scope creep, missing tests, security, and workflow drift. |
+| `blueprint` | Shapes specs, issue decompositions, architecture seams, research spikes, tracker triage, and reusable planning templates. |
+| `lab` | Runs proof-only command, UI, and smoke validation while recording behavior evidence without expanding scope. |
+| `repair-pack` | Fixes exactly one concrete review or proof finding from a fresh compact packet. |
+| `roboports` | Coordinates one tracked implementation issue end to end with localized fanout, minimal diffs, refactors, and performance work. |
+| `rocket-launch` | Enforces launch gates for ready changes and records the evidence loop for PR merge and tracker closeout handoff. |
+| `assembler` | Sets up or refreshes a repo-local workflow kit envelope, harness wiring, repo glossary, commands, templates, and skills. |
+| `prospect` | Captures a brand-new idea, feature, or initiative as tracked planning work before a spec or issues exist. |
+| `space-age` | Coordinates artifact promotion and cross-repo delivery through ordered CI/CD or dependency hops. |
+| `map-seed` | De-risks constrained designs with a fast throwaway prototype, retro, and restarted plan. |
 
 ## Install per harness
 
-**Universal skill path (all harnesses).** Repo skills live under [`skills/`](skills/) as the canonical source. Symlink or copy one directory per skill into your harness skill root:
-
-```sh
-ln -s "$(pwd)/skills/blueprint" ~/.agents/skills/blueprint
-```
-
-Harness-specific roots also work: `~/.codex/skills/<name>/`, `~/.claude/skills/<name>/`, or project-local `.agents/skills/<name>/`.
-
-
-## Try one skill in 5 minutes
-
-```sh
-git clone https://github.com/DylanMcCavitt/loom.git && cd loom
-npm run check
-ln -s "$(pwd)/skills/blueprint" ~/.agents/skills/blueprint
-```
-
-Invoke the `blueprint` skill in your harness (shape/spec work). Roster agents: `belt`, `biters`, `blueprint`, `lab`, `repair-pack`, `roboports`, `rocket-launch`. Kit utilities: `assembler`, `prospect`, `space-age`, `map-seed`.
-
-## Harness matrix
-
-| Harness | Skill root | Install route | Status |
-| --- | --- | --- | --- |
-| OMP | `~/.agents/skills/` (shared); repo [`skills/`](skills/) | Per-skill symlink or copy from `skills/<name>` | Skills available through skill roots |
-| Codex | `~/.codex/skills/`, `~/.agents/skills/` | Per-skill symlink or copy from [`skills/`](skills/) | Skills available through skill roots |
-| Claude Code | `~/.claude/skills/`, `~/.agents/skills/` | Per-skill symlink or copy from [`skills/`](skills/) | Skills available through skill roots |
-
-## Glossary
-
-| Term | Meaning |
-| --- | --- |
-| Loom | This repo and the cross-harness agent pack it ships |
-| nucleus | Cross-harness workflow model shipped as canonical skill packages under [`skills/`](skills/) |
-
-## Validators and tests
-
-```sh
-npm run check
-```
-
-### Validators
-
-| Area | Command | Purpose |
+| Harness | Install route | Notes |
 | --- | --- | --- |
-| Check (all) | `npm run check` | Runs `npm run validate` then the full test suite |
-| Validate | `npm run validate` | Runs surviving `scripts/validate-*.mjs` validators |
-| Test | `npm test` | Runs the full Node test suite |
-| Bench | `npm run bench` | Runs the benchmark harness |
-| Worktree guard | `npm run guard:worktree` | Confirms agent work starts in the intended checkout |
-| Loop | `npm run loop` | Runs the operator loop entrypoint |
-| Skills | `node scripts/validate-skills.mjs` | Skill shape, frontmatter, naming, secret-like content |
-| Docs drift | `node scripts/validate-nucleus-docs-drift.mjs` | README identity, command docs, roster, and table sync |
+| Claude Code | `ln -s ~/loom/skills ~/.claude/skills` | Plain skill dirs, no plugin needed; symlinks documented-supported. |
+| Codex CLI and generic Agent Skills convention | `ln -s ~/loom/skills ~/.agents/skills` | Symlinked folders documented-supported. |
+| Cursor | Reads `~/.agents/skills` or `~/.cursor/skills` | Symlink support undocumented — verify in Skills UI; copy if not listed. |
+| OMP | `skills.customDirectories: [~/loom/skills]` | No symlink needed. |
+| Factory Droid | Copy into `~/.factory/skills` | Symlink behavior undocumented. |
+
+## Maintainers
+
+### Commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run check` | Runs `npm run validate` and then `npm test`. |
+| `npm run validate` | Runs every `scripts/validate-*.mjs` validator. |
+| `npm run lint` | Alias for `npm run validate`. |
+| `npm test` | Runs `node --test tests/*.test.mjs`. |
+| `npm run bench` | Runs `node scripts/bench.mjs`. |
+| `npm run loop` | Runs `node scripts/loop.mjs`. |
+| `npm run guard:worktree` | Runs `node scripts/worktree-guard.mjs`. |
 
 ### Test Suites
 
 | Area | Command |
 | --- | --- |
 | Assembler skill | `node --test tests/assembler-skill.test.mjs` |
-| Benchmarks | `node --test tests/benchmarks-bench.test.mjs` |
+| Benchmark script | `node --test tests/benchmarks-bench.test.mjs` |
 | Biters skill | `node --test tests/biters-skill.test.mjs` |
 | Blueprint skill | `node --test tests/blueprint-skill.test.mjs` |
 | Factorio kit golden path | `node --test tests/factorio-kit-goldenpath.test.mjs` |
+| Frontmatter metadata | `node --test tests/frontmatter.test.mjs` |
+| Harness safety library | `node --test tests/harness-safety-lib.test.mjs` |
 | Loop entrypoint | `node --test tests/loop-entrypoint.test.mjs` |
 | Map seed skill | `node --test tests/map-seed-skill.test.mjs` |
 | Nucleus docs drift | `node --test tests/nucleus-docs-drift.test.mjs` |
@@ -77,8 +64,22 @@ npm run check
 | Space age skill | `node --test tests/space-age-skill.test.mjs` |
 | Worktree guard | `node --test tests/worktree-guard.test.mjs` |
 
-## Links
+### Validators
 
-**Operator runbooks:** [`docs/operator/daily-workflow.md`](docs/operator/daily-workflow.md) · [`docs/operator/loop.md`](docs/operator/loop.md)
+| Validator | Command | Purpose |
+| --- | --- | --- |
+| Nucleus docs drift | `node scripts/validate-nucleus-docs-drift.mjs` | Keeps README identity, commands, script citations, and test-suite rows aligned with package scripts and files on disk. |
+| Skill validation | `node scripts/validate-skills.mjs` | Checks skill shape, frontmatter, naming, and secret-like content. |
 
-**Governance (sibling PR):** [`LICENSE`](LICENSE) · [`SECURITY.md`](SECURITY.md) · [`template/`](template/)
+### Scripts
+
+| Script | Command | Purpose |
+| --- | --- | --- |
+| Benchmark harness | `node scripts/bench.mjs` | Runs repository benchmark checks. |
+| Operator loop | `node scripts/loop.mjs` | Runs the offline loop entrypoint. |
+| Retro packet helper | `node scripts/retro-packet.mjs` | Handles retro packet maintenance. |
+| Worktree guard | `node scripts/worktree-guard.mjs` | Confirms agent work starts in the intended checkout. |
+
+### Release asset
+
+The release tarball ships only `skills/`, `docs/agent-contract.md`, `LICENSE`, `README.md`, and `RELEASE-NOTES.md`. Development tooling lives only in the repository.

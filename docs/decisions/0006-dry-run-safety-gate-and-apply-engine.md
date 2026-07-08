@@ -1,4 +1,5 @@
 # ADR 0006: Dry-Run Safety Gate and Apply Engine
+> Superseded by [ADR 0009](0009-skill-pack-pivot.md) (2026-07-07); kept as a historical record.
 
 ## Status
 

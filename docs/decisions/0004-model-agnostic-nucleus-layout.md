@@ -1,4 +1,5 @@
 # ADR 0004: Model-Agnostic Nucleus Layout (nucleus / adapters / distributions)
+> Superseded by [ADR 0009](0009-skill-pack-pivot.md) (2026-07-07); kept as a historical record.
 
 ## Status
 
