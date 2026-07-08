@@ -32,16 +32,31 @@ mock bridge, and bench CLI smoke. Do not treat model scores as a substitute.
 ### 2. After skill text or routing changes (tier 2)
 
 ```sh
-# dry run (no network)
+# dry run (no network; canned scores, not a real judgment)
 LOOM_JUDGE_MOCK=1 npm run bench -- --judge
 
-# live grader (env only; never commit keys)
+# live grader via API key (env only; never commit keys)
 export LOOM_JUDGE_API_KEY=...
 export LOOM_JUDGE_MODEL=...
 # optional: LOOM_JUDGE_BASE_URL=...
 npm run bench -- --judge            # all skills
 npm run bench -- --judge roboports  # one skill
+
+# live grader via a subscription CLI (no API key needed):
+# OpenAI Codex plan — GPT-5.5 at xhigh reasoning, stdin prompt, read-only
+LOOM_JUDGE_CMD='codex exec --ephemeral --sandbox read-only -m gpt-5.5 -c model_reasoning_effort=xhigh -' \
+LOOM_JUDGE_MODEL='gpt-5.5-xhigh' npm run bench -- --judge
+# Cursor plan — auto model; -p takes the prompt as an argument, so "$(cat)"
+# captures the piped stdin; --mode ask keeps the judge read-only
+LOOM_JUDGE_CMD='cursor-agent -p --mode ask --model auto --output-format text "$(cat)"' \
+LOOM_JUDGE_MODEL='cursor-auto' npm run bench -- --judge
 ```
+
+`LOOM_JUDGE_CMD` runs once per skill with the judge prompt on stdin and must
+print the rubric JSON on stdout. `LOOM_JUDGE_MODEL` is only a scorecard label
+in this mode. Read the freshest `retro/judge-scorecard-*.md` in a markdown
+preview — the rubric table is the dashboard; diff two scorecards across skill
+versions to spot regressions.
 
 Scorecards land in `retro/judge-scorecard-*.{json,md}` (gitignored). Use them as
 trim candidates and regression notes; they do not gate CI. Each skill’s
