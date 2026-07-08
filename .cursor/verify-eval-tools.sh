@@ -41,16 +41,13 @@ fi
 
 echo ""
 echo "=== Auth hints (non-fatal) ==="
-if agent status >/dev/null 2>&1; then
-  echo "ok: agent CLI is logged in (Cursor subscription)"
-else
-  echo "hint: run 'agent login' once in this VM, then snapshot the environment (Dashboard -> Cloud Agents -> Environments)"
-fi
-if codex login status >/dev/null 2>&1; then
-  echo "ok: codex CLI is logged in (ChatGPT/Codex subscription)"
-else
-  echo "hint: run 'codex login' once in this VM (device-auth flow), then snapshot the environment"
-fi
+# Both CLIs may print "Not logged in" while still exiting 0, so check output too.
+AGENT_STATUS="$(agent status 2>&1)" && ! grep -qi 'not logged in' <<<"${AGENT_STATUS}" \
+  && echo "ok: agent CLI is logged in (Cursor subscription)" \
+  || echo "hint: run 'agent login' once in this VM, then snapshot the environment (Dashboard -> Cloud Agents -> Environments)"
+CODEX_STATUS="$(codex login status 2>&1)" && ! grep -qi 'not logged in' <<<"${CODEX_STATUS}" \
+  && echo "ok: codex CLI is logged in (ChatGPT/Codex subscription)" \
+  || echo "hint: run 'codex login' once in this VM (device-auth flow), then snapshot the environment"
 
 echo ""
 echo "=== Structural gate ==="
