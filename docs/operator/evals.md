@@ -31,21 +31,24 @@ saved environment snapshot when one exists.
 
 1. **Merge** the branch with `.cursor/environment.json` (or cherry-pick those files).
 2. Open [Cloud Agents → loom environment](https://cursor.com/dashboard/cloud-agents) and confirm the repo picks up `.cursor/environment.json` (it overrides personal defaults when present).
-3. In **Secrets** for that environment, add:
-   - `LOOM_JUDGE_BACKEND` = `cursor` or `codex` (selects the judge command)
-   - `CURSOR_API_KEY` — required for headless `agent -p` when backend is `cursor`
-   - `CODEX_API_KEY` — optional; otherwise run `codex login` once interactively, then snapshot
+3. In **Secrets** for that environment, add only
+   `LOOM_JUDGE_BACKEND` = `cursor` or `codex` (selects the judge CLI).
+   No API keys are needed.
 4. Start a cloud agent on `main`. The `install` step runs
    `bash .cursor/install-eval-tools.sh && npm ci`.
-5. From the **loom repo root**, verify:
+5. **One-time subscription login** inside a cloud thread: from the VM terminal,
+   run `agent login` (Cursor plan) and/or `codex login` (ChatGPT plan,
+   device-auth flow). Verify with `agent status` / `codex login status`, then
+   **snapshot** the environment so the login persists for every future thread.
+6. From the **loom repo root**, verify:
    ```sh
    bash .cursor/verify-eval-tools.sh
    source .cursor/source-eval-judge.sh
    npm run bench -- --judge roboports
    ```
-6. Open `retro/judge-scorecard-*.md` in markdown preview.
-7. **Snapshot** the environment from the dashboard so future threads skip cold
-   install and retain Codex auth if you logged in interactively.
+7. Open `retro/judge-scorecard-*.md` in markdown preview.
+8. **Snapshot** the environment from the dashboard so future threads skip cold
+   install and retain the subscription logins.
 
 ### Per-thread eval commands (cloud VM, repo root)
 

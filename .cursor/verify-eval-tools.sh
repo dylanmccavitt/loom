@@ -41,15 +41,15 @@ fi
 
 echo ""
 echo "=== Auth hints (non-fatal) ==="
-if [[ -n "${CURSOR_API_KEY:-}" ]]; then
-  echo "ok: CURSOR_API_KEY is set (agent headless auth)"
+if agent status >/dev/null 2>&1; then
+  echo "ok: agent CLI is logged in (Cursor subscription)"
 else
-  echo "hint: add CURSOR_API_KEY to Secrets when using LOOM_JUDGE_BACKEND=cursor"
+  echo "hint: run 'agent login' once in this VM, then snapshot the environment (Dashboard -> Cloud Agents -> Environments)"
 fi
-if [[ -n "${CODEX_API_KEY:-}" ]]; then
-  echo "ok: CODEX_API_KEY is set"
+if codex login status >/dev/null 2>&1; then
+  echo "ok: codex CLI is logged in (ChatGPT/Codex subscription)"
 else
-  echo "hint: add CODEX_API_KEY to Secrets, or run 'codex login' once then snapshot the environment"
+  echo "hint: run 'codex login' once in this VM (device-auth flow), then snapshot the environment"
 fi
 
 echo ""

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Sources judge defaults for cloud-agent sessions. Never contains secrets.
 # Set LOOM_JUDGE_BACKEND to "cursor" or "codex" in the environment Secrets tab.
-# Optional: CURSOR_API_KEY (Cursor headless auth), CODEX_API_KEY (Codex API auth).
+# Auth comes from the CLIs' own subscription login state (`agent login` /
+# `codex login`, persisted via environment snapshot) — no API keys.
 
 case "${LOOM_JUDGE_BACKEND:-}" in
   codex)
