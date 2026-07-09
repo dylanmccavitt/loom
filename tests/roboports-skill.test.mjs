@@ -15,7 +15,7 @@ test("roboports has the required trigger", () => {
   );
   assert.match(
     skill,
-    /Use when the user asks to start, continue, or ship one tracked issue, refactor without changing behavior, or optimize a proven bottleneck\./u,
+    /Use when starting, continuing, or shipping one tracked issue, refactoring without changing behavior, or optimizing a proven bottleneck\./u,
   );
 });
 

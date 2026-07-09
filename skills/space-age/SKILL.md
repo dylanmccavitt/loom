@@ -1,9 +1,9 @@
 ---
 name: space-age
-description: Promotes an artifact planet by planet through CI/CD environments and orchestrates cross-repo changes in dependency order, reusing per-hop launch gates. Use when work crosses one repo or one environment: CI/CD pipelines, releasing/promoting through staging then prod, or rolling a change across multiple service repos. Not for shipping a single PR on one repo — use rocket-launch; not for implementing a feature — use roboports.
+description: Promotes an artifact planet by planet through CI/CD environments and orchestrates cross-repo changes in dependency order, reusing per-hop launch gates. Use when work crosses one repo or environment: CI/CD pipelines, promoting staging then prod, or rolling a change across multiple service repos. Not for shipping a single PR on one repo — use rocket-launch; not for implementing a feature — use roboports.
 metadata:
   version: "0.1.1"
-  changelog: "0.1.1 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.1.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

@@ -1,9 +1,9 @@
 ---
 name: blueprint
-description: Shapes current context into a PRD/spec with acceptance criteria, non-goals, and a proof plan, and covers issue decomposition, architecture seams, research spikes, and tracker triage through lenses. Owns the kit's reusable PR, issue, project-doc, and PRD templates. Use for writing a PRD/spec, breaking a plan into issues, planning structure, resolving unknowns, triaging incoming issues, or fetching a PR/issue/doc template. Not for implementing a ready tracked issue — use roboports; not for throwaway prototypes — use map-seed; not for landing a brand-new idea's tracker home — use prospect.
+description: Shapes current context into a PRD/spec with acceptance criteria, non-goals, and a proof plan; covers issue decomposition, architecture seams, research spikes, and tracker triage through lenses; owns the kit's reusable PR, issue, project-doc, and PRD templates. Use for writing a PRD/spec, breaking a plan into issues, planning structure, resolving unknowns, triaging incoming issues, or fetching a PR/issue/doc template. Not for implementing a ready tracked issue — use roboports; not for throwaway prototypes — use map-seed; not for landing a brand-new idea's tracker home — use prospect.
 metadata:
   version: "0.2.1"
-  changelog: "0.2.1 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

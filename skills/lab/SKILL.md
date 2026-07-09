@@ -1,9 +1,9 @@
 ---
 name: lab
-description: Proves a stated behavior claim with command, UI, or smoke evidence and records artifacts without expanding scope. Use when behavior must be proved, verified, smoke tested, or evidenced — rerun checks and capture output, click through browser/desktop UI for screenshots, or grade an end-to-end smoke pass. Not for adversarial review or hunting bugs — use biters; not for implementing a tracked issue or feature — use roboports.
+description: Proves a stated behavior claim with command, UI, or smoke evidence and records artifacts without expanding scope. Use when rerunning checks to capture output, clicking through browser/desktop UI for screenshots, or grading an end-to-end smoke pass. Not for adversarial review or hunting bugs — use biters; not for implementing a tracked issue or feature — use roboports.
 metadata:
   version: "0.2.2"
-  changelog: "0.2.2 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.2.2 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

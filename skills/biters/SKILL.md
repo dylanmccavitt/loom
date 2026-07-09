@@ -1,9 +1,9 @@
 ---
 name: biters
-description: Probes a change before merge for correctness bugs, regressions, maintainability rot, scope creep, and missing tests by default, with security, minimal-diff, and workflow-drift review lenses. Use when reviewing a PR adversarially, hunting bugs and risks before merge, asking where the codebase could be breached, tightening an over-engineered diff, or checking planned-vs-actual drift. Not for explaining concepts; not for applying fixes — use repair-pack for one finding or roboports for full issue work; not for proving behavior with evidence — use lab.
+description: Probes a change before merge for correctness bugs, regressions, maintainability rot, scope creep, and missing tests, with security, minimal-diff, and workflow-drift review lenses. Use when reviewing a PR adversarially, hunting bugs and risks before merge, probing breach paths, tightening an over-engineered diff, or checking planned-vs-actual drift. Not for explaining concepts; not for applying fixes — use repair-pack for one finding or roboports for full issue work; not for proving behavior with evidence — use lab.
 metadata:
   version: "0.2.1"
-  changelog: "0.2.1 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

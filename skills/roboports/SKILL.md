@@ -1,9 +1,9 @@
 ---
 name: roboports
-description: Implements one ready tracked issue end to end as code — one issue to one branch/worktree to one PR — with localized subagent fanout and a minimal diff, plus behavior-preserving refactor and measured performance lenses. Use when the user asks to start, continue, or ship one tracked issue, refactor without changing behavior, or optimize a proven bottleneck. Not for triaging incoming bugs — use blueprint; not for merging or closing a ready PR — use rocket-launch; not for one-finding patches — use repair-pack.
+description: Implements one ready tracked issue end to end as code — one issue to one branch/worktree to one PR — with localized subagent fanout and a minimal diff, plus behavior-preserving refactor and measured performance lenses. Use when starting, continuing, or shipping one tracked issue, refactoring without changing behavior, or optimizing a proven bottleneck. Not for triaging incoming bugs — use blueprint; not for merging or closing a ready PR — use rocket-launch; not for one-finding patches — use repair-pack.
 metadata:
   version: "0.2.1"
-  changelog: "0.2.1 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

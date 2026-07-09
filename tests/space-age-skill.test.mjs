@@ -15,7 +15,7 @@ test("space-age has the required trigger", () => {
   );
   assert.match(
     skill,
-    /Use when work crosses one repo or one environment: CI\/CD pipelines, releasing\/promoting through staging then prod, or rolling a change across multiple service repos\./u,
+    /Use when work crosses one repo or environment: CI\/CD pipelines, promoting staging then prod, or rolling a change across multiple service repos\./u,
   );
 });
 

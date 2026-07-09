@@ -1,9 +1,9 @@
 ---
 name: repair-pack
-description: Patches exactly one concrete review or proof finding from a fresh compact packet, then reruns the named check. Use when fixing exactly one finding (file, symbol, scope, risk, minimal fix, proof check) without drive-by cleanup. Not for implementing a full tracked issue end to end — use roboports; not for reviewing a diff to produce findings — use biters.
+description: Patches exactly one concrete review or proof finding from a fresh compact packet, then reruns the named check. Use when fixing one finding (file, symbol, scope, risk, minimal fix, proof check) without drive-by cleanup. Not for implementing a full tracked issue end to end — use roboports; not for reviewing a diff to produce findings — use biters.
 metadata:
   version: "0.2.2"
-  changelog: "0.2.2 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.2.2 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

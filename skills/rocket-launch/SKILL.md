@@ -1,9 +1,9 @@
 ---
 name: rocket-launch
-description: Launches a ready change by enforcing every launch gate, merging the PR, and letting the bridge close its tracked issue while recording auditable evidence. Use when a change is ready to ship — merge the PR, run the review gate, and close out the tracked issue. Not for opening a draft PR or unfinished work — use roboports; not for multi-repo or multi-environment promotion — use space-age.
+description: Launches a ready change by enforcing every launch gate, merging the PR, and letting the bridge close its tracked issue while recording auditable evidence. Use when shipping a ready change — merge the PR, run the review gate, and close out the tracked issue. Not for opening a draft PR or unfinished work — use roboports; not for multi-repo or multi-environment promotion — use space-age.
 metadata:
   version: "0.3.1"
-  changelog: "0.3.1 - sharpen routing description with distinct verbs and negative triggers"
+  changelog: "0.3.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
 
 ---
 

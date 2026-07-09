@@ -6,7 +6,7 @@ const skill = readFileSync(new URL("../skills/assembler/SKILL.md", import.meta.u
 
 test("assembler has the required trigger", () => {
   assert.match(skill, /description: Bootstraps or refreshes a repo for the Factorio workflow kit/u);
-  assert.match(skill, /Use when setting up a repo for the kit, checking whether it is kit-ready, refreshing/u);
+  assert.match(skill, /Use when setting up a repo for the kit, checking kit-readiness, refreshing/u);
 });
 
 test("assembler generates the repo-local envelope bindings", () => {
