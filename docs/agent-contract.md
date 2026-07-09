@@ -121,6 +121,29 @@ Every agent receives a bounded input packet and returns a bounded output packet.
 
 Rules use stable IDs (`## rule/{stable-id}`) citing status, scope, rule, why, exceptions, source, bad/good examples, assumptions, and open decisions. Missing or unverified guidance belongs in `references/coverage-gaps.md`.
 
+### Machine-checkable JSON packets
+
+Tag packets with a top-level `"packet"` kind. Schemas: `scripts/lib/packet-schema.mjs`. Scanner: `scripts/validate-packets.mjs` over `retro/**/*.md` (fenced json) and `retro/**/*.json`; untagged JSON is ignored.
+
+| `packet` | Shape |
+| --- | --- |
+| `repair-finding` | nine required finding fields |
+| `agent-input` | `mode`, `targetSurface`; optional `lens`/`lenses`, `context`, `scope`, `issueId`/`prId` |
+| `agent-output` | mode, lens, loaded references, rule IDs, proof run/result, coverage gaps, changed files; optional blocker |
+
+CamelCase fields. `context` is `validation` | `live` (default `live`). Example:
+
+```json
+{
+  "packet": "agent-input",
+  "mode": "repair",
+  "context": "validation",
+  "targetSurface": "skills/repair-pack",
+  "issueId": "LOO-000",
+  "lens": "correctness"
+}
+```
+
 ## Governance and activation
 
 Guidance changes follow the practiced retro-packet core: generated packets (scripts/retro-packet.mjs) stay pending under `retro/pr-{number}/`, human PR review is the HITL gate, accepted rules still satisfy the enforced rule schema, and accepted guidance lands only after approval in the narrowest relevant skill destination. The older collector/judge/destination machine is aspirational design vocabulary, not live automation.
