@@ -14,6 +14,7 @@
     "lint": "npm run validate",
     "check": "npm run validate && npm test",
     "install:skills": "node scripts/install.mjs",
-    "loop": "node scripts/loop.mjs"
+    "loop": "node scripts/loop.mjs",
+    "verify:eval-tools": "bash .cursor/verify-eval-tools.sh"
   }
 }

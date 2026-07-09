@@ -42,8 +42,9 @@ saved environment snapshot when one exists.
    **snapshot** the environment so the login persists for every future thread.
 6. From the **loom repo root**, verify:
    ```sh
-   bash .cursor/verify-eval-tools.sh
-   npm run bench -- --judge roboports   # LOOM_JUDGE_BACKEND secret is read directly
+   npm run check
+   npm run verify:eval-tools                           # CLIs + LOOM_JUDGE_BACKEND + auth hints
+   npm run bench -- --judge roboports                  # LOOM_JUDGE_BACKEND secret is read directly
    ```
 7. Open `retro/judge-scorecard-*.md` in markdown preview.
 8. **Snapshot** the environment from the dashboard so future threads skip cold
@@ -55,6 +56,7 @@ saved environment snapshot when one exists.
 cd /workspace   # or your loom checkout — must be repo root
 
 npm run check                                          # always
+npm run verify:eval-tools                              # judge CLIs + secret/auth hints (not check alone)
 npm run bench -- --judge roboports                     # one skill first; reads LOOM_JUDGE_BACKEND directly
 npm run bench -- --judge                               # full pack when ready
 

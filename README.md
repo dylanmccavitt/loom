@@ -75,6 +75,7 @@ Manual routes, for reference:
 | `npm run loop` | Runs `node scripts/loop.mjs`. |
 | `npm run guard:worktree` | Runs `node scripts/worktree-guard.mjs`. |
 | `npm run install:skills` | Runs `node scripts/install.mjs`. |
+| `npm run verify:eval-tools` | Runs `bash .cursor/verify-eval-tools.sh` (cloud VM judge readiness). |
 
 ### Test Suites
 
@@ -82,6 +83,7 @@ Manual routes, for reference:
 | --- | --- |
 | Assembler skill | `node --test tests/assembler-skill.test.mjs` |
 | Benchmark script | `node --test tests/benchmarks-bench.test.mjs` |
+| Cloud VM eval tools | `node --test tests/eval-tools-vm.test.mjs` |
 | Biters skill | `node --test tests/biters-skill.test.mjs` |
 | Blueprint skill | `node --test tests/blueprint-skill.test.mjs` |
 | Factorio kit golden path | `node --test tests/factorio-kit-goldenpath.test.mjs` |

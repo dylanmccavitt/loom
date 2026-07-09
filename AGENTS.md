@@ -12,6 +12,7 @@ Loom is a curated, harness-agnostic agent skill pack. The repo source of truth i
 - `npm run loop` - offline loop entrypoint.
 - `npm run guard:worktree` - confirms work starts in the intended checkout.
 - `npm run install:skills` - interactive or flag-driven installer that links or copies `skills/` into harness skill directories.
+- `npm run verify:eval-tools` - cloud VM eval readiness (judge CLIs, `LOOM_JUDGE_BACKEND`, auth hints).
 
 Node >= 20, ESM (`type: module`), no external runtime dependencies.
 
@@ -45,4 +46,5 @@ Before finishing: `npm run check` must pass.
 - This repo has **zero runtime dependencies** and no build step. `npm ci` is essentially a no-op but keeps things clean; it is the update script.
 - There is **no dev server, GUI, database, or container**. "Running the app" means invoking the CLI scripts in `## Commands` and running the test/validate gates — all fully offline and hermetic.
 - `npm test` / `npm run check` runs the full Node test suite and takes ~60–90s; do not assume it hung.
-- **Evals on cloud VMs:** run from the **loom repo root**. `.cursor/environment.json` installs `agent` and `codex` CLIs on boot; set `LOOM_JUDGE_BACKEND` (`cursor` or `codex`) in Cloud Agents Secrets — judge auth uses the CLIs' subscription login persisted in the environment snapshot (`agent login` / `codex login` once, then snapshot) — then `npm run bench -- --judge` reads `LOOM_JUDGE_BACKEND` directly (no sourcing needed). Full cadence: [`docs/operator/evals.md`](docs/operator/evals.md).
+- **Boot checklist (every cloud thread):** from the loom repo root run `npm run check`, then `npm run verify:eval-tools`. Do not declare the VM healthy from `check` alone — verify confirms judge CLIs and prints hints for missing `LOOM_JUDGE_BACKEND` / CLI login.
+- **Evals on cloud VMs:** `.cursor/environment.json` installs `agent` and `codex` CLIs on boot; set `LOOM_JUDGE_BACKEND` (`cursor` or `codex`) in Cloud Agents Secrets — judge auth uses the CLIs' subscription login persisted in the environment snapshot (`agent login` / `codex login` once, then snapshot) — then `npm run bench -- --judge` reads `LOOM_JUDGE_BACKEND` directly (no sourcing needed). Full cadence: [`docs/operator/evals.md`](docs/operator/evals.md).

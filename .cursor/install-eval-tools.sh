@@ -54,4 +54,5 @@ install_codex_cli
 
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "${MARKER}"
 echo "eval-tools: marker written to ${MARKER}"
-echo "eval-tools: run 'bash .cursor/verify-eval-tools.sh' from ${REPO_ROOT} to confirm judge readiness"
+echo "eval-tools: from ${REPO_ROOT} run 'npm run verify:eval-tools' (or bash .cursor/verify-eval-tools.sh)"
+echo "eval-tools: set LOOM_JUDGE_BACKEND=cursor|codex in Cloud Agents Secrets; login once then snapshot"

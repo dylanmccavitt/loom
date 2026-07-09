@@ -1,3 +1,4 @@
 {
+  "name": "loom",
   "install": "bash .cursor/install-eval-tools.sh && npm ci"
 }
