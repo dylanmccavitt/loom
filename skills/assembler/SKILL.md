@@ -2,14 +2,14 @@
 name: assembler
 description: Bootstraps or refreshes a repo for the Factorio workflow kit by stamping the repo-local envelope (.agents/envelope/), harness wiring, and repo-specific skills/agents. Use when setting up a repo for the kit, checking kit-readiness, refreshing tracker team/project/label map, domain glossary, build/test/lint commands, PR/issue/doc templates, or scaffolding a repo-specific skill. Not for opening tracked issues or writing PRDs/specs — use blueprint; not for capturing a brand-new idea as planning work — use prospect.
 metadata:
-  version: "0.3.1"
-  changelog: "0.3.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.3.2"
+  changelog: "0.3.2 - trim narrative lore from the entrypoint"
 
 ---
 
 # Assembler
 
-The assembling machine that builds the machines: it lays out the per-repo factory the rest of the kit runs on. `assembler` reads a repo and stamps the repo-local **envelope**, wires the harness to it, and scaffolds the repo-specific tooling the kit needs there. It replaces the retired bootstrap trio — `repo-workflow-bootstrap`, `workflow-kit`, and `setup-matt-pocock-skills` — folding their machinery into one Factorio-framed, tracker-aware skill.
+`assembler` reads a repo and stamps the repo-local **envelope**, wires the harness to it, and scaffolds the repo-specific tooling the kit needs there. It replaces the retired bootstrap trio — `repo-workflow-bootstrap`, `workflow-kit`, and `setup-matt-pocock-skills` — folding their machinery into one Factorio-framed, tracker-aware skill.
 
 This skill writes only envelope, wiring, and scaffold files. It never creates tracker objects, branches, or PRs (`prospect` and `blueprint` (issue-decomposition lens) create planning objects; `roboports` writes code), and it asks the user only for facts no tool can supply.
 

@@ -2,14 +2,14 @@
 name: rocket-launch
 description: Launches a ready change by enforcing every launch gate, merging the PR, and letting the bridge close its tracked issue while recording auditable evidence. Use when shipping a ready change — merge the PR, run the review gate, and close out the tracked issue. Not for opening a draft PR or unfinished work — use roboports; not for multi-repo or multi-environment promotion — use space-age.
 metadata:
-  version: "0.3.1"
-  changelog: "0.3.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.3.2"
+  changelog: "0.3.2 - trim narrative lore from the entrypoint"
 
 ---
 
 # Rocket Launch
 
-Ship a ready change off-planet. Enforce the launch gates, merge the PR, and let the bridge close the tracked issue, leaving a record a human can audit.
+Enforce the launch gates, merge the PR, and let the bridge close the tracked issue, leaving a record a human can audit.
 
 Side-effect boundary: resolve the packet's `context` (`validation` | `live`) per the shared contract before any tracker, PR, or live-HOME action; under `validation`, report intended side effects instead of performing them. During real closeout it owns the ship step for one ready change: gate, merge, and confirm the bridge closed the issue.
 

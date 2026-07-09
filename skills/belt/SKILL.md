@@ -2,8 +2,8 @@
 name: belt
 description: Compacts durable handoff, thread-control, and resume context between agents or threads — concise state, proof, risks, blockers, and next actions. Use when writing a handoff, deciding whether to continue or start a new thread, or resuming a repo task from durable state. Not for triaging or planning incoming work — use blueprint; not for merging a PR or closing a tracked issue — use rocket-launch.
 metadata:
-  version: "0.2.2"
-  changelog: "0.2.2 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.3"
+  changelog: "0.2.3 - cite shared lens mechanic; trim narrative lore from the entrypoint"
 
 ---
 
@@ -26,7 +26,7 @@ Use when moving durable context between agents/threads with concise state, proof
 
 ### Lenses
 
-The input packet may carry a `lens` field. A named lens loads `references/lens-<name>.md`; when `lens` is absent, load the mode default. Lenses select guidance only; they never widen packet scope or change the mode boundary.
+Lens load rules: `docs/skills/lens-mechanic.md`.
 
 - `handoff` (default): compact the current work into a durable handoff document for a fresh agent. Loads `references/lens-handoff.md`.
 - `thread-control`: decide whether to continue in the current thread or start a new one (absorbed from the retired `thread-control` skill). Loads `references/lens-thread-control.md`.

@@ -5,7 +5,7 @@ This package is the canonical shared-agent source for `blueprint`: one portable 
 ## Load order
 
 1. `SKILL.md` for trigger, mode, packet, and output contract.
-2. The packet-named lens reference `references/lens-<lens-name>.md`; when the packet names no lens, the default `references/lens-spec-synthesis.md`. Unnamed lens references stay unloaded.
+2. The packet-named lens per `docs/skills/lens-mechanic.md` (default `references/lens-spec-synthesis.md`).
 3. `references/rules.md` for accepted rules.
 4. `references/agent-judgment.md` for role-specific judgment boundaries.
 5. `references/patterns.md` for repeatable workflow patterns.
@@ -14,7 +14,7 @@ This package is the canonical shared-agent source for `blueprint`: one portable 
 
 ## Lens references
 
-`references/lens-{spec-synthesis,issue-decomposition,architecture,research-spike,triage}.md` carry per-lens judgment and playbooks absorbed from the retired ghosts, main-bus, science-pack/research, and inserter packages. Lenses select guidance only; they never widen packet scope or change the shape-mode boundary.
+`references/lens-{spec-synthesis,issue-decomposition,architecture,research-spike,triage}.md` carry per-lens judgment and playbooks absorbed from the retired ghosts, main-bus, science-pack/research, and inserter packages. See `docs/skills/lens-mechanic.md` for load rules.
 
 ## Update rules
 

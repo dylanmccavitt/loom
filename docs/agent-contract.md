@@ -45,8 +45,8 @@ One agent per mode; behavioral variants are lens references inside the agent pac
 
 ## Lens policy
 
-- The input packet may name one or more lenses; when `lens` is absent, the agent loads its mode default.
-- Only the named lens references load; lenses never widen the packet scope or change the mode boundary.
+Canonical load rules live in `docs/skills/lens-mechanic.md`: packet `lens` → `references/lens-<name>.md`, default when absent, unnamed lenses stay unloaded, and lenses never widen scope or change the mode boundary.
+
 - Review and proof may fan out one child per lens in parallel across correctness, security, user-visible behavior, minimal diff, and workflow drift.
 
 ## Pipeline DAG
