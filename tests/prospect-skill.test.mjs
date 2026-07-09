@@ -7,7 +7,11 @@ const skill = readFileSync(new URL("../skills/prospect/SKILL.md", import.meta.ur
 test("prospect has the required trigger", () => {
   assert.match(
     skill,
-    /Use when the user is starting a new idea, feature, or initiative from scratch and wants it captured as planning work before a spec or issues exist\./u,
+    /description: Scouts a brand-new idea, feature, or initiative and lands it as tracked planning work/u,
+  );
+  assert.match(
+    skill,
+    /Use when starting a new idea, feature, or initiative from scratch that needs a planning home before a spec or issues exist\./u,
   );
 });
 
