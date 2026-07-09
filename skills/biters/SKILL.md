@@ -2,8 +2,8 @@
 name: biters
 description: Probes a change before merge for correctness bugs, regressions, maintainability rot, scope creep, and missing tests, with security, minimal-diff, and workflow-drift review lenses. Use when reviewing a PR adversarially, hunting bugs and risks before merge, probing breach paths, tightening an over-engineered diff, or checking planned-vs-actual drift. Not for explaining concepts; not for applying fixes — use repair-pack for one finding or roboports for full issue work; not for proving behavior with evidence — use lab.
 metadata:
-  version: "0.2.1"
-  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.2"
+  changelog: "0.2.2 - cite shared lens mechanic; trim narrative lore from the entrypoint"
 
 ---
 
@@ -11,7 +11,7 @@ metadata:
 
 Use when attacking a change before merge across correctness, security, minimal-diff, and workflow-drift lenses, reporting prioritized findings without editing, within the active issue, PR, or workflow packet.
 
-Biters is the general adversarial reviewer of the shared roster: it stops asking "does the happy path work?" and starts asking "where does this break, and what does it cost when it does?" It is a review skill, not an exploit tool or an editor — it maps and reports; it never fixes, weakens a guard, or runs live exploits.
+Review skill, not an exploit tool or editor — it maps and reports; it never fixes, weakens a guard, or runs live exploits.
 
 ## Operating Contract
 
@@ -27,7 +27,7 @@ Biters is the general adversarial reviewer of the shared roster: it stops asking
 
 ### Lenses
 
-The input packet may carry a `lens` field. A named lens loads `references/lens-<name>.md`; when `lens` is absent, load the mode default. Lenses select guidance only; they never widen packet scope, change the review boundary, or grant delegation authority. Distinct lenses may run as parallel biters children when each has a distinct finding contract.
+Lens load rules: `docs/skills/lens-mechanic.md`. Distinct lenses may run as parallel biters children when each has a distinct finding contract.
 
 - `correctness` (default): general adversarial review — correctness bugs, regressions, maintainability, scope creep, missing tests. Loads `references/lens-correctness.md`.
 - `security`: AppSec/adversarial pass across trust boundaries and abuse paths (absorbed from the retired `spitters` agent). Loads `references/lens-security.md`.

@@ -2,31 +2,18 @@
 name: blueprint
 description: Shapes current context into a PRD/spec with acceptance criteria, non-goals, and a proof plan; covers issue decomposition, architecture seams, research spikes, and tracker triage through lenses; owns the kit's reusable PR, issue, project-doc, and PRD templates. Use for writing a PRD/spec, breaking a plan into issues, planning structure, resolving unknowns, triaging incoming issues, or fetching a PR/issue/doc template. Not for implementing a ready tracked issue — use roboports; not for throwaway prototypes — use map-seed; not for landing a brand-new idea's tracker home — use prospect.
 metadata:
-  version: "0.2.1"
-  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.2"
+  changelog: "0.2.2 - cite shared lens mechanic; trim narrative lore from the entrypoint"
 
 ---
 
 # Blueprint
 
-A blueprint is a saved layout you stamp down. This agent owns **shape** work: it
-drafts the spec for an idea, and through lenses it also decomposes plans into
-tracked issues, plans architecture seams, runs research spikes, and triages
-incoming issues. It owns the reusable templates the kit stamps into repos and
-the tracker.
+`blueprint` owns **shape** work: draft a PRD/spec with acceptance criteria, non-goals, and a proof plan; through lenses also decompose plans into tracked issues, plan architecture seams, run research spikes, and triage incoming issues. It owns the reusable templates the kit stamps into repos and the tracker.
 
 ## Lenses
 
-The input packet's `lens` field selects which variant guidance loads:
-
-- A named lens loads `references/lens-<name>.md` (e.g. `lens: triage` loads
-  `references/lens-triage.md`).
-- When `lens` is absent, load the default lens `references/lens-spec-synthesis.md`.
-- Only the named lens references load; unnamed ones stay unloaded.
-- Lenses select guidance only; they never widen packet scope, change the
-  shape-mode boundary, or grant extra delegation authority.
-
-Available lenses:
+Lens load rules: `docs/skills/lens-mechanic.md`.
 
 - `spec-synthesis` (default) — synthesize a PRD/spec from current context.
 - `issue-decomposition` — split a plan/spec into dependency-ordered tracked
@@ -79,7 +66,7 @@ Publish the finished spec as a tracker **document** on the prospect's project vi
 `save_document`. Return the created document id/link. The document is the spec's home;
 the issue-decomposition lens reads it to cut issues.
 
-## Templates (the canonical blueprints)
+## Templates
 
 This skill owns the kit's starter templates under `templates/`; `assembler` stamps
 repo-local and tracker-side copies from them. Keep them generic and placeholder-driven —

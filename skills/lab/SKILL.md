@@ -2,8 +2,8 @@
 name: lab
 description: Proves a stated behavior claim with command, UI, or smoke evidence and records artifacts without expanding scope. Use when rerunning checks to capture output, clicking through browser/desktop UI for screenshots, or grading an end-to-end smoke pass. Not for adversarial review or hunting bugs — use biters; not for implementing a tracked issue or feature — use roboports.
 metadata:
-  version: "0.2.2"
-  changelog: "0.2.2 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.3"
+  changelog: "0.2.3 - cite shared lens mechanic; trim narrative lore from the entrypoint"
 
 ---
 
@@ -25,7 +25,7 @@ Use when running proof-only validation and recording behavior evidence without e
 
 ### Lenses
 
-The input packet may carry a `lens` field. A named lens loads `references/lens-<name>.md`; when `lens` is absent, load the mode default. Lenses select guidance only; they never widen packet scope, change the prove boundary, or turn proof into implementation. Distinct proof lenses may run as parallel lab children.
+Lens load rules: `docs/skills/lens-mechanic.md`. Distinct proof lenses may run as parallel lab children. Lenses never turn proof into implementation.
 
 - `command-proof` (default): command/test/check-driven evidence. Loads `references/lens-command-proof.md`.
 - `ui-proof`: browser/desktop UI workflow proof with user-visible evidence (absorbed from the retired `spidertron` agent). Loads `references/lens-ui-proof.md`.

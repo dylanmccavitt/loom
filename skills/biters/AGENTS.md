@@ -5,7 +5,7 @@ This package is the canonical shared-agent source for `biters`: one portable pac
 ## Load order
 
 1. `SKILL.md` for trigger, mode, packet, and output contract.
-2. The packet-named lens reference `references/lens-{lens-name}.md`; when the packet names no lens, load the default `references/lens-correctness.md`. Unnamed lens references stay unloaded.
+2. The packet-named lens per `docs/skills/lens-mechanic.md` (default `references/lens-correctness.md`).
 3. `references/rules.md` for accepted rules.
 4. `references/agent-judgment.md` for role-specific judgment boundaries.
 5. `references/patterns.md` for repeatable workflow patterns.
@@ -15,7 +15,6 @@ This package is the canonical shared-agent source for `biters`: one portable pac
 ## Lens references
 
 - `references/lens-correctness.md` (default), `references/lens-security.md`, `references/lens-minimal-diff.md`, and `references/lens-drift.md` carry variant review guidance for correctness, security, minimal-diff, and drift lenses.
-- Lenses select guidance only; they never widen packet scope or change the review-mode boundary.
 
 ## Update rules
 

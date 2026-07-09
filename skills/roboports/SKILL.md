@@ -2,26 +2,21 @@
 name: roboports
 description: Implements one ready tracked issue end to end as code — one issue to one branch/worktree to one PR — with localized subagent fanout and a minimal diff, plus behavior-preserving refactor and measured performance lenses. Use when starting, continuing, or shipping one tracked issue, refactoring without changing behavior, or optimizing a proven bottleneck. Not for triaging incoming bugs — use blueprint; not for merging or closing a ready PR — use rocket-launch; not for one-finding patches — use repair-pack.
 metadata:
-  version: "0.2.1"
-  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.2"
+  changelog: "0.2.2 - cite shared lens mechanic; trim narrative lore from the entrypoint"
 
 ---
 
 # Roboports
 
-Blueprint's issue-decomposition lens stamps the planned work; `roboports`
-coordinates the bounded build network that turns one *ready* tracked issue into
-landed code: one issue → one branch/worktree → one PR, no more. The main agent
-is the roboport hub — it owns intake, integration, and handing the PR to
-`rocket-launch`; subagents do bounded, disjoint, localized work.
+`roboports` turns one *ready* tracked issue into landed code: one issue → one
+branch/worktree → one PR, no more. The main agent owns intake, integration, and
+handing the PR to `rocket-launch`; subagents do bounded, disjoint, localized work.
+Blueprint's issue-decomposition lens stamps the planned work.
 
 ## Lenses
 
-The input packet's `lens` field selects which variant guidance loads: a named
-lens loads `references/lens-<name>.md`; when `lens` is absent, load the default
-`references/lens-issue-delivery.md`. Unnamed lens references stay unloaded.
-Lenses select guidance only; they never widen packet scope, change the
-implement-mode boundary, or grant extra delegation authority.
+Lens load rules: `docs/skills/lens-mechanic.md`.
 
 - `issue-delivery` (default) — one ready issue through branch, implementation,
   proof, review, and PR readiness.

@@ -2,32 +2,25 @@
 name: map-seed
 description: Prototypes under fixed constraints with a fast throwaway run, retros what worked versus what didn't, then rerolls carrying the learnings. Use when prototyping or de-risking a design before committing, mocking up an approach around awkward constraints, or flipping through throwaway layout variants. Not for writing the final committed PRD/spec — use blueprint; not for conceptual explanations.
 metadata:
-  version: "0.2.1"
-  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.2"
+  changelog: "0.2.2 - trim narrative lore from the entrypoint"
 
 ---
 
 # Map Seed
 
-In Factorio you don't fight the terrain you were dealt — you **plan around** the
-cliffs and the thin ore patches, run a fast game to learn the layout, and if the
-seed turns out doomed you **reroll** and start fresh carrying what you learned,
-rather than grinding a base that can never scale.
-
 A map-seed run is **throwaway code that answers a design question under
 constraints you can't change**. The answer is the only keepsake; the run itself
-gets deleted. The point is to de-risk a design *before* committing — not to ship
-the prototype.
+gets deleted. De-risk a design *before* committing — do not ship the prototype.
 
 ## 1. Read the terrain — plan around fixed constraints
 
 Name the constraints you are *stuck with* in this run — a legacy or third-party
 API, a fixed schema, a hard deadline, a platform limit, a data shape you don't
-own — in one line at the top of the prototype. You plan **around** these, not
+own — in one line at the top of the prototype. Plan **around** these, not
 against them: mock or stub the awkward piece (an in-memory fake of the legacy
 API, a hardcoded sample of unfetchable data) so the run can still answer its
-question. The constraint is the terrain; the question is "given this terrain,
-does the design hold?"
+question.
 
 ## 2. Run a throwaway prototype — pick a branch
 

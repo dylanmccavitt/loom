@@ -2,30 +2,28 @@
 name: space-age
 description: Promotes an artifact planet by planet through CI/CD environments and orchestrates cross-repo changes in dependency order, reusing per-hop launch gates. Use when work crosses one repo or environment: CI/CD pipelines, promoting staging then prod, or rolling a change across multiple service repos. Not for shipping a single PR on one repo — use rocket-launch; not for implementing a feature — use roboports.
 metadata:
-  version: "0.1.1"
-  changelog: "0.1.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.1.2"
+  changelog: "0.1.2 - trim narrative lore from the entrypoint"
 
 ---
 
 # Space Age
 
-Beyond one planet. `rocket-launch` ships one change off one planet; `space-age`
-runs the logistics *between* planets — promoting an artifact through environments
-and coordinating a change across repos. Interplanetary logistics, not a single
-launch.
+`rocket-launch` ships one change in one repo/environment; `space-age` coordinates
+delivery across environments and repos — promoting an artifact through a pipeline
+and landing cross-repo changes in dependency order.
 
 This skill does not deploy, promote artifacts, trigger pipelines, or merge across repos while being validated. During real work it plans and drives the
 promotion path and the cross-repo landing order, deferring each individual
 gate/merge to `rocket-launch`.
 
-## The space platform and its planets
+## Environments and the pipeline
 
-- Each environment or repo is a **planet** with its own constraints (staging,
-  prod, edge — like Vulcanus, Fulgora, Gleba, Aquilo: each hostile in its own
-  way, each demanding its own gates).
+- Each environment or repo is a **planet** with its own constraints and gates
+  (staging, prod, edge).
 - The CI/CD pipeline is the **space platform** that carries an artifact from
-  planet to planet. You promote the artifact that already passed — you carry it
-  forward, you do not rebuild it at each stop.
+  planet to planet. Promote the artifact that already passed — carry it
+  forward; do not rebuild it at each stop.
 
 ## Required reading: the repo envelope
 
@@ -43,13 +41,13 @@ carries the same built artifact forward to the next planet.
 
 ## Per-planet gates
 
-Every planet has its own gravity. The **`rocket-launch` gates apply per environment** — per-environment gates, not a single global check. At each hop, run
+The **`rocket-launch` gates apply per environment** — per-environment gates, not one global check. At each hop, run
 that destination's gates before the artifact lands there:
 
 - Reuse `rocket-launch` per hop to run that environment's gate set (tests,
   review, acceptance, CI, minimal-diff) and perform the merge/deploy — do not
   reinvent merge or gate logic here.
-- **Never promote past a red gate.** A red gate on any planet stops the platform:
+- **Never promote past a red gate.** A red gate on any planet stops promotion:
   the artifact does not advance to the next environment. Report which planet's
   gate failed and why; promotion resumes only once it is green.
 

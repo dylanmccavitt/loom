@@ -26,9 +26,9 @@ test("biters carries the four review lenses with correctness as default", () => 
   }
 });
 
-test("biters lenses select guidance only and never widen scope", () => {
-  assert.match(skill, /Lenses select guidance only/u);
-  assert.match(skill, /never widen packet scope/u);
+test("biters cites the shared lens mechanic and keeps parallel fanout", () => {
+  assert.match(skill, /docs\/skills\/lens-mechanic\.md/u);
+  assert.match(skill, /Distinct lenses may run as parallel biters children/u);
 });
 
 test("biters records absorbed retired reviewer agents in lens guidance", () => {

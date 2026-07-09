@@ -2,18 +2,17 @@
 name: prospect
 description: Scouts a brand-new idea, feature, or initiative and lands it as tracked planning work — tracker home plus idea/brief before any spec or issues exist. Use when starting a new idea, feature, or initiative from scratch that needs a planning home before a spec or issues exist. Not for splitting a plan into issues or writing a PRD — use blueprint; not for building features — use roboports.
 metadata:
-  version: "0.2.1"
-  changelog: "0.2.1 - sharpen and tighten routing description with distinct verbs and negative triggers"
+  version: "0.2.2"
+  changelog: "0.2.2 - trim narrative lore from the entrypoint"
 
 ---
 
 # Prospect
 
-Scout a fresh patch and plant the first marker on it. A new idea arrives with no
-tracker home; `prospect` frames its intent just enough, then lands it as a
-tracker initiative or project with an idea/brief document attached — the
-planning system of record for everything that follows. It does **not** spec,
-decompose, or build; it opens the patch so the rest of the kit can mine it.
+`prospect` frames a new idea's intent briefly, then lands it as a tracker
+initiative or project with an idea/brief document attached — the planning system
+of record for everything that follows. It does **not** spec, decompose, or build;
+it only opens the tracker home.
 
 This skill does not create tracker initiatives, projects, or documents while
 being validated; during real intake it opens one home for the idea and attaches
