@@ -158,6 +158,15 @@ skill’s `evals/evals.json` is fed to the judge as routing intent.
 `retro/routing-scorecard-*.{json,md}` (gitignored) with per-skill accuracy,
 overall accuracy, and an expected×chosen confusion matrix.
 
+Convert live trim candidates into repair-pack packets under `retro/findings/`:
+
+```sh
+npm run judge:findings                              # latest scorecard under retro/
+npm run judge:findings -- retro/judge-scorecard-….json
+```
+
+Stale candidates are flagged; re-runs are idempotent.
+
 **Worker ≠ grader:** keep `LOOM_JUDGE_*` separate from whatever configures the
 implementer agent. Prefer scoring `roboports`, `biters`, `lab`, and
 `rocket-launch` first when starting live judge runs.
@@ -216,8 +225,11 @@ candidates, and current skill versions. The improve-and-rejudge loop:
 
 - Run `npm run bench -- --judge` to produce a fresh scorecard.
 - Run `npm run dashboard` and read the per-skill trim candidates and notes.
-- Edit the `SKILL.md` sections flagged, then bump `metadata.version` and
-  `metadata.changelog` per [`docs/skills/skill-versioning.md`](../skills/skill-versioning.md).
+- Optionally `npm run judge:findings` to emit repair-pack packets under
+  `retro/findings/`.
+- Edit the flagged `SKILL.md` text (or hand a packet to `repair-pack`), then
+  bump `metadata.version` / `metadata.changelog` per
+  [`docs/skills/skill-versioning.md`](../skills/skill-versioning.md).
 - Re-judge and re-run the dashboard; the Δ column and sparkline show whether
   the edit moved the total.
 - Mock runs (`LOOM_JUDGE_MOCK`) are marked gray/italic — they are canned

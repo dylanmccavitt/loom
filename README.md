@@ -84,6 +84,7 @@ Manual routes, for reference:
 | Benchmark script | `node --test tests/benchmarks-bench.test.mjs` |
 | Eval dashboard | `node --test tests/eval-dashboard.test.mjs` |
 | Routing eval | `node --test tests/routing-eval.test.mjs` |
+| Judge-to-findings | `node --test tests/judge-to-findings.test.mjs` |
 | Biters skill | `node --test tests/biters-skill.test.mjs` |
 | Blueprint skill | `node --test tests/blueprint-skill.test.mjs` |
 | Factorio kit golden path | `node --test tests/factorio-kit-goldenpath.test.mjs` |
@@ -131,6 +132,7 @@ Tiers 2–3 are model-in-the-loop modes: they read `LOOM_JUDGE_*` settings, fall
 | --- | --- | --- |
 | Benchmark harness | `node scripts/bench.mjs` | Runs repository benchmark checks. |
 | Eval dashboard | `node scripts/eval-dashboard.mjs` | Renders gitignored judge scorecards into `retro/eval-dashboard.html` plus a stdout summary. |
+| Judge-to-findings | `node scripts/judge-to-findings.mjs` | Converts judge scorecard `trim_candidates` into repair-pack finding packets under `retro/findings/`. |
 | Skill installer | `node scripts/install.mjs` | Links or copies `skills/` into harness skill directories, interactively or via flags. |
 | Operator loop | `node scripts/loop.mjs` | Runs the offline loop entrypoint. |
 | Retro packet helper | `node scripts/retro-packet.mjs` | Handles retro packet maintenance. |
