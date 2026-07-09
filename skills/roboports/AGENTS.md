@@ -14,7 +14,7 @@ This package is the canonical shared-agent source for `roboports`: one portable 
 
 ## Lens references
 
-`references/lens-{issue-delivery,refactor,performance}.md` carry per-lens judgment and playbooks absorbed from the retired recycler/quality and modules packages. See `docs/skills/lens-mechanic.md` for load rules.
+`references/lens-{issue-delivery,refactor,performance}.md` carry per-lens judgment and playbooks absorbed from the retired recycler/quality and modules packages.
 
 ## Update rules
 

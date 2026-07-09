@@ -15,7 +15,6 @@ This package is the canonical shared-agent source for `belt`: one portable packa
 ## Lens references
 
 - `references/lens-handoff.md` (default), `references/lens-thread-control.md`, and `references/lens-resume.md` carry variant carrier guidance absorbed from the retired `handoff`, `thread-control`, and `resume-thread` skills.
-- See `docs/skills/lens-mechanic.md` for load rules.
 
 ## Update rules
 

@@ -9,10 +9,10 @@ metadata:
 
 # Prospect
 
-`prospect` frames a new idea's intent just enough, then lands it as a tracker
+`prospect` frames a new idea's intent briefly, then lands it as a tracker
 initiative or project with an idea/brief document attached — the planning system
 of record for everything that follows. It does **not** spec, decompose, or build;
-it opens the tracker home so the rest of the kit can continue.
+it only opens the tracker home.
 
 This skill does not create tracker initiatives, projects, or documents while
 being validated; during real intake it opens one home for the idea and attaches

@@ -15,7 +15,6 @@ This package is the canonical shared-agent source for `biters`: one portable pac
 ## Lens references
 
 - `references/lens-correctness.md` (default), `references/lens-security.md`, `references/lens-minimal-diff.md`, and `references/lens-drift.md` carry variant review guidance for correctness, security, minimal-diff, and drift lenses.
-- See `docs/skills/lens-mechanic.md` for load rules.
 
 ## Update rules
 

@@ -12,7 +12,7 @@ metadata:
 `roboports` turns one *ready* tracked issue into landed code: one issue → one
 branch/worktree → one PR, no more. The main agent owns intake, integration, and
 handing the PR to `rocket-launch`; subagents do bounded, disjoint, localized work.
-Blueprint's issue-decomposition lens stamps the planned work this skill builds.
+Blueprint's issue-decomposition lens stamps the planned work.
 
 ## Lenses
 

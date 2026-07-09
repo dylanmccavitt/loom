@@ -20,7 +20,7 @@ API, a fixed schema, a hard deadline, a platform limit, a data shape you don't
 own — in one line at the top of the prototype. Plan **around** these, not
 against them: mock or stub the awkward piece (an in-memory fake of the legacy
 API, a hardcoded sample of unfetchable data) so the run can still answer its
-question. Given these constraints, does the design hold?
+question.
 
 ## 2. Run a throwaway prototype — pick a branch
 

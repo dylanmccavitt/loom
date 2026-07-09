@@ -14,7 +14,7 @@ This package is the canonical shared-agent source for `blueprint`: one portable 
 
 ## Lens references
 
-`references/lens-{spec-synthesis,issue-decomposition,architecture,research-spike,triage}.md` carry per-lens judgment and playbooks absorbed from the retired ghosts, main-bus, science-pack/research, and inserter packages. See `docs/skills/lens-mechanic.md` for load rules.
+`references/lens-{spec-synthesis,issue-decomposition,architecture,research-spike,triage}.md` carry per-lens judgment and playbooks absorbed from the retired ghosts, main-bus, science-pack/research, and inserter packages.
 
 ## Update rules
 

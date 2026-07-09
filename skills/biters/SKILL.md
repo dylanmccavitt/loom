@@ -11,7 +11,7 @@ metadata:
 
 Use when attacking a change before merge across correctness, security, minimal-diff, and workflow-drift lenses, reporting prioritized findings without editing, within the active issue, PR, or workflow packet.
 
-`biters` is the general adversarial reviewer: it probes where a change breaks and what that costs. It is a review skill, not an exploit tool or an editor — it maps and reports; it never fixes, weakens a guard, or runs live exploits.
+Review skill, not an exploit tool or editor — it maps and reports; it never fixes, weakens a guard, or runs live exploits.
 
 ## Operating Contract
 

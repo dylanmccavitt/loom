@@ -15,7 +15,6 @@ This package is the canonical shared-agent source for `lab`: one portable packag
 ## Lens references
 
 - `references/lens-command-proof.md` (default), `references/lens-ui-proof.md`, and `references/lens-smoke-proof.md` carry variant proof guidance absorbed from the retired `spidertron` agent and `proof-pass` skill.
-- See `docs/skills/lens-mechanic.md` for load rules.
 
 ## Update rules
 

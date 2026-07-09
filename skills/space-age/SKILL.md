@@ -41,7 +41,7 @@ carries the same built artifact forward to the next planet.
 
 ## Per-planet gates
 
-The **`rocket-launch` gates apply per environment** — per-environment gates, not a single global check. At each hop, run
+The **`rocket-launch` gates apply per environment** — per-environment gates, not one global check. At each hop, run
 that destination's gates before the artifact lands there:
 
 - Reuse `rocket-launch` per hop to run that environment's gate set (tests,
