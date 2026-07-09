@@ -8,6 +8,10 @@
 # - CURSOR_API_KEY   — the agent CLI reads it natively; nothing to write.
 # - CODEX_AUTH_JSON  — base64 of a working ~/.codex/auth.json; written to
 #   ~/.codex/auth.json on boot so codex is logged in without a snapshot.
+#   Secrets are capped at 4096 chars, so when the blob is longer split it
+#   into CODEX_AUTH_JSON_1, CODEX_AUTH_JSON_2, ... (concatenated in order;
+#   up to _8). Gzip-compressed payloads (gzip -c auth.json | base64) are
+#   detected and decompressed automatically.
 # - LOOM_JUDGE_BACKEND — optional override of the committed default in
 #   benchmarks/judge/judge.config.json (cursor | codex | none).
 
@@ -58,19 +62,54 @@ install_codex_cli() {
 
 # Secret-driven auth: this runs on a disposable cloud VM at boot (not an
 # operator's live HOME), so materializing CLI auth state here is expected.
+
+# Secrets max out at 4096 chars, so the base64 auth blob may arrive either
+# whole (CODEX_AUTH_JSON) or split into ordered chunks (CODEX_AUTH_JSON_1..8).
+assemble_codex_auth_b64() {
+  if [[ -n "${CODEX_AUTH_JSON:-}" ]]; then
+    printf '%s' "${CODEX_AUTH_JSON}"
+    return 0
+  fi
+  local assembled="" i chunk
+  for i in 1 2 3 4 5 6 7 8; do
+    chunk="$(eval "printf '%s' \"\${CODEX_AUTH_JSON_${i}:-}\"")"
+    [[ -z "${chunk}" ]] && break
+    assembled+="${chunk}"
+  done
+  printf '%s' "${assembled}"
+}
+
 wire_codex_auth() {
-  if [[ -z "${CODEX_AUTH_JSON:-}" ]]; then
+  local b64
+  b64="$(assemble_codex_auth_b64)"
+  if [[ -z "${b64}" ]]; then
     return 0
   fi
   mkdir -p "${HOME}/.codex"
-  if base64 -d <<<"${CODEX_AUTH_JSON}" > "${HOME}/.codex/auth.json" 2>/dev/null \
-      && [[ -s "${HOME}/.codex/auth.json" ]]; then
-    chmod 600 "${HOME}/.codex/auth.json"
-    echo "eval-tools: wrote ~/.codex/auth.json from CODEX_AUTH_JSON secret"
-  else
-    rm -f "${HOME}/.codex/auth.json"
-    echo "eval-tools: CODEX_AUTH_JSON secret is set but is not valid base64 — codex stays logged out" >&2
+  local raw="${HOME}/.codex/.auth-payload"
+  if ! base64 -d <<<"${b64}" > "${raw}" 2>/dev/null || [[ ! -s "${raw}" ]]; then
+    rm -f "${raw}" "${HOME}/.codex/auth.json"
+    echo "eval-tools: CODEX_AUTH_JSON(_N) secret is set but is not valid base64 — codex stays logged out" >&2
+    return 0
   fi
+  # Accept both plain JSON and gzip-compressed payloads (magic bytes 1f 8b).
+  if [[ "$(head -c 2 "${raw}" | od -An -tx1 | tr -d ' \n')" == "1f8b" ]]; then
+    if ! gunzip -c "${raw}" > "${HOME}/.codex/auth.json" 2>/dev/null; then
+      rm -f "${raw}" "${HOME}/.codex/auth.json"
+      echo "eval-tools: CODEX_AUTH_JSON(_N) payload looks gzipped but failed to decompress — codex stays logged out" >&2
+      return 0
+    fi
+  else
+    mv "${raw}" "${HOME}/.codex/auth.json"
+  fi
+  rm -f "${raw}"
+  if ! node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "${HOME}/.codex/auth.json" 2>/dev/null; then
+    rm -f "${HOME}/.codex/auth.json"
+    echo "eval-tools: decoded CODEX_AUTH_JSON(_N) is not valid JSON — codex stays logged out (re-export auth.json and re-split)" >&2
+    return 0
+  fi
+  chmod 600 "${HOME}/.codex/auth.json"
+  echo "eval-tools: wrote ~/.codex/auth.json from CODEX_AUTH_JSON secret(s)"
 }
 
 auth_state() {
@@ -92,7 +131,7 @@ auth_state() {
       local status
       status="$(codex login status 2>&1 || true)"
       if grep -qi 'not logged in' <<<"${status}"; then
-        echo "NOT authenticated — add CODEX_AUTH_JSON to Cloud Agents Secrets (or 'codex login' + snapshot)"
+        echo "NOT authenticated — add CODEX_AUTH_JSON (or CODEX_AUTH_JSON_1/_2 chunks) to Cloud Agents Secrets (or 'codex login' + snapshot)"
       else
         echo "authenticated"
       fi

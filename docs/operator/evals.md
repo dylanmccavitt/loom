@@ -40,8 +40,19 @@ optimization to skip the cold CLI install.
    - `CURSOR_API_KEY` (from cursor.com/settings → API keys) — the `agent` CLI
      reads it natively; enables the `cursor` judge headlessly.
    - `CODEX_AUTH_JSON` — base64 of a working `~/.codex/auth.json` from a
-     machine where `codex login` succeeded (`base64 -w0 ~/.codex/auth.json`);
-     the install script writes it to `~/.codex/auth.json` on every boot.
+     machine where `codex login` succeeded; the install script writes it to
+     `~/.codex/auth.json` on every boot. Secret values are capped at 4096
+     chars and the blob is usually longer, so split it into ordered chunks
+     `CODEX_AUTH_JSON_1`, `CODEX_AUTH_JSON_2`, ... (up to `_8`):
+     ```sh
+     # macOS (Linux: base64 -w0 ~/.codex/auth.json instead of the first line)
+     b64="$(base64 -i ~/.codex/auth.json | tr -d '\n')"
+     echo "${b64:0:4000}"      # -> secret CODEX_AUTH_JSON_1
+     echo "${b64:4000:4000}"   # -> secret CODEX_AUTH_JSON_2
+     echo "${b64:8000:4000}"   # -> CODEX_AUTH_JSON_3 (only if non-empty)
+     ```
+     Gzip-compressed payloads (`gzip -c ~/.codex/auth.json | base64`) are
+     also accepted and may fit fewer chunks.
    - Optionally `LOOM_JUDGE_BACKEND` = `cursor` or `codex` to override the
      committed default (`none` disables the judge entirely). No other keys.
 4. Start a cloud agent on `main`. The `install` step runs

@@ -70,7 +70,7 @@ else
 fi
 CODEX_STATUS="$(codex login status 2>&1)" && ! grep -qi 'not logged in' <<<"${CODEX_STATUS}" \
   && echo "ok: codex CLI is logged in (ChatGPT/Codex subscription)" \
-  || echo "hint: add CODEX_AUTH_JSON (base64 of a working ~/.codex/auth.json) to Cloud Agents Secrets, or run 'codex login' once and snapshot the environment"
+  || echo "hint: add CODEX_AUTH_JSON (base64 of a working ~/.codex/auth.json; split into CODEX_AUTH_JSON_1/_2 chunks when over the 4096-char secret limit) to Cloud Agents Secrets, or run 'codex login' once and snapshot the environment"
 
 echo ""
 echo "=== Structural gate ==="
