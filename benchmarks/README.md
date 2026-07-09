@@ -100,16 +100,12 @@ npm run bench -- --route          # all skills' eval corpora
 npm run bench -- --route belt     # one skill's eval corpus
 ```
 
-Tier-2 trigger eval: for each case in `skills/<name>/evals/evals.json`, prompt
-the configured judge backend with the full roster of `name` + `description`
-pairs (frontmatter only — what a harness shows at routing time) plus the eval
-prompt, and require strict JSON naming which single skill should activate (or
-`none`). Expected skills are derived from `expected_output` prose (activation
-→ corpus skill; "Does NOT activate" → routed-to skill or `none`). Output is a
-timestamped scorecard pair `retro/routing-scorecard-<ISO>.{json,md}` with
-per-skill accuracy, overall accuracy, and an expected×chosen confusion matrix;
-generated scorecards are gitignored and must not be committed. Same
-`LOOM_JUDGE_*` enablement as `--judge`.
+Tier-2 trigger eval: for each `skills/<name>/evals/evals.json` case, prompt the
+judge with the roster of `name` + `description` pairs plus the eval prompt, and
+require `{"skill":"<name>"}` (or `none`). Expected skills come from
+`expected_output` prose. Writes `retro/routing-scorecard-<ISO>.{json,md}`
+(gitignored) with per-skill / overall accuracy and an expected×chosen confusion
+matrix. Same `LOOM_JUDGE_*` enablement as `--judge`.
 
 ### Ablation (`--ablate`)
 

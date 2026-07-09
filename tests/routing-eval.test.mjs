@@ -312,7 +312,7 @@ test("runRoutingEval mock backend defaults to the corpus skill", async () => {
       env: { LOOM_JUDGE_MOCK: "1" },
       now: () => new Date("2026-07-09T12:01:00.000Z"),
     });
-    // Mock always returns corpus skill: case 1 correct, 2+3 wrong.
+    // Mock returns the corpus skill, so only the positive case scores correct.
     assert.equal(scorecard.scores.correct, 1);
     assert.equal(scorecard.cases[0].chosen, "alpha");
     assert.equal(scorecard.cases[1].chosen, "alpha");

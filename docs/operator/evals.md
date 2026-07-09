@@ -152,12 +152,11 @@ dashboard; diff two scorecards across skill versions to spot regressions.
 Use them as trim candidates and regression notes; they do not gate CI. Each
 skill’s `evals/evals.json` is fed to the judge as routing intent.
 
-**Routing** (`--route`) is the LLM trigger-eval runner: it shows the model only
-the 11 `name` + `description` pairs (what a harness exposes at routing time),
-asks which single skill should activate (or `none`) for each corpus prompt, and
-scores against expected skills derived from `expected_output` prose. Scorecards
-land in `retro/routing-scorecard-*.{json,md}` (gitignored) with per-skill
-accuracy, overall accuracy, and an expected×chosen confusion matrix.
+**Routing** (`--route`) scores each `evals/evals.json` prompt against the 11
+`name` + `description` pairs only, expecting strict `{"skill":"..."}` (or
+`none`). Expected skills come from `expected_output` prose. Scorecards land in
+`retro/routing-scorecard-*.{json,md}` (gitignored) with per-skill accuracy,
+overall accuracy, and an expected×chosen confusion matrix.
 
 **Worker ≠ grader:** keep `LOOM_JUDGE_*` separate from whatever configures the
 implementer agent. Prefer scoring `roboports`, `biters`, `lab`, and
@@ -229,8 +228,8 @@ candidates, and current skill versions. The improve-and-rejudge loop:
 - Do not put live judge, routing, ablation, or worker arms into CI — model-scored
   gates are forbidden by design.
 - Do not treat `evals/evals.json` schema validation as a substitute for
-  `--route` — check only validates coverage; routing accuracy needs a live
-  (or mock) judge backend.
+  `--route` — check only validates coverage; routing accuracy needs a judge
+  backend.
 - Do not ask the implementer (`roboports`) to grade itself; use `biters` /
   `lab` (or the judge) as separate graders.
 - Do not invent a parallel bus-first benchmark directory — that methodology was
@@ -246,9 +245,6 @@ These are intentional absences, not broken setup:
   fully implemented in `checks/score.mjs`.
 - Content-envelope tests are missing for `belt`, `lab`, and `repair-pack` (CI
   still covers eval schema and golden-path presence).
-
-The trigger-eval LLM runner ships as `npm run bench -- --route` (same
-`LOOM_JUDGE_*` path as `--judge`) — still opt-in, never CI.
 
 ## Success criteria
 

@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-// Tier-2 routing eval: ask a judge backend which skill should activate for each
-// skills/*/evals/evals.json prompt, given only the 11 name+description pairs.
-//
-// Invoked through `npm run bench -- --route [skill]`; never wired into
-// `npm run check`, validators, or CI. Reuses LOOM_JUDGE_* / judge.config.json
-// enablement from benchmarks/judge/judge.mjs (worker != grader).
+// Tier-2 routing eval for skills/*/evals/evals.json.
+// Invoked via `npm run bench -- --route [skill]`; never part of check/CI.
+// Reuses LOOM_JUDGE_* enablement from benchmarks/judge/judge.mjs.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -14,19 +11,15 @@ import { parseFrontmatter } from '../../scripts/lib/frontmatter.mjs';
 import {
   defaultRepoRoot,
   listJudgeSkills,
-  offlineSkipNotice,
   resolveJudgeConfig,
   scorecardTimestampSlug,
 } from '../judge/judge.mjs';
-
-export { defaultRepoRoot };
 
 export const NONE_SKILL = 'none';
 export const ROUTING_SCORECARD_PREFIX = 'routing-scorecard-';
 
 const DOES_NOT_ACTIVATE_RE = /\bdoes\s+not\s+activate\b/iu;
 const ACTIVATES_RE = /\bactivates\b/iu;
-// "routes to X", "routes prototyping to the X skill", etc.
 const ROUTES_TO_RE = /\broutes?\b[\s\S]{0,48}?\bto\s+(?:the\s+)?/iu;
 
 function stripCodeFences(text) {
@@ -34,8 +27,8 @@ function stripCodeFences(text) {
   return (fenced ? fenced[1] : text).trim();
 }
 
-/** Longest-first so `repair-pack` wins over a bare `repair` substring. */
-export function skillNameMatcher(skillNames) {
+// Longest-first so `repair-pack` wins over a bare `repair` substring.
+function skillNameMatcher(skillNames) {
   const sorted = [...skillNames].sort((a, b) => b.length - a.length || a.localeCompare(b));
   const escaped = sorted.map((name) => name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'));
   if (escaped.length === 0) return null;
@@ -67,10 +60,9 @@ function firstRoutedSkill(text, corpusSkill, roster) {
 
 /**
  * Derive the expected routed skill for one eval case.
- * - Explicit "Does NOT activate": first other roster skill named in
- *   expected_output, else "none".
+ * - "Does NOT activate": first other roster skill named in expected_output, else "none".
  * - "routes to <other>" with no "activates" signal: that other skill.
- * - Otherwise: the corpus skill (positive activation / default).
+ * - Otherwise: the corpus skill.
  */
 export function deriveExpectedSkill(expectedOutput, corpusSkill, skillNames = []) {
   const text = String(expectedOutput ?? '');
@@ -160,10 +152,7 @@ export function buildRoutingPrompt({ descriptions, prompt, allowedSkills }) {
   ].join('\n');
 }
 
-/**
- * Parse a routing judge response into a single skill name or "none".
- * Accepts {"skill":"..."}, {"chosen":"..."}, or a bare skill token.
- */
+/** Parse a routing response into a roster skill name or "none". */
 export function parseRoutingResponse(text, skillNames = []) {
   const allowed = new Set([...skillNames.map((name) => name.toLowerCase()), NONE_SKILL]);
   const raw = stripCodeFences(text);
@@ -174,7 +163,7 @@ export function parseRoutingResponse(text, skillNames = []) {
     if (typeof parsed === 'string') {
       candidate = parsed;
     } else if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const value = parsed.skill ?? parsed.chosen ?? parsed.name ?? parsed.route;
+      const value = parsed.skill ?? parsed.chosen;
       if (typeof value === 'string') candidate = value;
     }
   } catch {
@@ -195,19 +184,11 @@ export function parseRoutingResponse(text, skillNames = []) {
   return normalized;
 }
 
-export function normalizeChosenSkill(chosen, skillNames = []) {
+function normalizeChosenSkill(chosen, skillNames = []) {
   if (typeof chosen === 'string') {
     return parseRoutingResponse(JSON.stringify({ skill: chosen }), skillNames);
   }
   return parseRoutingResponse(chosen, skillNames);
-}
-
-export function emptyConfusionMatrix(labels) {
-  const matrix = {};
-  for (const expected of labels) {
-    matrix[expected] = Object.fromEntries(labels.map((chosen) => [chosen, 0]));
-  }
-  return matrix;
 }
 
 export function computeRoutingScores(results, skillNames = []) {
@@ -216,22 +197,17 @@ export function computeRoutingScores(results, skillNames = []) {
     if (b === NONE_SKILL) return -1;
     return a.localeCompare(b);
   });
-  const matrix = emptyConfusionMatrix(labels);
+  const matrix = Object.fromEntries(
+    labels.map((expected) => [expected, Object.fromEntries(labels.map((chosen) => [chosen, 0]))]),
+  );
   const perSkill = Object.fromEntries(
     skillNames.map((name) => [name, { total: 0, correct: 0, accuracy: null }]),
   );
 
   let correct = 0;
   for (const row of results) {
-    const expected = row.expected;
-    const chosen = row.chosen;
-    if (!matrix[expected]) {
-      matrix[expected] = Object.fromEntries(labels.map((label) => [label, 0]));
-    }
-    if (!(chosen in matrix[expected])) matrix[expected][chosen] = 0;
+    const { expected, chosen, corpus_skill: corpus } = row;
     matrix[expected][chosen] += 1;
-
-    const corpus = row.corpus_skill;
     if (perSkill[corpus]) {
       perSkill[corpus].total += 1;
       if (expected === chosen) perSkill[corpus].correct += 1;
@@ -251,11 +227,6 @@ export function computeRoutingScores(results, skillNames = []) {
     confusionMatrix: matrix,
     labels,
   };
-}
-
-export function mockRoutingSkill(context) {
-  // Deterministic offline stub: always pick the corpus skill under test.
-  return context.corpusSkill;
 }
 
 function invokeCommandRoute(config, context, spawnImpl = spawnSync) {
@@ -317,9 +288,7 @@ export function createRoutingProvider(config, { fetchImpl = fetch, spawnImpl = s
       kind: 'mock',
       model: 'mock',
       async route(context) {
-        if (canned) return canned;
-        if (typeof context.mockSkill === 'string') return context.mockSkill;
-        return mockRoutingSkill(context);
+        return canned ?? context.corpusSkill;
       },
     };
   }
@@ -485,7 +454,5 @@ export async function runRoutingEval({
   fs.writeFileSync(jsonPath, `${JSON.stringify(scorecard, null, 2)}\n`);
   fs.writeFileSync(mdPath, renderRoutingScorecardMarkdown(scorecard));
 
-  return { scorecard, jsonPath, mdPath, descriptions };
+  return { scorecard, jsonPath, mdPath };
 }
-
-export { offlineSkipNotice, resolveJudgeConfig };
