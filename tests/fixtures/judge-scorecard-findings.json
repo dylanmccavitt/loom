@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "skill-judge",
+  "generatedAt": "2026-07-09T12:00:00.000Z",
+  "rubric": "benchmarks/judge/RUBRIC.md",
+  "judge": { "provider": "mock", "model": "mock" },
+  "skills": [
+    {
+      "skill": "sample-skill",
+      "evals_included": true,
+      "scores": {
+        "conciseness": 2,
+        "delta_over_base": 3,
+        "agnosticism": 4,
+        "actionability": 4
+      },
+      "total": 13,
+      "trim_candidates": [
+        "## Filler Section",
+        "This sentence restates the obvious and can be cut.",
+        "## Gone Section"
+      ],
+      "notes": "Conciseness is weak; filler section and one restated sentence add little over base."
+    }
+  ]
+}
