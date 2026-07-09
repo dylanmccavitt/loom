@@ -11,6 +11,7 @@ export const DEFAULT_TOKEN_BUDGETS_PATH = "scripts/skill-token-budgets.json";
 const DEFAULT_LENS_PATTERNS = Object.freeze([
   /(?:load\s+)?the\s+default\s+`(?<rel>references\/lens-[a-z0-9-]+\.md)`/iu,
   /`(?<rel>references\/lens-[a-z0-9-]+\.md)`\s*\(default\)/iu,
+  /\(default\s+`(?<rel>references\/lens-[a-z0-9-]+\.md)`\)/iu,
 ]);
 
 export function estimateTokensFromChars(charCount) {
